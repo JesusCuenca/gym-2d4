@@ -1,0 +1,80 @@
+<script setup>
+import { ref } from 'vue'
+import { useScreenStore } from '../stores/screenStore'
+
+const screenStore = useScreenStore()
+const newScreenName = ref('')
+const adding = ref(false)
+
+async function handleAdd() {
+  if (!newScreenName.value.trim()) return
+  adding.value = true
+  try {
+    await screenStore.createScreen(newScreenName.value.trim())
+    newScreenName.value = ''
+    await screenStore.fetchScreens()
+  } finally {
+    adding.value = false
+  }
+}
+
+async function handleDelete(screen) {
+  if (confirm(`Delete screen "${screen.name}"?`)) {
+    await screenStore.deleteScreen(screen.id)
+  }
+}
+</script>
+
+<template>
+  <div>
+    <!-- Add screen form -->
+    <div class="flex gap-2 mb-4">
+      <input
+        v-model="newScreenName"
+        type="text"
+        placeholder="Screen name (e.g. Sala 1)"
+        @keyup.enter="handleAdd"
+        class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
+      />
+      <button
+        @click="handleAdd"
+        :disabled="adding || !newScreenName.trim()"
+        class="bg-gymOrange text-white font-bold rounded-lg px-4 py-2 text-sm hover:bg-gymOrange/90 disabled:opacity-50 transition-colors"
+      >
+        + Add
+      </button>
+    </div>
+
+    <!-- Screens list -->
+    <div v-if="screenStore.screens.length === 0" class="text-white/30 text-sm text-center py-4 border border-dashed border-white/10 rounded-lg">
+      No screens yet. Add a screen for each TV in your gym.
+    </div>
+
+    <div v-else class="space-y-2">
+      <div
+        v-for="screen in screenStore.screens"
+        :key="screen.id"
+        class="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg px-4 py-3"
+      >
+        <div>
+          <span class="text-white font-medium text-sm">{{ screen.name }}</span>
+          <span class="text-white/30 text-xs ml-2">/tv/{{ screen.id }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span
+            v-if="screen.activeSessionId"
+            class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400"
+          >
+            Live
+          </span>
+          <button
+            @click="handleDelete(screen)"
+            class="text-sm text-red-400/70 hover:text-red-400 px-2 py-1 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

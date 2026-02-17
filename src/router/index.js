@@ -1,26 +1,27 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
+import { useAuthStore } from '../stores/auth'
 import AdminLayout from '../layouts/AdminLayout.vue'
 
 const routes = [
-  // TV (público)
+  // TV (public — no auth required)
   {
     path: '/tv/:id',
     name: 'tv-display',
     component: () => import('../views/TvDisplayView.vue'),
   },
 
-  // Autenticación
+  // Authentication
   {
     path: '/login',
     name: 'login',
     component: () => import('../views/LoginView.vue'),
   },
 
-  // Administración
+  // Admin (requires auth)
   {
     path: '/admin',
     component: AdminLayout,
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
@@ -36,6 +37,12 @@ const routes = [
         path: 'bloques/nuevo',
         name: 'admin-block-create',
         component: () => import('../views/AdminBlockCreateView.vue'),
+      },
+      {
+        path: 'bloques/:id/editar',
+        name: 'admin-block-edit',
+        component: () => import('../views/AdminBlockCreateView.vue'),
+        props: true,
       },
       {
         path: 'clases',
@@ -55,7 +62,7 @@ const routes = [
     ],
   },
 
-  // Redirect raíz al login
+  // Root redirect
   {
     path: '/',
     redirect: '/login',
@@ -65,6 +72,18 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+
+  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
+    return { name: 'login' }
+  }
+
+  if (to.name === 'login' && authStore.isLoggedIn) {
+    return { name: 'admin-dashboard' }
+  }
 })
 
 export default router

@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-gymOrange: #FB6537;
+  --color-gymBlack: #0A0A0A;
+  --color-gymRest: #06B6D4;
+}
+
+body {
+  @apply bg-gymBlack text-white antialiased;
+  margin: 0;
+  min-height: 100vh;
+}

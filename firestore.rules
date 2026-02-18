@@ -5,7 +5,8 @@ service cloud.firestore {
 
     // Blocks: only authenticated owner can read/write
     match /blocks/{blockId} {
-      allow read, write: if request.auth != null
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
                          && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null
                     && request.resource.data.uid == request.auth.uid;
@@ -13,7 +14,8 @@ service cloud.firestore {
 
     // Classes: only authenticated owner can read/write
     match /classes/{classId} {
-      allow read, write: if request.auth != null
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
                          && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null
                     && request.resource.data.uid == request.auth.uid;

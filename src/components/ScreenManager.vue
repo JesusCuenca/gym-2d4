@@ -1,8 +1,13 @@
 <script setup>
 import { ref } from 'vue'
 import { useScreenStore } from '../stores/screenStore'
+import { useToastStore } from '../stores/toastStore'
+import { useConfirm } from '../composables/useConfirm'
+import { TrashIcon } from '@heroicons/vue/24/outline'
 
 const screenStore = useScreenStore()
+const toastStore = useToastStore()
+const { confirm } = useConfirm()
 const newScreenName = ref('')
 const adding = ref(false)
 
@@ -13,14 +18,20 @@ async function handleAdd() {
     await screenStore.createScreen(newScreenName.value.trim())
     newScreenName.value = ''
     await screenStore.fetchScreens()
+    toastStore.show('Pantalla creada')
   } finally {
     adding.value = false
   }
 }
 
 async function handleDelete(screen) {
-  if (confirm(`¿Eliminar pantalla "${screen.name}"?`)) {
+  const ok = await confirm({
+    title: 'Eliminar pantalla',
+    message: `"${screen.name}" será eliminada permanentemente.`,
+  })
+  if (ok) {
     await screenStore.deleteScreen(screen.id)
+    toastStore.show('Pantalla eliminada')
   }
 }
 </script>
@@ -69,9 +80,9 @@ async function handleDelete(screen) {
           </span>
           <button
             @click="handleDelete(screen)"
-            class="text-sm text-red-400/70 hover:text-red-400 px-2 py-1 transition-colors"
+            class="text-red-400/70 hover:text-red-400 p-1.5 transition-colors"
           >
-            ✕
+            <TrashIcon class="w-4 h-4" />
           </button>
         </div>
       </div>

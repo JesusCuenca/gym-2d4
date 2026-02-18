@@ -1,17 +1,24 @@
-import { createApp } from "vue";
-import { createPinia } from "pinia";
-import router from "./router";
-import App from "./App.vue";
-import "./style.css";
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import router from './router'
+import App from './App.vue'
+import AppSpinner from './components/AppSpinner.vue'
+import './style.css'
 
-const app = createApp(App);
-const pinia = createPinia();
+const app = createApp(App)
+const pinia = createPinia()
 
-app.use(pinia);
+app.use(pinia)
+app.component('AppSpinner', AppSpinner)
 
-import { useAuthStore } from "./stores/auth";
-const authStore = useAuthStore();
-authStore.initAuth().then(() => {
-  app.use(router);
-  app.mount("#app");
-});
+import { useAuthStore } from './stores/auth'
+const authStore = useAuthStore()
+authStore
+  .initAuth()
+  .catch((e) => {
+    console.error('Auth initialization failed:', e)
+  })
+  .then(() => {
+    app.use(router)
+    app.mount('#app')
+  })

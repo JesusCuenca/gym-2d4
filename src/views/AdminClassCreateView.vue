@@ -4,6 +4,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { useClassStore } from '../stores/classStore'
 import { useBlockStore } from '../stores/blockStore'
 import { BLOCK_TYPES, TIMED_PRESETS, isTimed, getBlockLabel } from '../models/blockTypes'
+import { ChevronUpIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const route = useRoute()
@@ -11,6 +13,7 @@ const classStore = useClassStore()
 const blockStore = useBlockStore()
 
 const isEditMode = computed(() => !!route.params.id)
+const loading = ref(false)
 const submitting = ref(false)
 const validationError = ref('')
 const name = ref('')
@@ -260,6 +263,7 @@ async function handleSubmit() {
 // --- Load ---
 
 onMounted(async () => {
+  loading.value = true
   await blockStore.fetchBlocks()
   if (isEditMode.value) {
     const cls = await classStore.getClassById(route.params.id)
@@ -273,6 +277,7 @@ onMounted(async () => {
       }))
     }
   }
+  loading.value = false
 })
 </script>
 
@@ -282,7 +287,12 @@ onMounted(async () => {
       {{ isEditMode ? 'Editar clase' : 'Crear clase' }}
     </h1>
 
-    <form @submit.prevent="handleSubmit" class="space-y-6">
+    <!-- Loading -->
+    <div v-if="loading" class="flex justify-center py-12">
+      <AppSpinner size="lg" />
+    </div>
+
+    <form v-else @submit.prevent="handleSubmit" class="space-y-6">
       <!-- Class Name -->
       <div>
         <label class="block text-sm text-white/70 mb-1">Nombre de la clase</label>
@@ -339,15 +349,15 @@ onMounted(async () => {
                   <span v-if="blockSummary(cb.form)"> · {{ blockSummary(cb.form) }}</span>
                 </span>
               </div>
-              <div class="flex items-center gap-1 shrink-0">
+              <div class="flex items-center gap-0.5 shrink-0">
                 <button type="button" @click="moveBlock(bIndex, -1)" :disabled="bIndex === 0"
-                  class="text-white/30 hover:text-white disabled:opacity-20 px-1 text-sm">↑</button>
+                  class="text-white/30 hover:text-white disabled:opacity-20 p-1"><ChevronUpIcon class="w-4 h-4" /></button>
                 <button type="button" @click="moveBlock(bIndex, 1)" :disabled="bIndex === classBlocks.length - 1"
-                  class="text-white/30 hover:text-white disabled:opacity-20 px-1 text-sm">↓</button>
+                  class="text-white/30 hover:text-white disabled:opacity-20 p-1"><ChevronDownIcon class="w-4 h-4" /></button>
                 <button type="button" @click="toggleEdit(bIndex)"
-                  class="text-gymOrange/70 hover:text-gymOrange px-1 text-sm ml-1">✎</button>
+                  class="text-gymOrange/70 hover:text-gymOrange p-1 ml-1"><PencilSquareIcon class="w-4 h-4" /></button>
                 <button type="button" @click="removeBlock(bIndex)"
-                  class="text-red-400/70 hover:text-red-400 px-1 text-sm ml-1">✕</button>
+                  class="text-red-400/70 hover:text-red-400 p-1 ml-1"><XMarkIcon class="w-4 h-4" /></button>
               </div>
             </div>
 
@@ -483,11 +493,11 @@ onMounted(async () => {
                       <span class="text-white/40 text-xs font-medium">#{{ eIndex + 1 }}</span>
                       <div class="flex items-center gap-1">
                         <button type="button" @click="moveExercise(bIndex, eIndex, -1)" :disabled="eIndex === 0"
-                          class="text-white/30 hover:text-white disabled:opacity-20 px-1 text-xs">↑</button>
+                          class="text-white/30 hover:text-white disabled:opacity-20 p-0.5"><ChevronUpIcon class="w-3.5 h-3.5" /></button>
                         <button type="button" @click="moveExercise(bIndex, eIndex, 1)" :disabled="eIndex === cb.form.exercises.length - 1"
-                          class="text-white/30 hover:text-white disabled:opacity-20 px-1 text-xs">↓</button>
+                          class="text-white/30 hover:text-white disabled:opacity-20 p-0.5"><ChevronDownIcon class="w-3.5 h-3.5" /></button>
                         <button type="button" @click="removeExercise(bIndex, eIndex)" :disabled="cb.form.exercises.length === 1"
-                          class="text-red-400/70 hover:text-red-400 disabled:opacity-20 px-1 text-xs">Eliminar</button>
+                          class="text-red-400/70 hover:text-red-400 disabled:opacity-20 p-0.5"><TrashIcon class="w-3.5 h-3.5" /></button>
                       </div>
                     </div>
 

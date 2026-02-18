@@ -14,14 +14,17 @@ import {
   orderBy,
 } from 'firebase/firestore'
 import { useAuthStore } from './auth'
+import { validateClass } from '../utils/validation'
 
 export const useClassStore = defineStore('classes', () => {
   const classes = ref([])
   const loading = ref(false)
+  const error = ref(null)
 
   async function fetchClasses() {
     const authStore = useAuthStore()
     loading.value = true
+    error.value = null
     try {
       const q = query(
         collection(db, 'classes'),
@@ -30,35 +33,84 @@ export const useClassStore = defineStore('classes', () => {
       )
       const snapshot = await getDocs(q)
       classes.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+    } catch (e) {
+      error.value = 'No se pudieron cargar las clases. Intenta de nuevo.'
+      console.error('fetchClasses error:', e)
     } finally {
       loading.value = false
     }
   }
 
   async function getClassById(classId) {
-    const snapshot = await getDoc(doc(db, 'classes', classId))
-    if (!snapshot.exists()) return null
-    return { id: snapshot.id, ...snapshot.data() }
+    error.value = null
+    try {
+      const snapshot = await getDoc(doc(db, 'classes', classId))
+      if (!snapshot.exists()) return null
+      return { id: snapshot.id, ...snapshot.data() }
+    } catch (e) {
+      error.value = 'No se pudo cargar la clase.'
+      console.error('getClassById error:', e)
+      return null
+    }
   }
 
   async function createClass(classData) {
-    const authStore = useAuthStore()
-    const docRef = await addDoc(collection(db, 'classes'), {
-      ...classData,
-      uid: authStore.user.uid,
-      createdAt: serverTimestamp(),
-    })
-    return docRef.id
+    const validation = validateClass(classData)
+    if (!validation.valid) {
+      error.value = validation.message
+      throw new Error(validation.message)
+    }
+
+    error.value = null
+    try {
+      const authStore = useAuthStore()
+      const docRef = await addDoc(collection(db, 'classes'), {
+        ...classData,
+        uid: authStore.user.uid,
+        createdAt: serverTimestamp(),
+      })
+      await fetchClasses()
+      return docRef.id
+    } catch (e) {
+      if (!error.value) {
+        error.value = 'No se pudo crear la clase. Intenta de nuevo.'
+      }
+      console.error('createClass error:', e)
+      throw e
+    }
   }
 
   async function updateClass(classId, classData) {
-    await updateDoc(doc(db, 'classes', classId), classData)
+    const validation = validateClass(classData)
+    if (!validation.valid) {
+      error.value = validation.message
+      throw new Error(validation.message)
+    }
+
+    error.value = null
+    try {
+      await updateDoc(doc(db, 'classes', classId), classData)
+      await fetchClasses()
+    } catch (e) {
+      if (!error.value) {
+        error.value = 'No se pudo actualizar la clase. Intenta de nuevo.'
+      }
+      console.error('updateClass error:', e)
+      throw e
+    }
   }
 
   async function deleteClass(classId) {
-    await deleteDoc(doc(db, 'classes', classId))
-    classes.value = classes.value.filter((c) => c.id !== classId)
+    error.value = null
+    try {
+      await deleteDoc(doc(db, 'classes', classId))
+      classes.value = classes.value.filter((c) => c.id !== classId)
+    } catch (e) {
+      error.value = 'No se pudo eliminar la clase. Intenta de nuevo.'
+      console.error('deleteClass error:', e)
+      throw e
+    }
   }
 
-  return { classes, loading, fetchClasses, getClassById, createClass, updateClass, deleteClass }
+  return { classes, loading, error, fetchClasses, getClassById, createClass, updateClass, deleteClass }
 })

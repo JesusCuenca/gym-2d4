@@ -59,10 +59,30 @@ export function useTimer(sessionRef) {
     return s?.blocks?.[s.currentBlockIndex]?.blockData ?? null
   })
 
-  const timeline = computed(() => {
-    const b = currentBlock.value
+  // Stable key that only changes when the block's structural data changes,
+  // not on every Firestore snapshot (e.g. clockState or accumulatedTime updates).
+  const timelineKey = computed(() => {
+    const s = sessionRef.value
+    if (!s) return null
+    const b = s.blocks?.[s.currentBlockIndex]?.blockData
     if (!b || b.type !== 'timed') return null
-    return buildTimeline(b)
+    return `${s.currentBlockIndex}_${b.rounds}_${b.workSeconds}_${b.restSeconds}_${b.exerciseMode}_${b.exercises?.length}`
+  })
+
+  let cachedTimeline = null
+  let cachedTimelineKey = null
+
+  const timeline = computed(() => {
+    const key = timelineKey.value
+    if (key === null) {
+      cachedTimeline = null
+      cachedTimelineKey = null
+      return null
+    }
+    if (key === cachedTimelineKey) return cachedTimeline
+    cachedTimeline = buildTimeline(currentBlock.value)
+    cachedTimelineKey = key
+    return cachedTimeline
   })
 
   const currentSegment = computed(() => {

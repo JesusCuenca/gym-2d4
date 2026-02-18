@@ -2,10 +2,19 @@
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useClassStore } from '../stores/classStore'
-import { getBlockLabel } from '../models/blockTypes'
+import { useToastStore } from '../stores/toastStore'
+import { useConfirm } from '../composables/useConfirm'
 import { getTotalDuration } from '../utils/timeline'
+import {
+  PencilSquareIcon,
+  DocumentDuplicateIcon,
+  TrashIcon,
+  PlayIcon,
+} from '@heroicons/vue/24/outline'
 
 const classStore = useClassStore()
+const toastStore = useToastStore()
+const { confirm } = useConfirm()
 
 function getTotalTime(cls) {
   return cls.blocks?.reduce((sum, b) => {
@@ -20,8 +29,13 @@ function formatMinutes(seconds) {
 }
 
 async function handleDelete(cls) {
-  if (confirm(`¿Eliminar "${cls.name}"?`)) {
+  const ok = await confirm({
+    title: 'Eliminar clase',
+    message: `"${cls.name}" será eliminada permanentemente.`,
+  })
+  if (ok) {
     await classStore.deleteClass(cls.id)
+    toastStore.show('Clase eliminada')
   }
 }
 
@@ -32,6 +46,7 @@ async function handleClone(cls) {
     blocks: cls.blocks,
   })
   await classStore.fetchClasses()
+  toastStore.show('Clase duplicada')
 }
 
 onMounted(() => {
@@ -52,8 +67,8 @@ onMounted(() => {
     </div>
 
     <!-- Loading -->
-    <div v-if="classStore.loading" class="text-white/50 text-center py-12">
-      Cargando...
+    <div v-if="classStore.loading" class="flex justify-center py-12">
+      <AppSpinner size="lg" />
     </div>
 
     <!-- Empty state -->
@@ -96,26 +111,30 @@ onMounted(() => {
         <div class="flex gap-2">
           <RouterLink
             :to="{ name: 'admin-class-live', params: { id: cls.id } }"
-            class="text-sm bg-gymOrange/20 text-gymOrange hover:bg-gymOrange/30 border border-gymOrange/30 rounded-lg px-3 py-1.5 font-medium transition-colors"
+            class="flex items-center gap-1.5 text-sm bg-gymOrange/20 text-gymOrange hover:bg-gymOrange/30 border border-gymOrange/30 rounded-lg px-3 py-1.5 font-medium transition-colors"
           >
+            <PlayIcon class="w-4 h-4" />
             Iniciar
           </RouterLink>
           <RouterLink
             :to="{ name: 'admin-class-edit', params: { id: cls.id } }"
-            class="text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
           >
+            <PencilSquareIcon class="w-4 h-4" />
             Editar
           </RouterLink>
           <button
             @click="handleClone(cls)"
-            class="text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
           >
+            <DocumentDuplicateIcon class="w-4 h-4" />
             Clonar
           </button>
           <button
             @click="handleDelete(cls)"
-            class="text-sm text-red-400/70 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 rounded-lg px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 text-sm text-red-400/70 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 rounded-lg px-3 py-1.5 transition-colors"
           >
+            <TrashIcon class="w-4 h-4" />
             Eliminar
           </button>
         </div>

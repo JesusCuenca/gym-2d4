@@ -4,16 +4,22 @@ import { useRoute, useRouter } from 'vue-router'
 import { useClassStore } from '../stores/classStore'
 import { useSessionStore } from '../stores/sessionStore'
 import { useScreenStore } from '../stores/screenStore'
+import { useToastStore } from '../stores/toastStore'
+import { useConfirm } from '../composables/useConfirm'
 import { useTimer } from '../composables/useTimer'
 import { formatTimer } from '../utils/time'
 import { getBlockLabel, isTimed } from '../models/blockTypes'
 import { getTotalDuration } from '../utils/timeline'
+import { PlayIcon, PauseIcon, ForwardIcon, StopIcon, CheckIcon } from '@heroicons/vue/24/solid'
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/vue/20/solid'
 
 const route = useRoute()
 const router = useRouter()
 const classStore = useClassStore()
 const sessionStore = useSessionStore()
 const screenStore = useScreenStore()
+const toastStore = useToastStore()
+const { confirm } = useConfirm()
 
 const sessionRef = toRef(sessionStore, 'session')
 const timer = useTimer(sessionRef)
@@ -126,8 +132,14 @@ async function handleNextBlock() {
 
 async function handleEnd() {
   if (!sessionId.value) return
-  if (confirm('¿Finalizar esta sesión?')) {
+  const ok = await confirm({
+    title: 'Finalizar sesión',
+    message: '¿Seguro que quieres finalizar esta sesión en vivo?',
+    confirmLabel: 'Finalizar',
+  })
+  if (ok) {
     await sessionStore.endSession(sessionId.value, selectedScreenId.value)
+    toastStore.show('Sesión finalizada')
   }
 }
 
@@ -257,29 +269,33 @@ onUnmounted(() => {
         <button
           v-if="!isRunning"
           @click="handlePlay"
-          class="col-span-2 bg-green-600 text-white font-bold rounded-xl px-6 py-5 text-lg hover:bg-green-500 transition-colors"
+          class="col-span-2 flex items-center justify-center gap-2 bg-green-600 text-white font-bold rounded-xl px-6 py-5 text-lg hover:bg-green-500 transition-colors"
         >
-          ▶ PLAY
+          <PlayIcon class="w-6 h-6" />
+          PLAY
         </button>
         <button
           v-else
           @click="handlePause"
-          class="col-span-2 bg-yellow-600 text-white font-bold rounded-xl px-6 py-5 text-lg hover:bg-yellow-500 transition-colors"
+          class="col-span-2 flex items-center justify-center gap-2 bg-yellow-600 text-white font-bold rounded-xl px-6 py-5 text-lg hover:bg-yellow-500 transition-colors"
         >
-          ⏸ PAUSA
+          <PauseIcon class="w-6 h-6" />
+          PAUSA
         </button>
 
         <button
           @click="handleNextBlock"
           :disabled="isLastBlock"
-          class="bg-blue-600 text-white font-bold rounded-xl px-4 py-4 hover:bg-blue-500 disabled:opacity-30 transition-colors"
+          class="flex items-center justify-center gap-2 bg-blue-600 text-white font-bold rounded-xl px-4 py-4 hover:bg-blue-500 disabled:opacity-30 transition-colors"
         >
-          SIGUIENTE ▶▶
+          SIGUIENTE
+          <ForwardIcon class="w-5 h-5" />
         </button>
         <button
           @click="handleEnd"
-          class="bg-red-600/80 text-white font-bold rounded-xl px-4 py-4 hover:bg-red-600 transition-colors"
+          class="flex items-center justify-center gap-2 bg-red-600/80 text-white font-bold rounded-xl px-4 py-4 hover:bg-red-600 transition-colors"
         >
+          <StopIcon class="w-5 h-5" />
           FINALIZAR
         </button>
       </div>
@@ -300,10 +316,10 @@ onUnmounted(() => {
               :class="i === currentBlockIndex ? 'bg-gymOrange/10' : 'hover:bg-white/5'"
             >
               <!-- Status icon -->
-              <span class="w-5 text-center shrink-0">
-                <span v-if="i < currentBlockIndex" class="text-green-400 text-sm">✓</span>
-                <span v-else-if="i === currentBlockIndex" class="text-gymOrange text-sm">▶</span>
-                <span v-else class="text-white/20 text-sm">○</span>
+              <span class="w-5 flex justify-center shrink-0">
+                <CheckIcon v-if="i < currentBlockIndex" class="w-4 h-4 text-green-400" />
+                <PlayIcon v-else-if="i === currentBlockIndex" class="w-4 h-4 text-gymOrange" />
+                <span v-else class="w-2 h-2 rounded-full bg-white/20" />
               </span>
               <!-- Block info -->
               <span class="flex-1 min-w-0">
@@ -317,8 +333,9 @@ onUnmounted(() => {
               <span class="text-xs text-white/30 shrink-0">
                 {{ block.blockData ? getBlockLabel(block.blockData) : '' }}
               </span>
-              <span class="text-white/20 text-xs shrink-0">
-                {{ expandedBlockIndex === i ? '▲' : '▼' }}
+              <span class="text-white/20 shrink-0">
+                <ChevronUpIcon v-if="expandedBlockIndex === i" class="w-4 h-4" />
+                <ChevronDownIcon v-else class="w-4 h-4" />
               </span>
             </button>
 

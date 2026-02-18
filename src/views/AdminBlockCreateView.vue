@@ -3,12 +3,14 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useBlockStore } from '../stores/blockStore'
 import { BLOCK_TYPES, TIMED_PRESETS, isTimed } from '../models/blockTypes'
+import { ChevronUpIcon, ChevronDownIcon, TrashIcon } from '@heroicons/vue/20/solid'
 
 const router = useRouter()
 const route = useRoute()
 const blockStore = useBlockStore()
 
 const isEditMode = computed(() => !!route.params.id)
+const loading = ref(false)
 const submitting = ref(false)
 const validationError = ref('')
 
@@ -153,7 +155,9 @@ async function handleSubmit() {
 
 onMounted(async () => {
   if (isEditMode.value) {
+    loading.value = true
     const block = await blockStore.getBlock(route.params.id)
+    loading.value = false
     if (block) {
       form.value.name = block.name
       form.value.type = block.type
@@ -188,7 +192,12 @@ onMounted(async () => {
       {{ isEditMode ? 'Editar bloque' : 'Crear bloque' }}
     </h1>
 
-    <form @submit.prevent="handleSubmit" class="space-y-6">
+    <!-- Loading -->
+    <div v-if="loading" class="flex justify-center py-12">
+      <AppSpinner size="lg" />
+    </div>
+
+    <form v-else @submit.prevent="handleSubmit" class="space-y-6">
       <!-- Block Name -->
       <div>
         <label class="block text-sm text-white/70 mb-1">Nombre del bloque</label>
@@ -365,20 +374,20 @@ onMounted(async () => {
                   type="button"
                   @click="moveExercise(index, -1)"
                   :disabled="index === 0"
-                  class="text-white/30 hover:text-white disabled:opacity-20 px-2 py-1 text-sm"
-                >↑</button>
+                  class="text-white/30 hover:text-white disabled:opacity-20 p-1"
+                ><ChevronUpIcon class="w-4 h-4" /></button>
                 <button
                   type="button"
                   @click="moveExercise(index, 1)"
                   :disabled="index === form.exercises.length - 1"
-                  class="text-white/30 hover:text-white disabled:opacity-20 px-2 py-1 text-sm"
-                >↓</button>
+                  class="text-white/30 hover:text-white disabled:opacity-20 p-1"
+                ><ChevronDownIcon class="w-4 h-4" /></button>
                 <button
                   type="button"
                   @click="removeExercise(index)"
                   :disabled="form.exercises.length === 1"
-                  class="text-red-400/70 hover:text-red-400 disabled:opacity-20 px-2 py-1 text-sm"
-                >Eliminar</button>
+                  class="text-red-400/70 hover:text-red-400 disabled:opacity-20 p-1"
+                ><TrashIcon class="w-4 h-4" /></button>
               </div>
             </div>
 

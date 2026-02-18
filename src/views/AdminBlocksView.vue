@@ -2,14 +2,24 @@
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useBlockStore } from '../stores/blockStore'
+import { useToastStore } from '../stores/toastStore'
+import { useConfirm } from '../composables/useConfirm'
 import { getBlockLabel } from '../models/blockTypes'
 import { formatTimer } from '../utils/time'
+import { PencilSquareIcon, DocumentDuplicateIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 const blockStore = useBlockStore()
+const toastStore = useToastStore()
+const { confirm } = useConfirm()
 
 async function handleDelete(block) {
-  if (confirm(`¿Eliminar "${block.name}"?`)) {
+  const ok = await confirm({
+    title: 'Eliminar bloque',
+    message: `"${block.name}" será eliminado permanentemente.`,
+  })
+  if (ok) {
     await blockStore.deleteBlock(block.id)
+    toastStore.show('Bloque eliminado')
   }
 }
 
@@ -20,6 +30,7 @@ async function handleClone(block) {
     name: `${block.name} (copia)`,
   })
   await blockStore.fetchBlocks()
+  toastStore.show('Bloque duplicado')
 }
 
 function blockMeta(block) {
@@ -53,8 +64,8 @@ onMounted(() => {
     </div>
 
     <!-- Loading -->
-    <div v-if="blockStore.loading" class="text-white/50 text-center py-12">
-      Cargando...
+    <div v-if="blockStore.loading" class="flex justify-center py-12">
+      <AppSpinner size="lg" />
     </div>
 
     <!-- Empty state -->
@@ -96,20 +107,23 @@ onMounted(() => {
         <div class="flex gap-2">
           <RouterLink
             :to="{ name: 'admin-block-edit', params: { id: block.id } }"
-            class="text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
           >
+            <PencilSquareIcon class="w-4 h-4" />
             Editar
           </RouterLink>
           <button
             @click="handleClone(block)"
-            class="text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
           >
+            <DocumentDuplicateIcon class="w-4 h-4" />
             Clonar
           </button>
           <button
             @click="handleDelete(block)"
-            class="text-sm text-red-400/70 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 rounded-lg px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 text-sm text-red-400/70 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 rounded-lg px-3 py-1.5 transition-colors"
           >
+            <TrashIcon class="w-4 h-4" />
             Eliminar
           </button>
         </div>

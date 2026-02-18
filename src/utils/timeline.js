@@ -5,6 +5,9 @@
  */
 export function buildTimeline(block) {
   if (block.type !== 'timed') return null
+  if (!block.exercises?.length) return []
+  if (!block.rounds || block.rounds < 1) return []
+  if (!block.workSeconds || block.workSeconds <= 0) return []
 
   const segments = []
   let cursor = 0

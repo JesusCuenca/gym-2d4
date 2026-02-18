@@ -1,15 +1,28 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useConnectionStatus } from '../composables/useConnectionStatus'
+import {
+  Bars3Icon,
+  XMarkIcon,
+  Squares2X2Icon,
+  CubeIcon,
+  CalendarDaysIcon,
+  ArrowRightOnRectangleIcon,
+} from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const menuOpen = ref(false)
 const { isOnline } = useConnectionStatus()
 
+watch(menuOpen, (open) => {
+  document.body.style.overflow = open ? 'hidden' : ''
+})
+
 async function handleLogout() {
+  closeMenu()
   await authStore.logout()
   router.push('/login')
 }
@@ -23,16 +36,28 @@ function closeMenu() {
   <div class="min-h-screen flex flex-col">
     <nav class="bg-gymBlack border-b border-white/10 px-4 sm:px-6 py-3 sm:py-4">
       <div class="flex items-center justify-between">
-        <span class="text-gymOrange font-bold text-xl">2D4 Gym TV</span>
+        <RouterLink to="/admin" class="text-gymOrange font-bold text-xl hover:text-gymOrange">
+          2D4 Gym TV
+        </RouterLink>
 
         <!-- Desktop nav -->
         <div class="hidden sm:flex items-center gap-6">
-          <RouterLink to="/admin" class="text-white/70 hover:text-white text-sm">Panel</RouterLink>
-          <RouterLink to="/admin/bloques" class="text-white/70 hover:text-white text-sm">Bloques</RouterLink>
-          <RouterLink to="/admin/clases" class="text-white/70 hover:text-white text-sm">Clases</RouterLink>
+          <RouterLink to="/admin" active-class="" exact-active-class="router-link-exact-active" class="nav-link">
+            <Squares2X2Icon class="w-4 h-4" />
+            Panel
+          </RouterLink>
+          <RouterLink to="/admin/bloques" class="nav-link">
+            <CubeIcon class="w-4 h-4" />
+            Bloques
+          </RouterLink>
+          <RouterLink to="/admin/clases" class="nav-link">
+            <CalendarDaysIcon class="w-4 h-4" />
+            Clases
+          </RouterLink>
           <span class="text-white/50 text-sm">{{ authStore.user?.email }}</span>
-          <button @click="handleLogout" class="text-white/50 hover:text-white text-sm">
-            Cerrar sesión
+          <button @click="handleLogout" class="nav-link">
+            <ArrowRightOnRectangleIcon class="w-4 h-4" />
+            Salir
           </button>
         </div>
 
@@ -41,28 +66,71 @@ function closeMenu() {
           @click="menuOpen = !menuOpen"
           class="sm:hidden text-white/70 hover:text-white p-1"
         >
-          <svg v-if="!menuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <Bars3Icon v-if="!menuOpen" class="w-6 h-6" />
+          <XMarkIcon v-else class="w-6 h-6" />
         </button>
       </div>
-
-      <!-- Mobile menu -->
-      <div v-if="menuOpen" class="sm:hidden mt-3 pt-3 border-t border-white/10 flex flex-col gap-3">
-        <RouterLink to="/admin" class="text-white/70 hover:text-white text-sm" @click="closeMenu">Panel</RouterLink>
-        <RouterLink to="/admin/bloques" class="text-white/70 hover:text-white text-sm" @click="closeMenu">Bloques</RouterLink>
-        <RouterLink to="/admin/clases" class="text-white/70 hover:text-white text-sm" @click="closeMenu">Clases</RouterLink>
-        <div class="pt-2 border-t border-white/10 flex items-center justify-between">
-          <span class="text-white/50 text-xs truncate">{{ authStore.user?.email }}</span>
-          <button @click="handleLogout" class="text-white/50 hover:text-white text-sm shrink-0">
-            Cerrar sesión
-          </button>
-        </div>
-      </div>
     </nav>
+
+    <!-- Mobile menu overlay -->
+    <Teleport to="body">
+      <Transition name="mobile-menu">
+        <div
+          v-if="menuOpen"
+          class="fixed inset-0 z-30 sm:hidden"
+          @click.self="closeMenu"
+        >
+          <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="closeMenu" />
+
+          <div class="relative bg-gymBlack border-b border-white/10 px-4 py-4 z-40">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-gymOrange font-bold text-xl">2D4 Gym TV</span>
+              <button @click="closeMenu" class="text-white/60 hover:text-white p-1">
+                <XMarkIcon class="w-6 h-6" />
+              </button>
+            </div>
+
+            <nav class="flex flex-col gap-1 mb-4">
+              <RouterLink
+                to="/admin"
+                active-class=""
+                exact-active-class="router-link-exact-active"
+                class="nav-link py-3 text-base border-b border-white/5"
+                @click="closeMenu"
+              >
+                <Squares2X2Icon class="w-5 h-5" />
+                Panel
+              </RouterLink>
+              <RouterLink
+                to="/admin/bloques"
+                class="nav-link py-3 text-base border-b border-white/5"
+                @click="closeMenu"
+              >
+                <CubeIcon class="w-5 h-5" />
+                Bloques
+              </RouterLink>
+              <RouterLink
+                to="/admin/clases"
+                class="nav-link py-3 text-base"
+                @click="closeMenu"
+              >
+                <CalendarDaysIcon class="w-5 h-5" />
+                Clases
+              </RouterLink>
+            </nav>
+
+            <div class="pt-3 border-t border-white/10 flex items-center justify-between">
+              <span class="text-white/40 text-sm truncate">{{ authStore.user?.email }}</span>
+              <button @click="handleLogout" class="nav-link text-base">
+                <ArrowRightOnRectangleIcon class="w-5 h-5" />
+                Salir
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- Offline banner -->
     <div v-if="!isOnline" class="bg-red-600 text-white text-center text-sm py-2 px-4">
       Sin conexión — Reconectando...

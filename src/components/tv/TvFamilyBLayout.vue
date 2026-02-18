@@ -13,7 +13,7 @@ const props = defineProps({
 
 const roundsDisplay = computed(() => {
   if (props.block?.repScheme) return props.block.repScheme
-  if (props.block?.rounds) return `${props.block.rounds} ROUNDS`
+  if (props.block?.rounds) return `${props.block.rounds} RONDAS`
   return ''
 })
 
@@ -24,10 +24,10 @@ const elapsedDisplay = computed(() => formatTimer(props.displaySeconds))
   <div class="flex h-full relative">
     <!-- Left Panel (30%) — Round Info -->
     <div class="w-[30%] flex flex-col items-center justify-center border-r border-white/10 px-6">
-      <p class="text-3xl font-black text-white/60 uppercase tracking-tighter font-condensed mb-6">
+      <p class="text-3xl font-black text-white/60 uppercase tracking-normal font-condensed mb-6">
         {{ block.name }}
       </p>
-      <div v-if="roundsDisplay" class="text-6xl font-black text-gymOrange uppercase tracking-tighter font-condensed text-center">
+      <div v-if="roundsDisplay" class="text-6xl font-black text-gymOrange uppercase tracking-normal font-condensed text-center">
         {{ roundsDisplay }}
       </div>
     </div>
@@ -38,6 +38,6 @@ const elapsedDisplay = computed(() => formatTimer(props.displaySeconds))
     </div>
 
     <!-- Info Pill — Elapsed Time -->
-    <TvInfoPill label="Time" :value="elapsedDisplay" />
+    <TvInfoPill label="Tiempo" :value="elapsedDisplay" />
   </div>
 </template>

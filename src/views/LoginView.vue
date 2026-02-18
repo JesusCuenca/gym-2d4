@@ -47,7 +47,7 @@ async function handleSubmit() {
         </div>
 
         <div>
-          <label for="password" class="block text-sm text-white/70 mb-1">Password</label>
+          <label for="password" class="block text-sm text-white/70 mb-1">Contraseña</label>
           <input
             id="password"
             v-model="password"
@@ -65,7 +65,7 @@ async function handleSubmit() {
         :disabled="submitting"
         class="w-full bg-gymOrange text-white font-bold rounded-lg px-4 py-3 hover:bg-gymOrange/90 disabled:opacity-50 transition-colors"
       >
-        {{ submitting ? 'Signing in...' : 'Sign In' }}
+        {{ submitting ? 'Entrando...' : 'Iniciar sesión' }}
       </button>
     </form>
   </div>

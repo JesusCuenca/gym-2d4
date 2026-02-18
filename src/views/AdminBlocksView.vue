@@ -11,13 +11,26 @@ function getTypeLabel(type) {
 }
 
 function getFamilyLabel(family) {
-  return family === 'timeBased' ? 'Time-Based' : 'Rep-Based'
+  return family === 'timeBased' ? 'Por Tiempo' : 'Por Repeticiones'
 }
 
 async function handleDelete(block) {
-  if (confirm(`Delete "${block.name}"?`)) {
+  if (confirm(`¿Eliminar "${block.name}"?`)) {
     await blockStore.deleteBlock(block.id)
   }
+}
+
+async function handleClone(block) {
+  await blockStore.createBlock({
+    name: `${block.name} (copia)`,
+    type: block.type,
+    timeCapSeconds: block.timeCapSeconds,
+    rounds: block.rounds,
+    intervalSeconds: block.intervalSeconds,
+    repScheme: block.repScheme,
+    exercises: block.exercises,
+  })
+  await blockStore.fetchBlocks()
 }
 
 onMounted(() => {
@@ -28,28 +41,28 @@ onMounted(() => {
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gymOrange">Blocks</h1>
+      <h1 class="text-2xl font-bold text-gymOrange">Bloques</h1>
       <RouterLink
         :to="{ name: 'admin-block-create' }"
         class="bg-gymOrange text-white font-bold rounded-lg px-4 py-2 text-sm hover:bg-gymOrange/90 transition-colors"
       >
-        + New Block
+        + Nuevo bloque
       </RouterLink>
     </div>
 
     <!-- Loading -->
     <div v-if="blockStore.loading" class="text-white/50 text-center py-12">
-      Loading...
+      Cargando...
     </div>
 
     <!-- Empty state -->
     <div v-else-if="blockStore.blocks.length === 0" class="text-center py-12">
-      <p class="text-white/50 mb-4">No blocks yet. Create your first exercise block.</p>
+      <p class="text-white/50 mb-4">No hay bloques todavía. Crea tu primer bloque de ejercicios.</p>
       <RouterLink
         :to="{ name: 'admin-block-create' }"
         class="inline-block bg-gymOrange text-white font-bold rounded-lg px-6 py-3 hover:bg-gymOrange/90 transition-colors"
       >
-        Create Block
+        Crear bloque
       </RouterLink>
     </div>
 
@@ -70,12 +83,12 @@ onMounted(() => {
         <p class="text-white/50 text-sm mb-3">
           {{ getFamilyLabel(block.family) }}
           <span v-if="block.timeCapSeconds"> · {{ Math.floor(block.timeCapSeconds / 60) }} min</span>
-          <span v-if="block.rounds"> · {{ block.rounds }} rounds</span>
+          <span v-if="block.rounds"> · {{ block.rounds }} rondas</span>
           <span v-if="block.repScheme"> · {{ block.repScheme }}</span>
         </p>
 
         <div class="text-white/40 text-sm mb-4">
-          {{ block.exercises?.length || 0 }} exercise{{ (block.exercises?.length || 0) !== 1 ? 's' : '' }}
+          {{ block.exercises?.length || 0 }} ejercicio{{ (block.exercises?.length || 0) !== 1 ? 's' : '' }}
           <span v-if="block.exercises?.length" class="text-white/30">
             — {{ block.exercises.map((e) => e.name).join(', ') }}
           </span>
@@ -86,13 +99,19 @@ onMounted(() => {
             :to="{ name: 'admin-block-edit', params: { id: block.id } }"
             class="text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
           >
-            Edit
+            Editar
           </RouterLink>
+          <button
+            @click="handleClone(block)"
+            class="text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+          >
+            Clonar
+          </button>
           <button
             @click="handleDelete(block)"
             class="text-sm text-red-400/70 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 rounded-lg px-3 py-1.5 transition-colors"
           >
-            Delete
+            Eliminar
           </button>
         </div>
       </div>

@@ -25,7 +25,7 @@ defineProps({
 
       <!-- Exercise name and details -->
       <div class="flex-1 min-w-0">
-        <p class="text-4xl font-black text-white uppercase tracking-tighter font-condensed truncate">
+        <p class="text-4xl font-black text-white uppercase tracking-normal font-condensed truncate">
           {{ exercise.name }}
         </p>
         <p v-if="exercise.weight" class="text-2xl text-white/50 font-condensed uppercase">

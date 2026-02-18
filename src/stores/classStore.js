@@ -6,6 +6,7 @@ import {
   addDoc,
   getDocs,
   getDoc,
+  updateDoc,
   deleteDoc,
   doc,
   query,
@@ -50,10 +51,14 @@ export const useClassStore = defineStore('classes', () => {
     return docRef.id
   }
 
+  async function updateClass(classId, classData) {
+    await updateDoc(doc(db, 'classes', classId), classData)
+  }
+
   async function deleteClass(classId) {
     await deleteDoc(doc(db, 'classes', classId))
     classes.value = classes.value.filter((c) => c.id !== classId)
   }
 
-  return { classes, loading, fetchClasses, getClassById, createClass, deleteClass }
+  return { classes, loading, fetchClasses, getClassById, createClass, updateClass, deleteClass }
 })

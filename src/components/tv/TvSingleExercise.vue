@@ -19,7 +19,7 @@ defineProps({
     </div>
 
     <!-- Exercise name -->
-    <h2 class="text-7xl font-black text-white uppercase tracking-tighter font-condensed text-center">
+    <h2 class="text-7xl font-black text-white uppercase tracking-normal font-condensed text-center">
       {{ exercise?.name }}
     </h2>
 

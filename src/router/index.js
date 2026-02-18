@@ -55,6 +55,12 @@ const routes = [
         component: () => import('../views/AdminClassCreateView.vue'),
       },
       {
+        path: 'clases/:id/editar',
+        name: 'admin-class-edit',
+        component: () => import('../views/AdminClassCreateView.vue'),
+        props: true,
+      },
+      {
         path: 'clases/:id/live',
         name: 'admin-class-live',
         component: () => import('../views/AdminClassLiveView.vue'),

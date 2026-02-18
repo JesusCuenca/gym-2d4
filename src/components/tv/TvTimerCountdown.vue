@@ -20,13 +20,13 @@ const isExpired = computed(() => remaining.value <= 0 && props.displaySeconds > 
   <div class="flex flex-col items-center justify-center">
     <div
       v-if="isExpired"
-      class="text-9xl font-black text-gymOrange uppercase tracking-tighter font-condensed animate-pulse"
+      class="text-9xl font-black text-gymOrange uppercase tracking-normal font-condensed animate-pulse"
     >
-      TIME!
+      ¡TIEMPO!
     </div>
     <div
       v-else
-      class="text-9xl font-black text-gymOrange uppercase tracking-tighter font-condensed tabular-nums"
+      class="text-9xl font-black text-gymOrange uppercase tracking-normal font-condensed tabular-nums"
     >
       {{ display }}
     </div>

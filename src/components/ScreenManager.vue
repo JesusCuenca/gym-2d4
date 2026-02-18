@@ -19,7 +19,7 @@ async function handleAdd() {
 }
 
 async function handleDelete(screen) {
-  if (confirm(`Delete screen "${screen.name}"?`)) {
+  if (confirm(`¿Eliminar pantalla "${screen.name}"?`)) {
     await screenStore.deleteScreen(screen.id)
   }
 }
@@ -32,7 +32,7 @@ async function handleDelete(screen) {
       <input
         v-model="newScreenName"
         type="text"
-        placeholder="Screen name (e.g. Sala 1)"
+        placeholder="Nombre de la pantalla (ej. Sala 1)"
         @keyup.enter="handleAdd"
         class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
       />
@@ -41,13 +41,13 @@ async function handleDelete(screen) {
         :disabled="adding || !newScreenName.trim()"
         class="bg-gymOrange text-white font-bold rounded-lg px-4 py-2 text-sm hover:bg-gymOrange/90 disabled:opacity-50 transition-colors"
       >
-        + Add
+        + Añadir
       </button>
     </div>
 
     <!-- Screens list -->
     <div v-if="screenStore.screens.length === 0" class="text-white/30 text-sm text-center py-4 border border-dashed border-white/10 rounded-lg">
-      No screens yet. Add a screen for each TV in your gym.
+      No hay pantallas todavía. Añade una pantalla por cada TV de tu gimnasio.
     </div>
 
     <div v-else class="space-y-2">
@@ -65,7 +65,7 @@ async function handleDelete(screen) {
             v-if="screen.activeSessionId"
             class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400"
           >
-            Live
+            En vivo
           </span>
           <button
             @click="handleDelete(screen)"

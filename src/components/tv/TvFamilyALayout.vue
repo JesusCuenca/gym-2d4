@@ -49,11 +49,11 @@ const nextExercise = computed(() => {
         :timeCapSeconds="block.timeCapSeconds"
         :displaySeconds="displaySeconds"
       />
-      <p class="text-3xl font-black text-white/60 uppercase tracking-tighter font-condensed mt-6">
+      <p class="text-3xl font-black text-white/60 uppercase tracking-normal font-condensed mt-6">
         {{ block.name }}
       </p>
       <p v-if="isEmom" class="text-2xl text-gymOrange font-bold font-condensed mt-2">
-        ROUND {{ emomRound }}<span v-if="block.rounds">/{{ block.rounds }}</span>
+        RONDA {{ emomRound }}<span v-if="block.rounds">/{{ block.rounds }}</span>
       </p>
     </div>
 
@@ -74,7 +74,7 @@ const nextExercise = computed(() => {
     <!-- Info Pill -->
     <TvInfoPill
       v-if="nextExercise"
-      label="Next"
+      label="Siguiente"
       :value="nextExercise.name"
     />
   </div>

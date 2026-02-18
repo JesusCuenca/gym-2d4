@@ -1,22 +1,28 @@
-export const BLOCK_FAMILY = {
-  TIME_BASED: 'timeBased',
-  REP_BASED: 'repBased',
-}
-
 export const BLOCK_TYPES = [
-  { value: 'amrap', label: 'AMRAP', family: BLOCK_FAMILY.TIME_BASED },
-  { value: 'emom', label: 'EMOM', family: BLOCK_FAMILY.TIME_BASED },
-  { value: 'tabata', label: 'Tabata', family: BLOCK_FAMILY.TIME_BASED },
-  { value: 'forTime', label: 'For Time', family: BLOCK_FAMILY.REP_BASED },
-  { value: 'strength', label: 'Strength', family: BLOCK_FAMILY.REP_BASED },
-  { value: 'customTime', label: 'Custom (Time)', family: BLOCK_FAMILY.TIME_BASED },
-  { value: 'customReps', label: 'Custom (Reps)', family: BLOCK_FAMILY.REP_BASED },
+  { value: 'timed', label: 'Por tiempo' },
+  { value: 'reps', label: 'Por repeticiones' },
 ]
 
-export function getFamilyForType(type) {
-  return BLOCK_TYPES.find((bt) => bt.value === type)?.family ?? BLOCK_FAMILY.TIME_BASED
+export const TIMED_PRESETS = [
+  { value: 'amrap', label: 'AMRAP', defaults: { rounds: 1, restSeconds: 0, exerciseMode: 'all' } },
+  { value: 'emom', label: 'EMOM', defaults: { restSeconds: 0, exerciseMode: 'all' } },
+  { value: 'tabata', label: 'Tabata', defaults: { workSeconds: 20, restSeconds: 10, exerciseMode: 'rotate' } },
+]
+
+export function isTimed(type) {
+  return type === 'timed'
 }
 
-export function isTimeBased(type) {
-  return getFamilyForType(type) === BLOCK_FAMILY.TIME_BASED
+export function getBlockLabel(block) {
+  if (block.type === 'timed' && block.preset) {
+    const preset = TIMED_PRESETS.find((p) => p.value === block.preset)
+    if (preset) return preset.label
+  }
+  return BLOCK_TYPES.find((bt) => bt.value === block.type)?.label ?? block.type
+}
+
+export function getRepsSubcase(block) {
+  if (block.repsPerRound?.length) return 'perRound'
+  if (block.repsEveryRound != null) return 'sameReps'
+  return 'perExercise'
 }

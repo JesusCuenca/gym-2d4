@@ -14,7 +14,6 @@ import {
   orderBy,
 } from 'firebase/firestore'
 import { useAuthStore } from './auth'
-import { getFamilyForType } from '../models/blockTypes'
 
 export const useBlockStore = defineStore('blocks', () => {
   const blocks = ref([])
@@ -46,7 +45,6 @@ export const useBlockStore = defineStore('blocks', () => {
     const authStore = useAuthStore()
     const docRef = await addDoc(collection(db, 'blocks'), {
       ...blockData,
-      family: getFamilyForType(blockData.type),
       uid: authStore.user.uid,
       createdAt: serverTimestamp(),
     })
@@ -56,7 +54,6 @@ export const useBlockStore = defineStore('blocks', () => {
   async function updateBlock(blockId, blockData) {
     await updateDoc(doc(db, 'blocks', blockId), {
       ...blockData,
-      family: getFamilyForType(blockData.type),
     })
   }
 

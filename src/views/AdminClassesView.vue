@@ -2,16 +2,16 @@
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useClassStore } from '../stores/classStore'
-import { BLOCK_TYPES } from '../models/blockTypes'
+import { getBlockLabel } from '../models/blockTypes'
+import { getTotalDuration } from '../utils/timeline'
 
 const classStore = useClassStore()
 
-function getTypeLabel(type) {
-  return BLOCK_TYPES.find((bt) => bt.value === type)?.label ?? type
-}
-
 function getTotalTime(cls) {
-  return cls.blocks?.reduce((sum, b) => sum + (b.blockData?.timeCapSeconds || 0), 0) || 0
+  return cls.blocks?.reduce((sum, b) => {
+    const d = b.blockData ? getTotalDuration(b.blockData) : null
+    return sum + (d || 0)
+  }, 0) || 0
 }
 
 function formatMinutes(seconds) {

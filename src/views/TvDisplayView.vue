@@ -16,7 +16,7 @@ const screenData = ref(null)
 let unsubscribeScreen = null
 
 const sessionRef = toRef(sessionStore, 'session')
-const { displaySeconds } = useTimer(sessionRef)
+const timer = useTimer(sessionRef)
 
 const hasActiveSession = ref(false)
 const { isOnline } = useConnectionStatus()
@@ -65,7 +65,7 @@ onUnmounted(() => {
     <TvBlockDisplay
       v-else
       :session="sessionStore.session"
-      :displaySeconds="displaySeconds"
+      :timer="timer"
     />
   </div>
 </template>

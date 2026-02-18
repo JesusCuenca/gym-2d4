@@ -1,8 +1,8 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useBlockStore } from '../stores/blockStore'
-import { BLOCK_TYPES, isTimeBased } from '../models/blockTypes'
+import { BLOCK_TYPES, TIMED_PRESETS, isTimed } from '../models/blockTypes'
 
 const router = useRouter()
 const route = useRoute()
@@ -14,24 +14,74 @@ const validationError = ref('')
 
 const form = ref({
   name: '',
-  type: 'amrap',
-  timeCapMinutes: '15',
-  timeCapSeconds: '00',
+  type: 'timed',
+  preset: null,
+  // Timed fields
+  workMinutes: '15',
+  workSeconds: '00',
+  restMinutes: '0',
+  restSeconds: '00',
   rounds: '',
-  intervalMinutes: '1',
-  intervalSeconds: '00',
-  repScheme: '',
+  exerciseMode: 'all',
+  // Reps fields
+  repsEveryRound: '',
+  repsPerRound: '',
+  // Exercises
   exercises: [createEmptyExercise()],
 })
 
 function createEmptyExercise() {
-  return { name: '', reps: '', timeSeconds: '', weight: '', notes: '' }
+  return { name: '', repsEveryRound: '', notes: '' }
 }
 
-const showTimeCap = computed(() => isTimeBased(form.value.type))
-const showInterval = computed(() => form.value.type === 'emom')
-const showRepScheme = computed(() => !isTimeBased(form.value.type))
-const showRounds = computed(() => ['emom', 'strength', 'tabata'].includes(form.value.type))
+// Computed visibility
+const isTimedType = computed(() => isTimed(form.value.type))
+const showWorkTime = computed(() => isTimedType.value)
+const showRestTime = computed(() => isTimedType.value && form.value.preset !== 'amrap')
+const showRounds = computed(() => {
+  if (isTimedType.value) return form.value.preset !== 'amrap'
+  return true
+})
+const showExerciseMode = computed(() => isTimedType.value && !form.value.preset)
+const showBlockReps = computed(() => !isTimedType.value)
+const showExerciseReps = computed(() => {
+  if (isTimedType.value) return form.value.exerciseMode === 'all'
+  return true
+})
+
+// Label for work time changes by preset
+const workTimeLabel = computed(() => {
+  if (form.value.preset === 'amrap') return 'Tiempo total'
+  return 'Tiempo de trabajo'
+})
+
+function selectPreset(presetValue) {
+  if (form.value.preset === presetValue) {
+    // Deselect → custom
+    form.value.preset = null
+    return
+  }
+  form.value.preset = presetValue
+  const preset = TIMED_PRESETS.find((p) => p.value === presetValue)
+  if (!preset) return
+
+  // Apply preset defaults
+  if (preset.defaults.rounds != null) form.value.rounds = String(preset.defaults.rounds)
+  if (preset.defaults.restSeconds != null) {
+    form.value.restMinutes = String(Math.floor(preset.defaults.restSeconds / 60))
+    form.value.restSeconds = String(preset.defaults.restSeconds % 60).padStart(2, '0')
+  }
+  if (preset.defaults.workSeconds != null) {
+    form.value.workMinutes = String(Math.floor(preset.defaults.workSeconds / 60))
+    form.value.workSeconds = String(preset.defaults.workSeconds % 60).padStart(2, '0')
+  }
+  if (preset.defaults.exerciseMode) form.value.exerciseMode = preset.defaults.exerciseMode
+}
+
+// Reset preset when type changes
+watch(() => form.value.type, () => {
+  form.value.preset = null
+})
 
 function addExercise() {
   form.value.exercises.push(createEmptyExercise())
@@ -57,27 +107,37 @@ async function handleSubmit() {
     validationError.value = 'Añade al menos un ejercicio con nombre.'
     return
   }
+
   submitting.value = true
   try {
-    const blockData = {
-      name: form.value.name,
-      type: form.value.type,
-      timeCapSeconds: showTimeCap.value
-        ? parseInt(form.value.timeCapMinutes || 0) * 60 + parseInt(form.value.timeCapSeconds || 0)
-        : null,
-      rounds: showRounds.value ? parseInt(form.value.rounds) || null : null,
-      intervalSeconds: showInterval.value
-        ? parseInt(form.value.intervalMinutes || 0) * 60 + parseInt(form.value.intervalSeconds || 0)
-        : null,
-      repScheme: showRepScheme.value ? form.value.repScheme || null : null,
-      exercises: form.value.exercises.map((ex) => ({
-        name: ex.name,
-        reps: ex.reps ? parseInt(ex.reps) : null,
-        timeSeconds: ex.timeSeconds ? parseInt(ex.timeSeconds) : null,
-        weight: ex.weight || null,
-        notes: ex.notes || null,
-      })),
+    const blockData = { name: form.value.name, type: form.value.type }
+
+    if (isTimedType.value) {
+      blockData.preset = form.value.preset || null
+      blockData.workSeconds = parseInt(form.value.workMinutes || 0) * 60 + parseInt(form.value.workSeconds || 0)
+      blockData.restSeconds = form.value.preset === 'amrap' ? 0 : parseInt(form.value.restMinutes || 0) * 60 + parseInt(form.value.restSeconds || 0)
+      blockData.rounds = form.value.preset === 'amrap' ? 1 : parseInt(form.value.rounds) || 1
+      blockData.exerciseMode = form.value.exerciseMode
+    } else {
+      // Reps
+      blockData.rounds = parseInt(form.value.rounds) || 1
+      const repsPerRoundStr = form.value.repsPerRound.trim()
+      if (repsPerRoundStr) {
+        blockData.repsPerRound = repsPerRoundStr.split(',').map((s) => parseInt(s.trim())).filter((n) => !isNaN(n))
+        blockData.rounds = blockData.repsPerRound.length
+      } else {
+        blockData.repsPerRound = null
+      }
+      blockData.repsEveryRound = form.value.repsEveryRound ? parseInt(form.value.repsEveryRound) : null
     }
+
+    blockData.exercises = form.value.exercises
+      .filter((ex) => ex.name.trim())
+      .map((ex) => ({
+        name: ex.name,
+        repsEveryRound: showExerciseReps.value && ex.repsEveryRound ? parseInt(ex.repsEveryRound) : null,
+        notes: ex.notes || null,
+      }))
 
     if (isEditMode.value) {
       await blockStore.updateBlock(route.params.id, blockData)
@@ -97,22 +157,23 @@ onMounted(async () => {
     if (block) {
       form.value.name = block.name
       form.value.type = block.type
-      if (block.timeCapSeconds) {
-        form.value.timeCapMinutes = String(Math.floor(block.timeCapSeconds / 60))
-        form.value.timeCapSeconds = String(block.timeCapSeconds % 60).padStart(2, '0')
+      form.value.preset = block.preset || null
+      if (block.workSeconds != null) {
+        form.value.workMinutes = String(Math.floor(block.workSeconds / 60))
+        form.value.workSeconds = String(block.workSeconds % 60).padStart(2, '0')
+      }
+      if (block.restSeconds != null) {
+        form.value.restMinutes = String(Math.floor(block.restSeconds / 60))
+        form.value.restSeconds = String(block.restSeconds % 60).padStart(2, '0')
       }
       form.value.rounds = block.rounds ? String(block.rounds) : ''
-      if (block.intervalSeconds) {
-        form.value.intervalMinutes = String(Math.floor(block.intervalSeconds / 60))
-        form.value.intervalSeconds = String(block.intervalSeconds % 60).padStart(2, '0')
-      }
-      form.value.repScheme = block.repScheme || ''
-      form.value.exercises = block.exercises.length
+      form.value.exerciseMode = block.exerciseMode || 'all'
+      form.value.repsEveryRound = block.repsEveryRound ? String(block.repsEveryRound) : ''
+      form.value.repsPerRound = block.repsPerRound ? block.repsPerRound.join(', ') : ''
+      form.value.exercises = block.exercises?.length
         ? block.exercises.map((ex) => ({
             name: ex.name || '',
-            reps: ex.reps ? String(ex.reps) : '',
-            timeSeconds: ex.timeSeconds ? String(ex.timeSeconds) : '',
-            weight: ex.weight || '',
+            repsEveryRound: ex.repsEveryRound ? String(ex.repsEveryRound) : '',
             notes: ex.notes || '',
           }))
         : [createEmptyExercise()]
@@ -143,22 +204,47 @@ onMounted(async () => {
       <!-- Block Type -->
       <div>
         <label class="block text-sm text-white/70 mb-1">Tipo</label>
-        <select
-          v-model="form.type"
-          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gymOrange"
-        >
-          <option v-for="bt in BLOCK_TYPES" :key="bt.value" :value="bt.value">
+        <div class="flex gap-2">
+          <button
+            v-for="bt in BLOCK_TYPES"
+            :key="bt.value"
+            type="button"
+            @click="form.type = bt.value"
+            class="flex-1 rounded-lg px-4 py-3 font-bold text-sm transition-colors border"
+            :class="form.type === bt.value
+              ? 'bg-gymOrange text-white border-gymOrange'
+              : 'bg-white/5 text-white/70 border-white/20 hover:border-white/40'"
+          >
             {{ bt.label }}
-          </option>
-        </select>
+          </button>
+        </div>
       </div>
 
-      <!-- Time Cap (Family A) -->
-      <div v-if="showTimeCap">
-        <label class="block text-sm text-white/70 mb-1">Tiempo límite</label>
+      <!-- Timed Presets -->
+      <div v-if="isTimedType">
+        <label class="block text-sm text-white/70 mb-1">Configuración rápida</label>
+        <div class="flex gap-2">
+          <button
+            v-for="p in TIMED_PRESETS"
+            :key="p.value"
+            type="button"
+            @click="selectPreset(p.value)"
+            class="rounded-lg px-4 py-2 text-sm font-bold transition-colors border"
+            :class="form.preset === p.value
+              ? 'bg-white/20 text-white border-white/40'
+              : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30'"
+          >
+            {{ p.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Work Time (timed) -->
+      <div v-if="showWorkTime">
+        <label class="block text-sm text-white/70 mb-1">{{ workTimeLabel }}</label>
         <div class="flex items-center gap-2">
           <input
-            v-model="form.timeCapMinutes"
+            v-model="form.workMinutes"
             type="number"
             min="0"
             placeholder="15"
@@ -166,7 +252,31 @@ onMounted(async () => {
           />
           <span class="text-white/50">min</span>
           <input
-            v-model="form.timeCapSeconds"
+            v-model="form.workSeconds"
+            type="number"
+            min="0"
+            max="59"
+            placeholder="00"
+            class="w-20 bg-white/10 border border-white/20 rounded-lg px-3 py-3 text-white text-center focus:outline-none focus:border-gymOrange"
+          />
+          <span class="text-white/50">seg</span>
+        </div>
+      </div>
+
+      <!-- Rest Time (timed, not AMRAP) -->
+      <div v-if="showRestTime">
+        <label class="block text-sm text-white/70 mb-1">Tiempo de descanso</label>
+        <div class="flex items-center gap-2">
+          <input
+            v-model="form.restMinutes"
+            type="number"
+            min="0"
+            placeholder="0"
+            class="w-20 bg-white/10 border border-white/20 rounded-lg px-3 py-3 text-white text-center focus:outline-none focus:border-gymOrange"
+          />
+          <span class="text-white/50">min</span>
+          <input
+            v-model="form.restSeconds"
             type="number"
             min="0"
             max="59"
@@ -189,39 +299,54 @@ onMounted(async () => {
         />
       </div>
 
-      <!-- Interval (EMOM) -->
-      <div v-if="showInterval">
-        <label class="block text-sm text-white/70 mb-1">Duración del intervalo</label>
-        <div class="flex items-center gap-2">
-          <input
-            v-model="form.intervalMinutes"
-            type="number"
-            min="0"
-            placeholder="1"
-            class="w-20 bg-white/10 border border-white/20 rounded-lg px-3 py-3 text-white text-center focus:outline-none focus:border-gymOrange"
-          />
-          <span class="text-white/50">min</span>
-          <input
-            v-model="form.intervalSeconds"
-            type="number"
-            min="0"
-            max="59"
-            placeholder="00"
-            class="w-20 bg-white/10 border border-white/20 rounded-lg px-3 py-3 text-white text-center focus:outline-none focus:border-gymOrange"
-          />
-          <span class="text-white/50">seg</span>
+      <!-- Exercise Mode (timed, custom only) -->
+      <div v-if="showExerciseMode">
+        <label class="block text-sm text-white/70 mb-1">Modo de ejercicios</label>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            @click="form.exerciseMode = 'all'"
+            class="flex-1 rounded-lg px-4 py-2 text-sm font-bold transition-colors border"
+            :class="form.exerciseMode === 'all'
+              ? 'bg-white/20 text-white border-white/40'
+              : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30'"
+          >
+            Todos a la vez
+          </button>
+          <button
+            type="button"
+            @click="form.exerciseMode = 'rotate'"
+            class="flex-1 rounded-lg px-4 py-2 text-sm font-bold transition-colors border"
+            :class="form.exerciseMode === 'rotate'
+              ? 'bg-white/20 text-white border-white/40'
+              : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30'"
+          >
+            Uno por uno
+          </button>
         </div>
       </div>
 
-      <!-- Rep Scheme (Family B) -->
-      <div v-if="showRepScheme">
-        <label class="block text-sm text-white/70 mb-1">Esquema de repeticiones</label>
-        <input
-          v-model="form.repScheme"
-          type="text"
-          placeholder="Ej. 21-15-9"
-          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-gymOrange"
-        />
+      <!-- Block-level reps (reps type) -->
+      <div v-if="showBlockReps" class="space-y-4">
+        <div>
+          <label class="block text-sm text-white/70 mb-1">Reps por ronda (todas iguales)</label>
+          <input
+            v-model="form.repsEveryRound"
+            type="number"
+            min="1"
+            placeholder="Ej. 10 (dejar vacío si cada ejercicio tiene reps distintas)"
+            class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-gymOrange"
+          />
+        </div>
+        <div>
+          <label class="block text-sm text-white/70 mb-1">Reps por ronda (variable)</label>
+          <input
+            v-model="form.repsPerRound"
+            type="text"
+            placeholder="Ej. 21, 15, 9 (sobrescribe rondas)"
+            class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-gymOrange"
+          />
+        </div>
       </div>
 
       <!-- Exercises -->
@@ -265,44 +390,27 @@ onMounted(async () => {
               class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
             />
 
-            <div class="grid grid-cols-3 gap-2">
-              <div>
+            <div class="flex gap-2">
+              <div v-if="showExerciseReps" class="w-32">
                 <label class="block text-xs text-white/50 mb-1">Reps</label>
                 <input
-                  v-model="exercise.reps"
+                  v-model="exercise.repsEveryRound"
                   type="number"
                   min="1"
                   placeholder="—"
                   class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm text-center focus:outline-none focus:border-gymOrange"
                 />
               </div>
-              <div>
-                <label class="block text-xs text-white/50 mb-1">Tiempo (seg)</label>
+              <div class="flex-1">
+                <label class="block text-xs text-white/50 mb-1">Notas</label>
                 <input
-                  v-model="exercise.timeSeconds"
-                  type="number"
-                  min="1"
-                  placeholder="—"
-                  class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm text-center focus:outline-none focus:border-gymOrange"
-                />
-              </div>
-              <div>
-                <label class="block text-xs text-white/50 mb-1">Peso</label>
-                <input
-                  v-model="exercise.weight"
+                  v-model="exercise.notes"
                   type="text"
-                  placeholder="Ej. 60kg"
+                  placeholder="Opcional"
                   class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
                 />
               </div>
             </div>
-
-            <input
-              v-model="exercise.notes"
-              type="text"
-              placeholder="Notas (opcional)"
-              class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
-            />
           </div>
         </div>
 

@@ -2,17 +2,10 @@
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useBlockStore } from '../stores/blockStore'
-import { BLOCK_TYPES } from '../models/blockTypes'
+import { getBlockLabel } from '../models/blockTypes'
+import { formatTimer } from '../utils/time'
 
 const blockStore = useBlockStore()
-
-function getTypeLabel(type) {
-  return BLOCK_TYPES.find((bt) => bt.value === type)?.label ?? type
-}
-
-function getFamilyLabel(family) {
-  return family === 'timeBased' ? 'Por Tiempo' : 'Por Repeticiones'
-}
 
 async function handleDelete(block) {
   if (confirm(`¿Eliminar "${block.name}"?`)) {
@@ -21,16 +14,25 @@ async function handleDelete(block) {
 }
 
 async function handleClone(block) {
+  const { id, createdAt, ...data } = block
   await blockStore.createBlock({
+    ...data,
     name: `${block.name} (copia)`,
-    type: block.type,
-    timeCapSeconds: block.timeCapSeconds,
-    rounds: block.rounds,
-    intervalSeconds: block.intervalSeconds,
-    repScheme: block.repScheme,
-    exercises: block.exercises,
   })
   await blockStore.fetchBlocks()
+}
+
+function blockMeta(block) {
+  const parts = []
+  if (block.type === 'timed') {
+    if (block.workSeconds) parts.push(formatTimer(block.workSeconds * (block.rounds || 1)))
+    if (block.rounds > 1) parts.push(`${block.rounds} rondas`)
+  } else {
+    if (block.rounds) parts.push(`${block.rounds} rondas`)
+    if (block.repsEveryRound) parts.push(`${block.repsEveryRound} reps`)
+    if (block.repsPerRound?.length) parts.push(block.repsPerRound.join('-'))
+  }
+  return parts.join(' · ')
 }
 
 onMounted(() => {
@@ -76,15 +78,12 @@ onMounted(() => {
         <div class="flex items-start justify-between mb-2">
           <h3 class="font-bold text-white text-lg">{{ block.name }}</h3>
           <span class="text-xs px-2 py-1 rounded-full bg-gymOrange/20 text-gymOrange font-medium">
-            {{ getTypeLabel(block.type) }}
+            {{ getBlockLabel(block) }}
           </span>
         </div>
 
-        <p class="text-white/50 text-sm mb-3">
-          {{ getFamilyLabel(block.family) }}
-          <span v-if="block.timeCapSeconds"> · {{ Math.floor(block.timeCapSeconds / 60) }} min</span>
-          <span v-if="block.rounds"> · {{ block.rounds }} rondas</span>
-          <span v-if="block.repScheme"> · {{ block.repScheme }}</span>
+        <p v-if="blockMeta(block)" class="text-white/50 text-sm mb-3">
+          {{ blockMeta(block) }}
         </p>
 
         <div class="text-white/40 text-sm mb-4">

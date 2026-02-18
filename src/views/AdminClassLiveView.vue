@@ -6,7 +6,8 @@ import { useSessionStore } from '../stores/sessionStore'
 import { useScreenStore } from '../stores/screenStore'
 import { useTimer } from '../composables/useTimer'
 import { formatTimer } from '../utils/time'
-import { BLOCK_TYPES, isTimeBased } from '../models/blockTypes'
+import { getBlockLabel, isTimed } from '../models/blockTypes'
+import { getTotalDuration } from '../utils/timeline'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,7 +16,7 @@ const sessionStore = useSessionStore()
 const screenStore = useScreenStore()
 
 const sessionRef = toRef(sessionStore, 'session')
-const { displaySeconds } = useTimer(sessionRef)
+const timer = useTimer(sessionRef)
 
 const classData = ref(null)
 const sessionId = ref(null)
@@ -44,30 +45,49 @@ const isLastBlock = computed(() => {
 const timerDisplay = computed(() => {
   const block = currentBlock.value
   if (!block) return '00:00'
-  if (block.family === 'timeBased' && block.timeCapSeconds) {
-    const remaining = Math.max(0, block.timeCapSeconds - displaySeconds.value)
-    return formatTimer(remaining)
+  if (isTimed(block.type)) {
+    return formatTimer(timer.phaseSecondsLeft.value)
   }
-  return formatTimer(displaySeconds.value)
+  return formatTimer(timer.displaySeconds.value)
 })
 
-function getTypeLabel(type) {
-  return BLOCK_TYPES.find((bt) => bt.value === type)?.label ?? type
+const timerLabel = computed(() => {
+  const block = currentBlock.value
+  if (!block) return ''
+  if (isTimed(block.type)) {
+    return timer.isResting.value ? 'Descanso' : 'Cuenta atrás'
+  }
+  return 'Tiempo transcurrido'
+})
+
+function formatBlockTime(block) {
+  const d = getTotalDuration(block)
+  if (!d) return null
+  const m = Math.floor(d / 60)
+  const s = d % 60
+  return s ? `${m}:${String(s).padStart(2, '0')}` : `${m} min`
 }
 
-function formatBlockTime(seconds) {
-  if (!seconds) return null
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return s ? `${m}:${String(s).padStart(2, '0')}` : `${m} min`
+function blockMeta(block) {
+  const parts = []
+  if (block.type === 'timed') {
+    const total = formatBlockTime(block)
+    if (total) parts.push(`Tiempo: ${total}`)
+    if (block.rounds > 1) parts.push(`Rondas: ${block.rounds}`)
+    if (block.workSeconds) parts.push(`Trabajo: ${block.workSeconds}s`)
+    if (block.restSeconds) parts.push(`Descanso: ${block.restSeconds}s`)
+  } else {
+    if (block.rounds) parts.push(`Rondas: ${block.rounds}`)
+    if (block.repsEveryRound) parts.push(`${block.repsEveryRound} reps`)
+    if (block.repsPerRound?.length) parts.push(block.repsPerRound.join('-'))
+  }
+  return parts
 }
 
 function exerciseSummary(ex) {
   const parts = []
-  if (ex.reps) parts.push(`${ex.reps}`)
-  if (ex.timeSeconds) parts.push(`${ex.timeSeconds}s`)
+  if (ex.repsEveryRound) parts.push(`${ex.repsEveryRound}`)
   parts.push(ex.name)
-  if (ex.weight) parts.push(`(${ex.weight})`)
   return parts.join(' ')
 }
 
@@ -92,7 +112,7 @@ async function handlePlay() {
 }
 
 async function handlePause() {
-  if (sessionId.value) await sessionStore.pause(sessionId.value, displaySeconds.value)
+  if (sessionId.value) await sessionStore.pause(sessionId.value, timer.displaySeconds.value)
 }
 
 async function handleNextBlock() {
@@ -146,7 +166,7 @@ onUnmounted(() => {
           >
             <span class="text-white/30">{{ i + 1 }}.</span>
             <span>{{ block.blockData?.name }}</span>
-            <span class="text-xs text-white/30">{{ getTypeLabel(block.blockData?.type) }}</span>
+            <span class="text-xs text-white/30">{{ block.blockData ? getBlockLabel(block.blockData) : '' }}</span>
           </div>
         </div>
       </div>
@@ -198,24 +218,13 @@ onUnmounted(() => {
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-lg font-bold text-white">{{ currentBlock.name }}</h2>
           <span class="text-xs px-2 py-0.5 rounded-full bg-gymOrange/20 text-gymOrange">
-            {{ getTypeLabel(currentBlock.type) }}
+            {{ getBlockLabel(currentBlock) }}
           </span>
         </div>
 
         <!-- Block metadata -->
         <div class="flex flex-wrap gap-3 text-sm text-white/50 mb-3">
-          <span v-if="currentBlock.timeCapSeconds">
-            Tiempo: {{ formatBlockTime(currentBlock.timeCapSeconds) }}
-          </span>
-          <span v-if="currentBlock.rounds">
-            Rondas: {{ currentBlock.rounds }}
-          </span>
-          <span v-if="currentBlock.intervalSeconds">
-            Intervalo: {{ formatBlockTime(currentBlock.intervalSeconds) }}
-          </span>
-          <span v-if="currentBlock.repScheme">
-            {{ currentBlock.repScheme }}
-          </span>
+          <span v-for="(meta, i) in blockMeta(currentBlock)" :key="i">{{ meta }}</span>
         </div>
 
         <!-- Exercise list -->
@@ -236,13 +245,11 @@ onUnmounted(() => {
       <div class="text-center mb-6">
         <div
           class="text-7xl font-black tracking-tight tabular-nums"
-          :class="isRunning ? 'text-gymOrange' : 'text-white/70'"
+          :class="isRunning ? (timer.isResting.value ? 'text-gymRest' : 'text-gymOrange') : 'text-white/70'"
         >
           {{ timerDisplay }}
         </div>
-        <p class="text-white/30 text-xs mt-2">
-          {{ currentBlock?.family === 'timeBased' ? 'Cuenta atrás' : 'Tiempo transcurrido' }}
-        </p>
+        <p class="text-white/30 text-xs mt-2">{{ timerLabel }}</p>
       </div>
 
       <!-- Control Buttons -->
@@ -308,7 +315,7 @@ onUnmounted(() => {
                 </span>
               </span>
               <span class="text-xs text-white/30 shrink-0">
-                {{ getTypeLabel(block.blockData?.type) }}
+                {{ block.blockData ? getBlockLabel(block.blockData) : '' }}
               </span>
               <span class="text-white/20 text-xs shrink-0">
                 {{ expandedBlockIndex === i ? '▲' : '▼' }}
@@ -321,18 +328,7 @@ onUnmounted(() => {
               class="ml-8 mr-2 mb-2 bg-white/5 border border-white/10 rounded-lg p-3"
             >
               <div class="flex flex-wrap gap-2 text-xs text-white/40 mb-2">
-                <span v-if="block.blockData.timeCapSeconds">
-                  Tiempo: {{ formatBlockTime(block.blockData.timeCapSeconds) }}
-                </span>
-                <span v-if="block.blockData.rounds">
-                  Rondas: {{ block.blockData.rounds }}
-                </span>
-                <span v-if="block.blockData.intervalSeconds">
-                  Intervalo: {{ formatBlockTime(block.blockData.intervalSeconds) }}
-                </span>
-                <span v-if="block.blockData.repScheme">
-                  {{ block.blockData.repScheme }}
-                </span>
+                <span v-for="(meta, j) in blockMeta(block.blockData)" :key="j">{{ meta }}</span>
               </div>
               <div v-if="block.blockData.exercises?.length" class="space-y-0.5">
                 <div

@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useClassStore } from '../stores/classStore'
 import { useBlockStore } from '../stores/blockStore'
-import { BLOCK_TYPES, isTimeBased, getFamilyForType } from '../models/blockTypes'
+import { BLOCK_TYPES, TIMED_PRESETS, isTimed, getBlockLabel } from '../models/blockTypes'
 
 const router = useRouter()
 const route = useRoute()
@@ -20,24 +20,23 @@ const showCatalog = ref(false)
 
 // --- Helpers ---
 
-function getTypeLabel(type) {
-  return BLOCK_TYPES.find((bt) => bt.value === type)?.label ?? type
-}
-
 function createEmptyExercise() {
-  return { name: '', reps: '', timeSeconds: '', weight: '', notes: '' }
+  return { name: '', repsEveryRound: '', notes: '' }
 }
 
 function createEmptyForm() {
   return {
     name: '',
-    type: 'amrap',
-    timeCapMinutes: '15',
-    timeCapSeconds: '00',
+    type: 'timed',
+    preset: null,
+    workMinutes: '15',
+    workSeconds: '00',
+    restMinutes: '0',
+    restSeconds: '00',
     rounds: '',
-    intervalMinutes: '1',
-    intervalSeconds: '00',
-    repScheme: '',
+    exerciseMode: 'all',
+    repsEveryRound: '',
+    repsPerRound: '',
     exercises: [createEmptyExercise()],
   }
 }
@@ -45,56 +44,112 @@ function createEmptyForm() {
 function blockDataToForm(bd) {
   return {
     name: bd.name || '',
-    type: bd.type || 'amrap',
-    timeCapMinutes: bd.timeCapSeconds ? String(Math.floor(bd.timeCapSeconds / 60)) : '0',
-    timeCapSeconds: bd.timeCapSeconds ? String(bd.timeCapSeconds % 60).padStart(2, '0') : '00',
+    type: bd.type || 'timed',
+    preset: bd.preset || null,
+    workMinutes: bd.workSeconds != null ? String(Math.floor(bd.workSeconds / 60)) : '0',
+    workSeconds: bd.workSeconds != null ? String(bd.workSeconds % 60).padStart(2, '0') : '00',
+    restMinutes: bd.restSeconds != null ? String(Math.floor(bd.restSeconds / 60)) : '0',
+    restSeconds: bd.restSeconds != null ? String(bd.restSeconds % 60).padStart(2, '0') : '00',
     rounds: bd.rounds ? String(bd.rounds) : '',
-    intervalMinutes: bd.intervalSeconds ? String(Math.floor(bd.intervalSeconds / 60)) : '1',
-    intervalSeconds: bd.intervalSeconds ? String(bd.intervalSeconds % 60).padStart(2, '0') : '00',
-    repScheme: bd.repScheme || '',
+    exerciseMode: bd.exerciseMode || 'all',
+    repsEveryRound: bd.repsEveryRound ? String(bd.repsEveryRound) : '',
+    repsPerRound: bd.repsPerRound ? bd.repsPerRound.join(', ') : '',
     exercises: (bd.exercises?.length ? bd.exercises : [{ name: '' }]).map((ex) => ({
       name: ex.name || '',
-      reps: ex.reps ? String(ex.reps) : '',
-      timeSeconds: ex.timeSeconds ? String(ex.timeSeconds) : '',
-      weight: ex.weight || '',
+      repsEveryRound: ex.repsEveryRound ? String(ex.repsEveryRound) : '',
       notes: ex.notes || '',
     })),
   }
 }
 
 function formToBlockData(form) {
-  const timeBased = isTimeBased(form.type)
-  const isEmom = form.type === 'emom'
-  const showRounds = ['emom', 'strength', 'tabata'].includes(form.type)
+  const blockData = { name: form.name, type: form.type }
 
-  return {
-    name: form.name,
-    type: form.type,
-    family: getFamilyForType(form.type),
-    timeCapSeconds: timeBased
-      ? parseInt(form.timeCapMinutes || 0) * 60 + parseInt(form.timeCapSeconds || 0)
-      : null,
-    rounds: showRounds ? parseInt(form.rounds) || null : null,
-    intervalSeconds: isEmom
-      ? parseInt(form.intervalMinutes || 0) * 60 + parseInt(form.intervalSeconds || 0)
-      : null,
-    repScheme: !timeBased ? form.repScheme || null : null,
-    exercises: form.exercises.map((ex) => ({
-      name: ex.name,
-      reps: ex.reps ? parseInt(ex.reps) : null,
-      timeSeconds: ex.timeSeconds ? parseInt(ex.timeSeconds) : null,
-      weight: ex.weight || null,
-      notes: ex.notes || null,
-    })),
+  if (isTimed(form.type)) {
+    blockData.preset = form.preset || null
+    blockData.workSeconds = parseInt(form.workMinutes || 0) * 60 + parseInt(form.workSeconds || 0)
+    blockData.restSeconds = form.preset === 'amrap' ? 0 : parseInt(form.restMinutes || 0) * 60 + parseInt(form.restSeconds || 0)
+    blockData.rounds = form.preset === 'amrap' ? 1 : parseInt(form.rounds) || 1
+    blockData.exerciseMode = form.exerciseMode
+  } else {
+    blockData.rounds = parseInt(form.rounds) || 1
+    const repsPerRoundStr = (form.repsPerRound || '').trim()
+    if (repsPerRoundStr) {
+      blockData.repsPerRound = repsPerRoundStr.split(',').map((s) => parseInt(s.trim())).filter((n) => !isNaN(n))
+      blockData.rounds = blockData.repsPerRound.length
+    } else {
+      blockData.repsPerRound = null
+    }
+    blockData.repsEveryRound = form.repsEveryRound ? parseInt(form.repsEveryRound) : null
   }
+
+  const showExReps = isTimed(form.type) ? form.exerciseMode === 'all' : true
+  blockData.exercises = form.exercises
+    .filter((ex) => ex.name.trim())
+    .map((ex) => ({
+      name: ex.name,
+      repsEveryRound: showExReps && ex.repsEveryRound ? parseInt(ex.repsEveryRound) : null,
+      notes: ex.notes || null,
+    }))
+
+  return blockData
 }
 
-// --- Block type visibility ---
+// --- Visibility helpers for inline form ---
 
-function showTimeCap(type) { return isTimeBased(type) }
-function showInterval(type) { return type === 'emom' }
-function showRepScheme(type) { return !isTimeBased(type) }
-function showRounds(type) { return ['emom', 'strength', 'tabata'].includes(type) }
+function isFormTimed(form) { return isTimed(form.type) }
+function showWorkTime(form) { return isTimed(form.type) }
+function showRestTime(form) { return isTimed(form.type) && form.preset !== 'amrap' }
+function showRounds(form) { return isTimed(form.type) ? form.preset !== 'amrap' : true }
+function showExerciseMode(form) { return isTimed(form.type) && !form.preset }
+function showBlockReps(form) { return !isTimed(form.type) }
+function showExerciseReps(form) {
+  if (isTimed(form.type)) return form.exerciseMode === 'all'
+  return true
+}
+
+function workTimeLabel(form) {
+  return form.preset === 'amrap' ? 'Tiempo total' : 'Tiempo de trabajo'
+}
+
+function selectPreset(form, presetValue) {
+  if (form.preset === presetValue) {
+    form.preset = null
+    return
+  }
+  form.preset = presetValue
+  const preset = TIMED_PRESETS.find((p) => p.value === presetValue)
+  if (!preset) return
+  if (preset.defaults.rounds != null) form.rounds = String(preset.defaults.rounds)
+  if (preset.defaults.restSeconds != null) {
+    form.restMinutes = String(Math.floor(preset.defaults.restSeconds / 60))
+    form.restSeconds = String(preset.defaults.restSeconds % 60).padStart(2, '0')
+  }
+  if (preset.defaults.workSeconds != null) {
+    form.workMinutes = String(Math.floor(preset.defaults.workSeconds / 60))
+    form.workSeconds = String(preset.defaults.workSeconds % 60).padStart(2, '0')
+  }
+  if (preset.defaults.exerciseMode) form.exerciseMode = preset.defaults.exerciseMode
+}
+
+// --- Summary text for collapsed block ---
+
+function blockSummary(form) {
+  const parts = []
+  const exCount = form.exercises?.filter((e) => e.name).length || 0
+  if (exCount) parts.push(`${exCount} ejercicio${exCount !== 1 ? 's' : ''}`)
+  if (isTimed(form.type)) {
+    const work = parseInt(form.workMinutes || 0) * 60 + parseInt(form.workSeconds || 0)
+    if (work) {
+      const m = Math.floor(work / 60)
+      const s = work % 60
+      parts.push(s ? `${m}:${String(s).padStart(2, '0')}` : `${m} min`)
+    }
+  }
+  if (form.rounds) parts.push(`${form.rounds} rondas`)
+  if (form.repsPerRound) parts.push(form.repsPerRound)
+  return parts.join(' · ')
+}
 
 // --- Block management ---
 
@@ -155,22 +210,6 @@ async function saveToLibrary(blockIndex) {
   const blockId = await blockStore.createBlock(blockData)
   classBlocks.value[blockIndex].sourceBlockId = blockId
   await blockStore.fetchBlocks()
-}
-
-// --- Summary text for collapsed block ---
-
-function blockSummary(form) {
-  const parts = []
-  const exCount = form.exercises?.filter((e) => e.name).length || 0
-  if (exCount) parts.push(`${exCount} ejercicio${exCount !== 1 ? 's' : ''}`)
-  if (isTimeBased(form.type) && (form.timeCapMinutes > 0 || form.timeCapSeconds > 0)) {
-    const mins = parseInt(form.timeCapMinutes || 0)
-    const secs = parseInt(form.timeCapSeconds || 0)
-    if (mins || secs) parts.push(`${mins}:${String(secs).padStart(2, '0')}`)
-  }
-  if (form.rounds) parts.push(`${form.rounds} rondas`)
-  if (form.repScheme) parts.push(form.repScheme)
-  return parts.join(' · ')
 }
 
 // --- Submit ---
@@ -296,7 +335,7 @@ onMounted(async () => {
                   {{ cb.form.name || 'Sin nombre' }}
                 </span>
                 <span class="text-white/40 text-xs">
-                  {{ getTypeLabel(cb.form.type) }}
+                  {{ cb.form.preset ? TIMED_PRESETS.find(p => p.value === cb.form.preset)?.label : BLOCK_TYPES.find(bt => bt.value === cb.form.type)?.label }}
                   <span v-if="blockSummary(cb.form)"> · {{ blockSummary(cb.form) }}</span>
                 </span>
               </div>
@@ -328,54 +367,107 @@ onMounted(async () => {
               <!-- Block Type -->
               <div>
                 <label class="block text-xs text-white/50 mb-1">Tipo</label>
-                <select
-                  v-model="cb.form.type"
-                  class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-gymOrange"
-                >
-                  <option v-for="bt in BLOCK_TYPES" :key="bt.value" :value="bt.value">
+                <div class="flex gap-2">
+                  <button
+                    v-for="bt in BLOCK_TYPES"
+                    :key="bt.value"
+                    type="button"
+                    @click="cb.form.type = bt.value; cb.form.preset = null"
+                    class="flex-1 rounded-lg px-3 py-2 font-bold text-xs transition-colors border"
+                    :class="cb.form.type === bt.value
+                      ? 'bg-gymOrange text-white border-gymOrange'
+                      : 'bg-white/5 text-white/70 border-white/20 hover:border-white/40'"
+                  >
                     {{ bt.label }}
-                  </option>
-                </select>
+                  </button>
+                </div>
               </div>
 
-              <!-- Time Cap -->
-              <div v-if="showTimeCap(cb.form.type)">
-                <label class="block text-xs text-white/50 mb-1">Tiempo límite</label>
+              <!-- Timed Presets -->
+              <div v-if="isFormTimed(cb.form)">
+                <label class="block text-xs text-white/50 mb-1">Configuración rápida</label>
+                <div class="flex gap-2">
+                  <button
+                    v-for="p in TIMED_PRESETS"
+                    :key="p.value"
+                    type="button"
+                    @click="selectPreset(cb.form, p.value)"
+                    class="rounded-lg px-3 py-1.5 text-xs font-bold transition-colors border"
+                    :class="cb.form.preset === p.value
+                      ? 'bg-white/20 text-white border-white/40'
+                      : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30'"
+                  >
+                    {{ p.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Work Time -->
+              <div v-if="showWorkTime(cb.form)">
+                <label class="block text-xs text-white/50 mb-1">{{ workTimeLabel(cb.form) }}</label>
                 <div class="flex items-center gap-2">
-                  <input v-model="cb.form.timeCapMinutes" type="number" min="0" placeholder="15"
+                  <input v-model="cb.form.workMinutes" type="number" min="0" placeholder="15"
                     class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
                   <span class="text-white/50 text-sm">min</span>
-                  <input v-model="cb.form.timeCapSeconds" type="number" min="0" max="59" placeholder="00"
+                  <input v-model="cb.form.workSeconds" type="number" min="0" max="59" placeholder="00"
+                    class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
+                  <span class="text-white/50 text-sm">seg</span>
+                </div>
+              </div>
+
+              <!-- Rest Time -->
+              <div v-if="showRestTime(cb.form)">
+                <label class="block text-xs text-white/50 mb-1">Tiempo de descanso</label>
+                <div class="flex items-center gap-2">
+                  <input v-model="cb.form.restMinutes" type="number" min="0" placeholder="0"
+                    class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
+                  <span class="text-white/50 text-sm">min</span>
+                  <input v-model="cb.form.restSeconds" type="number" min="0" max="59" placeholder="00"
                     class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
                   <span class="text-white/50 text-sm">seg</span>
                 </div>
               </div>
 
               <!-- Rounds -->
-              <div v-if="showRounds(cb.form.type)">
+              <div v-if="showRounds(cb.form)">
                 <label class="block text-xs text-white/50 mb-1">Rondas</label>
                 <input v-model="cb.form.rounds" type="number" min="1" placeholder="Ej. 5"
                   class="w-24 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
               </div>
 
-              <!-- Interval (EMOM) -->
-              <div v-if="showInterval(cb.form.type)">
-                <label class="block text-xs text-white/50 mb-1">Duración del intervalo</label>
-                <div class="flex items-center gap-2">
-                  <input v-model="cb.form.intervalMinutes" type="number" min="0" placeholder="1"
-                    class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
-                  <span class="text-white/50 text-sm">min</span>
-                  <input v-model="cb.form.intervalSeconds" type="number" min="0" max="59" placeholder="00"
-                    class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
-                  <span class="text-white/50 text-sm">seg</span>
+              <!-- Exercise Mode -->
+              <div v-if="showExerciseMode(cb.form)">
+                <label class="block text-xs text-white/50 mb-1">Modo de ejercicios</label>
+                <div class="flex gap-2">
+                  <button type="button" @click="cb.form.exerciseMode = 'all'"
+                    class="flex-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors border"
+                    :class="cb.form.exerciseMode === 'all'
+                      ? 'bg-white/20 text-white border-white/40'
+                      : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30'">
+                    Todos a la vez
+                  </button>
+                  <button type="button" @click="cb.form.exerciseMode = 'rotate'"
+                    class="flex-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors border"
+                    :class="cb.form.exerciseMode === 'rotate'
+                      ? 'bg-white/20 text-white border-white/40'
+                      : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30'">
+                    Uno por uno
+                  </button>
                 </div>
               </div>
 
-              <!-- Rep Scheme -->
-              <div v-if="showRepScheme(cb.form.type)">
-                <label class="block text-xs text-white/50 mb-1">Esquema de repeticiones</label>
-                <input v-model="cb.form.repScheme" type="text" placeholder="Ej. 21-15-9"
-                  class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
+              <!-- Block-level reps (reps type) -->
+              <div v-if="showBlockReps(cb.form)" class="space-y-3">
+                <div>
+                  <label class="block text-xs text-white/50 mb-1">Reps por ronda (todas iguales)</label>
+                  <input v-model="cb.form.repsEveryRound" type="number" min="1" placeholder="Ej. 10"
+                    class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
+                </div>
+                <div>
+                  <label class="block text-xs text-white/50 mb-1">Reps por ronda (variable)</label>
+                  <input v-model="cb.form.repsPerRound" type="text" placeholder="Ej. 21, 15, 9"
+                    class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
+                </div>
               </div>
 
               <!-- Exercises -->
@@ -402,26 +494,18 @@ onMounted(async () => {
                     <input v-model="ex.name" type="text" placeholder="Nombre del ejercicio"
                       class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
 
-                    <div class="grid grid-cols-3 gap-2">
-                      <div>
+                    <div class="flex gap-2">
+                      <div v-if="showExerciseReps(cb.form)" class="w-24">
                         <label class="block text-xs text-white/40 mb-0.5">Reps</label>
-                        <input v-model="ex.reps" type="number" min="1" placeholder="—"
+                        <input v-model="ex.repsEveryRound" type="number" min="1" placeholder="—"
                           class="w-full bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-gymOrange" />
                       </div>
-                      <div>
-                        <label class="block text-xs text-white/40 mb-0.5">Tiempo (seg)</label>
-                        <input v-model="ex.timeSeconds" type="number" min="1" placeholder="—"
-                          class="w-full bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-gymOrange" />
-                      </div>
-                      <div>
-                        <label class="block text-xs text-white/40 mb-0.5">Peso</label>
-                        <input v-model="ex.weight" type="text" placeholder="Ej. 60kg"
+                      <div class="flex-1">
+                        <label class="block text-xs text-white/40 mb-0.5">Notas</label>
+                        <input v-model="ex.notes" type="text" placeholder="Opcional"
                           class="w-full bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
                       </div>
                     </div>
-
-                    <input v-model="ex.notes" type="text" placeholder="Notas (opcional)"
-                      class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
                   </div>
                 </div>
 
@@ -431,7 +515,7 @@ onMounted(async () => {
                 </button>
               </div>
 
-              <!-- Save to library (only for blocks not already in library) -->
+              <!-- Save to library -->
               <div v-if="!cb.sourceBlockId" class="pt-2 border-t border-white/10">
                 <button type="button" @click="saveToLibrary(bIndex)"
                   class="text-xs text-gymOrange/70 hover:text-gymOrange transition-colors">
@@ -493,7 +577,7 @@ onMounted(async () => {
             <div class="flex items-center justify-between">
               <span class="text-white text-sm font-medium">{{ block.name }}</span>
               <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60">
-                {{ getTypeLabel(block.type) }}
+                {{ getBlockLabel(block) }}
               </span>
             </div>
             <span class="text-white/40 text-xs">

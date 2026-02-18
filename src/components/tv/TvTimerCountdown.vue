@@ -1,19 +1,15 @@
 <script setup>
 import { computed } from 'vue'
-import { formatTimer } from '../../utils/time'
+import { formatTimerTwoLine } from '../../utils/time'
 
 const props = defineProps({
-  timeCapSeconds: Number,
-  displaySeconds: Number,
+  secondsLeft: Number,
+  isResting: Boolean,
 })
 
-const remaining = computed(() => {
-  return Math.max(0, (props.timeCapSeconds || 0) - props.displaySeconds)
-})
+const formatted = computed(() => formatTimerTwoLine(props.secondsLeft))
 
-const display = computed(() => formatTimer(remaining.value))
-
-const isExpired = computed(() => remaining.value <= 0 && props.displaySeconds > 0)
+const isExpired = computed(() => props.secondsLeft <= 0)
 </script>
 
 <template>
@@ -24,11 +20,20 @@ const isExpired = computed(() => remaining.value <= 0 && props.displaySeconds > 
     >
       ¡TIEMPO!
     </div>
-    <div
-      v-else
-      class="text-9xl font-black text-gymOrange uppercase tracking-normal font-condensed tabular-nums"
-    >
-      {{ display }}
-    </div>
+    <template v-else>
+      <div
+        v-if="formatted.minutes"
+        class="text-[12rem] font-black uppercase tracking-normal font-condensed tabular-nums leading-none"
+        :class="isResting ? 'text-gymRest' : 'text-gymOrange'"
+      >
+        {{ formatted.minutes }}
+      </div>
+      <div
+        class="text-[12rem] font-black uppercase tracking-normal font-condensed tabular-nums leading-none"
+        :class="isResting ? 'text-gymRest' : 'text-gymOrange'"
+      >
+        {{ formatted.seconds }}
+      </div>
+    </template>
   </div>
 </template>

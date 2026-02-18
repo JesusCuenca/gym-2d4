@@ -1,13 +1,14 @@
 <script setup>
 import { computed } from 'vue'
-import TvFamilyALayout from './TvFamilyALayout.vue'
-import TvFamilyBLayout from './TvFamilyBLayout.vue'
+import { isTimed } from '../../models/blockTypes'
+import TvTimedLayout from './TvTimedLayout.vue'
+import TvRepsLayout from './TvRepsLayout.vue'
 import TvRestScreen from './TvRestScreen.vue'
 import TvFinishedScreen from './TvFinishedScreen.vue'
 
 const props = defineProps({
   session: Object,
-  displaySeconds: Number,
+  timer: Object,
 })
 
 const currentBlock = computed(() => {
@@ -28,17 +29,17 @@ const isStopped = computed(() => props.session?.clockState === 'stopped' && prop
     :totalBlocks="session.blocks?.length || 0"
   />
 
-  <TvFamilyALayout
-    v-else-if="currentBlock?.family === 'timeBased'"
+  <TvTimedLayout
+    v-else-if="currentBlock && isTimed(currentBlock.type)"
     :block="currentBlock"
-    :displaySeconds="displaySeconds"
+    :timer="timer"
     :session="session"
   />
 
-  <TvFamilyBLayout
+  <TvRepsLayout
     v-else-if="currentBlock"
     :block="currentBlock"
-    :displaySeconds="displaySeconds"
+    :timer="timer"
     :session="session"
   />
 </template>

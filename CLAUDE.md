@@ -34,13 +34,15 @@ src/
 ├── style.css                        # Tailwind import + custom theme colors/fonts
 │
 ├── models/
-│   └── blockTypes.js                # BLOCK_TYPES, BLOCK_FAMILY constants, getFamilyForType()
+│   └── blockTypes.js                # BLOCK_TYPES, TIMED_PRESETS, isTimed(), getBlockLabel(), getRepsSubcase()
 │
 ├── utils/
-│   └── time.js                      # timeStringToSeconds, secondsToTimeString, formatTimer
+│   ├── time.js                      # timeStringToSeconds, secondsToTimeString, formatTimer, formatTimerTwoLine
+│   └── timeline.js                  # buildTimeline (flat segment array), getTotalDuration
 │
 ├── composables/
-│   └── useTimer.js                  # Timer engine (requestAnimationFrame, reads startTimestamp)
+│   ├── useTimer.js                  # Timer engine (rAF loop + timeline-based computed values)
+│   └── useConnectionStatus.js       # Firestore connection status
 │
 ├── stores/
 │   ├── auth.js                      # Firebase Auth: login, logout, initAuth, onAuthStateChanged
@@ -56,13 +58,12 @@ src/
 │   ├── ScreenManager.vue            # Add/delete screens (used in Dashboard)
 │   └── tv/
 │       ├── TvWaitingScreen.vue      # "Waiting..." when no session
-│       ├── TvBlockDisplay.vue       # Dispatcher: picks Family A or B layout
-│       ├── TvFamilyALayout.vue      # Time-based: 30% countdown + 70% exercises
-│       ├── TvFamilyBLayout.vue      # Rep-based: 30% round info + 70% exercise list
-│       ├── TvTimerCountdown.vue     # Giant countdown digits (shows "TIME!" at 0)
-│       ├── TvTimerCountup.vue       # Stopwatch counting up
-│       ├── TvExerciseList.vue       # Exercise list with shape convention
-│       ├── TvSingleExercise.vue     # Single colossal exercise (EMOM)
+│       ├── TvBlockDisplay.vue       # Dispatcher: picks TvTimedLayout or TvRepsLayout via isTimed()
+│       ├── TvTimedLayout.vue        # Data-driven timed layout (countdown + exercises/single + rest overlay)
+│       ├── TvRepsLayout.vue         # Rep-based layout (3 sub-cases: sameReps, perRound, perExercise)
+│       ├── TvTimerCountdown.vue     # Giant countdown digits, two-line format, cyan during rest
+│       ├── TvExerciseList.vue       # Exercise list with rep badges (orange squares)
+│       ├── TvSingleExercise.vue     # Single colossal exercise (rotate mode)
 │       ├── TvInfoPill.vue           # Bottom-right info pill
 │       ├── TvRestScreen.vue         # Between-blocks "Get Ready" screen
 │       └── TvFinishedScreen.vue     # "CLASS FINISHED" screen
@@ -71,28 +72,34 @@ src/
     ├── LoginView.vue                # Email/password login form
     ├── AdminDashboardView.vue       # Stats, quick actions, screen manager
     ├── AdminBlocksView.vue          # Block list with cards
-    ├── AdminBlockCreateView.vue     # Block form (create + edit mode)
+    ├── AdminBlockCreateView.vue     # Block form with type selection + timed presets
     ├── AdminClassesView.vue         # Class list with "Start Live"
-    ├── AdminClassCreateView.vue     # Class builder (select + order blocks)
+    ├── AdminClassCreateView.vue     # Class builder with inline block editor + presets
     ├── AdminClassLiveView.vue       # Live remote control (Play/Pause/Next/End)
     └── TvDisplayView.vue            # TV: screen subscription → session subscription → render
 ```
 
 ## 5. Firestore Data Model
 
-### 5.1 Collection: `blocks`
+### 5.1 Block Model — 2 Types + Presets
 
-A block is the smallest unit of training. Every block belongs to one of **two families** that determine the TV layout.
+Blocks use **only 2 data types**: `timed` and `reps`. Common workout formats (AMRAP, EMOM, Tabata) are **UI presets** that pre-fill the form — they don't exist as distinct types at the data level.
+
+**Design principle:** The TV is 100% data-driven. It never checks `type` or `preset` to decide layout — it reads `rounds`, `workSeconds`, `restSeconds`, `exerciseMode`, and the pre-computed timeline to render everything.
+
+#### Collection: `blocks`
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Block display name (e.g. "AMRAP 15 min") |
-| `type` | string | One of: `amrap`, `emom`, `tabata`, `forTime`, `strength`, `customTime`, `customReps` |
-| `family` | string | `timeBased` or `repBased` — computed from `type` at creation, stored for TV convenience |
-| `timeCapSeconds` | number\|null | Total duration in seconds (Family A only) |
-| `rounds` | number\|null | Number of rounds (EMOM, Tabata, Strength) |
-| `intervalSeconds` | number\|null | Interval duration in seconds (EMOM only) |
-| `repScheme` | string\|null | Rep scheme string e.g. "21-15-9" (Family B only) |
+| `type` | string | `timed` or `reps` |
+| `preset` | string\|null | `amrap`, `emom`, `tabata`, or `null` — only for admin UX, TV ignores this |
+| `rounds` | number | Number of rounds (AMRAP = 1) |
+| `workSeconds` | number | Work phase duration per round in seconds (timed only) |
+| `restSeconds` | number | Rest phase duration per round in seconds (0 = no rest) |
+| `exerciseMode` | string | `all` (show full list) or `rotate` (one exercise at a time, cycling) |
+| `repsEveryRound` | number\|null | Same reps each round (reps blocks, sub-case: sameReps) |
+| `repsPerRound` | array\|null | Different reps per round e.g. `[21, 15, 9]` (reps blocks, sub-case: perRound) |
 | `exercises` | array | List of exercises (see below) |
 | `createdAt` | Timestamp | Server timestamp |
 | `uid` | string | Owner user ID |
@@ -102,130 +109,145 @@ A block is the smallest unit of training. Every block belongs to one of **two fa
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Exercise name |
-| `reps` | number\|null | Number of reps (shown as orange square on TV) |
-| `timeSeconds` | number\|null | Duration in seconds (shown as orange circle on TV) |
-| `weight` | string\|null | Free text e.g. "60kg", "60% RM" |
+| `repsEveryRound` | number\|null | Reps per round (shown as orange square badge on TV) |
 | `notes` | string\|null | Optional notes |
 
-#### Block Type Examples
+#### Timed Presets
 
-**AMRAP** (Family A — timeBased): "As Many Rounds As Possible" within a time cap.
+Presets are shortcuts in the admin form. They pre-fill fields with sensible defaults:
+
+| Preset | `rounds` | `workSeconds` | `restSeconds` | `exerciseMode` |
+|--------|----------|---------------|----------------|----------------|
+| AMRAP | 1 | total time cap | 0 | `all` |
+| EMOM | N intervals | interval duration | 0 | `all` |
+| Tabata | 8 | 20 | 10 | `rotate` |
+| (custom) | user-defined | user-defined | user-defined | user-defined |
+
+#### Block Examples
+
+**AMRAP 12 min** (timed, preset: amrap):
 ```json
 {
-  "name": "AMRAP 15",
-  "type": "amrap",
-  "family": "timeBased",
-  "timeCapSeconds": 900,
-  "rounds": null,
-  "intervalSeconds": null,
-  "repScheme": null,
+  "name": "AMRAP 12",
+  "type": "timed",
+  "preset": "amrap",
+  "rounds": 1,
+  "workSeconds": 720,
+  "restSeconds": 0,
+  "exerciseMode": "all",
   "exercises": [
-    { "name": "Thrusters", "reps": 15, "timeSeconds": null, "weight": "40kg", "notes": null },
-    { "name": "Box Jumps", "reps": 12, "timeSeconds": null, "weight": null, "notes": "24 inch" },
-    { "name": "Chest-to-bar Pull-ups", "reps": 9, "timeSeconds": null, "weight": null, "notes": null }
+    { "name": "Thrusters", "repsEveryRound": 15, "notes": null },
+    { "name": "Box Jumps", "repsEveryRound": 12, "notes": "24 inch" },
+    { "name": "Pull-ups", "repsEveryRound": 9, "notes": null }
   ]
 }
 ```
 
-**EMOM** (Family A — timeBased): "Every Minute On the Minute". Each interval shows one exercise colossal on TV, rotating automatically.
+**EMOM 6 rounds x 60s** (timed, preset: emom):
 ```json
 {
-  "name": "EMOM 20",
-  "type": "emom",
-  "family": "timeBased",
-  "timeCapSeconds": 1200,
-  "rounds": 20,
-  "intervalSeconds": 60,
-  "repScheme": null,
+  "name": "EMOM 6",
+  "type": "timed",
+  "preset": "emom",
+  "rounds": 6,
+  "workSeconds": 60,
+  "restSeconds": 0,
+  "exerciseMode": "all",
   "exercises": [
-    { "name": "Power Cleans", "reps": 5, "timeSeconds": null, "weight": "70kg", "notes": null },
-    { "name": "Burpees", "reps": 10, "timeSeconds": null, "weight": null, "notes": null }
+    { "name": "Power Cleans", "repsEveryRound": 5, "notes": "70kg" },
+    { "name": "Burpees", "repsEveryRound": 10, "notes": null }
   ]
 }
 ```
 
-**Tabata** (Family A — timeBased): Fixed 20s work / 10s rest intervals.
+**Tabata** (timed, preset: tabata):
 ```json
 {
   "name": "Tabata Core",
-  "type": "tabata",
-  "family": "timeBased",
-  "timeCapSeconds": 240,
+  "type": "timed",
+  "preset": "tabata",
   "rounds": 8,
-  "intervalSeconds": 30,
-  "repScheme": null,
+  "workSeconds": 20,
+  "restSeconds": 10,
+  "exerciseMode": "rotate",
   "exercises": [
-    { "name": "Sit-ups", "reps": null, "timeSeconds": 20, "weight": null, "notes": "20s on / 10s off" }
+    { "name": "Sit-ups", "repsEveryRound": null, "notes": null },
+    { "name": "Plank Hold", "repsEveryRound": null, "notes": null }
   ]
 }
 ```
 
-**For Time** (Family B — repBased): Complete all reps as fast as possible. Clock counts up.
+**Custom timed** (timed, no preset):
+```json
+{
+  "name": "Intervals 4x3",
+  "type": "timed",
+  "preset": null,
+  "rounds": 4,
+  "workSeconds": 180,
+  "restSeconds": 60,
+  "exerciseMode": "rotate",
+  "exercises": [
+    { "name": "Row", "repsEveryRound": null, "notes": "Max cal" },
+    { "name": "Assault Bike", "repsEveryRound": null, "notes": "Max cal" },
+    { "name": "Ski Erg", "repsEveryRound": null, "notes": "Max cal" }
+  ]
+}
+```
+
+**Reps — same reps every round:**
+```json
+{
+  "name": "5 Rounds",
+  "type": "reps",
+  "preset": null,
+  "rounds": 5,
+  "repsEveryRound": 10,
+  "exercises": [
+    { "name": "Deadlifts", "repsEveryRound": null, "notes": "100kg" },
+    { "name": "Box Jumps", "repsEveryRound": null, "notes": "24 inch" }
+  ]
+}
+```
+
+**Reps — different reps per round (e.g. "21-15-9"):**
 ```json
 {
   "name": "Fran",
-  "type": "forTime",
-  "family": "repBased",
-  "timeCapSeconds": null,
-  "rounds": null,
-  "intervalSeconds": null,
-  "repScheme": "21-15-9",
-  "exercises": [
-    { "name": "Thrusters", "reps": 21, "timeSeconds": null, "weight": "42.5kg", "notes": null },
-    { "name": "Pull-ups", "reps": 21, "timeSeconds": null, "weight": null, "notes": null }
-  ]
-}
-```
-
-**Strength** (Family B — repBased): Lifting sets at the athlete's own pace.
-```json
-{
-  "name": "Back Squat 5x5",
-  "type": "strength",
-  "family": "repBased",
-  "timeCapSeconds": null,
-  "rounds": 5,
-  "intervalSeconds": null,
-  "repScheme": null,
-  "exercises": [
-    { "name": "Back Squat", "reps": 5, "timeSeconds": null, "weight": "80% RM", "notes": "Rest 2-3 min between sets" }
-  ]
-}
-```
-
-**Custom (Time)** (Family A — timeBased): Freeform time-based block.
-```json
-{
-  "name": "Mobility Flow",
-  "type": "customTime",
-  "family": "timeBased",
-  "timeCapSeconds": 600,
-  "rounds": null,
-  "intervalSeconds": null,
-  "repScheme": null,
-  "exercises": [
-    { "name": "Hip Opener", "reps": null, "timeSeconds": 60, "weight": null, "notes": "Each side" },
-    { "name": "Shoulder Pass-throughs", "reps": null, "timeSeconds": 60, "weight": "PVC pipe", "notes": null }
-  ]
-}
-```
-
-**Custom (Reps)** (Family B — repBased): Freeform rep-based block.
-```json
-{
-  "name": "Accessory Work",
-  "type": "customReps",
-  "family": "repBased",
-  "timeCapSeconds": null,
+  "type": "reps",
+  "preset": null,
   "rounds": 3,
-  "intervalSeconds": null,
-  "repScheme": null,
+  "repsPerRound": [21, 15, 9],
   "exercises": [
-    { "name": "DB Rows", "reps": 12, "timeSeconds": null, "weight": "20kg", "notes": "Each arm" },
-    { "name": "Plank Hold", "reps": null, "timeSeconds": 45, "weight": null, "notes": null }
+    { "name": "Thrusters", "repsEveryRound": null, "notes": "42.5kg" },
+    { "name": "Pull-ups", "repsEveryRound": null, "notes": null }
   ]
 }
 ```
+
+**Reps — per exercise (each exercise has its own reps):**
+```json
+{
+  "name": "Accessory",
+  "type": "reps",
+  "preset": null,
+  "rounds": 3,
+  "exercises": [
+    { "name": "DB Rows", "repsEveryRound": 12, "notes": "Each arm" },
+    { "name": "Plank Hold", "repsEveryRound": null, "notes": "45s" }
+  ]
+}
+```
+
+#### Reps Sub-cases
+
+The `getRepsSubcase(block)` helper determines which of 3 layout variations to use:
+
+| Sub-case | Condition | TV Left (30%) |
+|----------|-----------|---------------|
+| `sameReps` | `block.repsEveryRound` is set | Big orange square with rep count |
+| `perRound` | `block.repsPerRound` has entries | Series breakdown (21-15-9) |
+| `perExercise` | Neither of the above | Empty — reps shown per exercise in the list |
 
 ### 5.2 Collection: `screens`
 
@@ -271,7 +293,6 @@ A live session is the real-time state of a class being projected. This is the **
 | `clockState` | string | `stopped` \| `running` \| `paused` \| `finished` |
 | `startTimestamp` | Timestamp\|null | Server time when Play was pressed (null when not running) |
 | `accumulatedTime` | number | Seconds elapsed before the current Play (for pause/resume) |
-| `currentRound` | number\|null | Current round for EMOM/interval types |
 | `sessionState` | string | `active` \| `finished` |
 | `screenId` | string | Which screen this session is assigned to |
 | `uid` | string | Owner user ID |
@@ -288,42 +309,60 @@ The TV interface must be extremely clean. Athletes are moving and sweating — n
 
 - **Typography:** Giant, condensed, uppercase, extra bold (`font-condensed font-black uppercase tracking-tighter`).
 
-- **Shape Psychology (strict):**
+- **Shape Psychology:**
   - **Reps:** Always inside an orange rounded square (`bg-gymOrange rounded-xl`).
-  - **Time/Seconds:** Always inside a hollow orange circle (`border-4 border-gymOrange rounded-full`).
+
+- **Timer Two-Line Format:** If total seconds >= 100 → minutes on first line, `:SS` on second. If < 100 → only `:SS`. During rest phases, timer color switches to cyan.
 
 ## 7. TV Layout: The 30/70 Rule
 
 All workout types use a split layout: **30% Left (Controller) / 70% Right (Action)**. A "Pill" in the bottom-right shows extra info.
 
-### Family A: Time-Based (Clock controls)
+### Timed Blocks (`type === 'timed'`)
 
-The time cap defines the block. Clock counts **down**.
+The TV is 100% data-driven via the timeline (pre-computed segment array). No type/preset checks.
 
-- **Left (30%):** Giant countdown timer (`MM:SS`) + block title/round.
+- **Left (30%):** Giant countdown timer (phase seconds left) + block name + round info.
+  - 1 round: shows total time.
+  - Multiple rounds: shows "RONDA X / Y".
+  - During rest: timer turns cyan.
 - **Right (70%):**
-  - AMRAP: Full exercise list.
-  - EMOM/Interval: Single colossal exercise, auto-rotating per interval.
-- **Pill:** "Next" exercise name.
+  - `exerciseMode: 'all'`: Full exercise list. During rest: "DESCANSO" overlay.
+  - `exerciseMode: 'rotate'`: Single colossal exercise, auto-cycling. During rest: replaces exercise with "DESCANSO".
+- **Pill:** Next exercise name (rotate mode only).
 
-### Family B: Rep-Based (Athlete controls)
+### Reps Blocks (`type === 'reps'`)
 
-Reps define the block. Athlete goes at own pace. Clock counts **up** (stopwatch).
+Athlete-paced. No countdown — clock counts **up** (stopwatch in pill).
 
-- **Left (30%):** Round instructions (e.g. "5 ROUNDS" or "21-15-9").
-- **Right (70%):** Full exercise list with orange rep squares.
+- **Left (30%):** Depends on sub-case (see `getRepsSubcase()`):
+  - `sameReps`: Big orange square with rep count + "cada ronda".
+  - `perRound`: Series breakdown (e.g. "21-15-9").
+  - `perExercise`: Empty.
+- **Right (70%):** Full exercise list with orange rep badges.
 - **Pill:** Elapsed time stopwatch.
 
-## 8. Timer Engine (Firebase Sync)
+## 8. Timeline Engine
+
+The timeline is a **pre-computed flat array of segments** built once per block by `buildTimeline()` in `src/utils/timeline.js`. This eliminates complex modular arithmetic at 60fps.
+
+Each segment: `{ startAt, duration, phase: 'work'|'rest', round, exerciseIndex }`.
+
+- `exerciseIndex: null` → show all exercises (`exerciseMode: 'all'`).
+- `exerciseIndex: N` → show exercise at index N (`exerciseMode: 'rotate'`).
+
+**`useTimer.js`** uses `requestAnimationFrame` to compute `displaySeconds`, then does a simple `findLast()` on the timeline to derive: `phaseSecondsLeft`, `isResting`, `currentRound`, `totalRounds`, `currentExerciseIndex`, `nextExerciseName`, `isBlockFinished`.
+
+## 9. Timer Engine (Firebase Sync)
 
 **CRITICAL RULE:** Never store "time remaining" in Firestore. This would saturate the database and cause desync.
 
 - **Play:** Admin writes `startTimestamp = serverTimestamp()` + `clockState = 'running'` to the session document.
 - **TV reads** `startTimestamp` once from the Firestore snapshot, then uses `requestAnimationFrame` locally: `elapsed = (Date.now() - startTimestamp) + accumulatedTime`.
 - **Pause:** Admin calculates elapsed time, adds it to `accumulatedTime`, sets `startTimestamp = null`.
-- **Implementation:** `src/composables/useTimer.js` — watches `clockState`, starts/stops the rAF loop accordingly.
+- **Implementation:** `src/composables/useTimer.js` — watches `clockState`, starts/stops the rAF loop accordingly. Timeline-based computed values derive all display state from `displaySeconds`.
 
-## 9. Multi-Screen Architecture
+## 10. Multi-Screen Architecture
 
 A gym can have multiple TVs in different rooms. Each TV is a `screen` document in Firestore.
 

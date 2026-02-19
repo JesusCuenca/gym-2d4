@@ -36,8 +36,9 @@ function closeMenu() {
   <div class="min-h-screen flex flex-col">
     <nav class="bg-gymBlack border-b border-white/10 px-4 sm:px-6 py-3 sm:py-4">
       <div class="flex items-center justify-between">
-        <RouterLink to="/admin" class="text-gymOrange font-bold text-xl hover:text-gymOrange">
-          2D4 Gym TV
+        <RouterLink to="/admin" class="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <img src="/gym-2d4-logo.jpg" alt="2D4 Gym" class="h-8 w-8 object-contain rounded-md" />
+          <span class="text-gymOrange font-bold text-xl">2D4 Gym TV</span>
         </RouterLink>
 
         <!-- Desktop nav -->
@@ -84,7 +85,10 @@ function closeMenu() {
 
           <div class="relative bg-gymBlack border-b border-white/10 px-4 py-4 z-40">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-gymOrange font-bold text-xl">2D4 Gym TV</span>
+              <span class="text-gymOrange font-bold text-xl flex items-center gap-2">
+                <img src="/gym-2d4-logo.jpg" alt="2D4 Gym" class="h-8 w-8 object-contain rounded-md" />
+                2D4 Gym TV
+              </span>
               <button @click="closeMenu" class="text-white/60 hover:text-white p-1">
                 <XMarkIcon class="w-6 h-6" />
               </button>

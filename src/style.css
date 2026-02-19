@@ -4,7 +4,14 @@
   --color-gymOrange: #FB6537;
   --color-gymBlack: #0A0A0A;
   --color-gymRest: #06B6D4;
+  --color-gymDanger: #EF4444;
   --font-condensed: 'Barlow Condensed', sans-serif;
+  --animate-urgency-pulse: urgency-pulse 0.5s ease-in-out infinite;
+  --animate-urgency-scale: urgency-scale 0.5s ease-in-out infinite;
+  --animate-countdown-pop: countdown-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --animate-confetti-fall: confetti-fall 3s ease-in forwards;
+  --animate-celebration-pulse: celebration-pulse 2s ease-in-out infinite;
+  --animate-progress-glow: progress-glow 2s ease-in-out infinite;
 }
 
 body {
@@ -30,4 +37,100 @@ body {
 .mobile-menu-enter-from,
 .mobile-menu-leave-to {
   opacity: 0;
+}
+
+/* Keyframes */
+@keyframes urgency-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes urgency-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes countdown-pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes celebration-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.04); opacity: 0.85; }
+}
+
+@keyframes progress-glow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+}
+
+/* Vue Transitions: tv-block (fade + slide-X for block/screen changes) */
+.tv-block-enter-active,
+.tv-block-leave-active {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.tv-block-enter-from {
+  opacity: 0;
+  transform: translateX(40px);
+}
+.tv-block-leave-to {
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+/* Vue Transitions: tv-exercise (fade + slide-Y for exercise rotation) */
+.tv-exercise-enter-active,
+.tv-exercise-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.tv-exercise-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.tv-exercise-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Vue Transitions: tv-rest (fade for rest overlay) */
+.tv-rest-enter-active,
+.tv-rest-leave-active {
+  transition: opacity 0.3s ease;
+}
+.tv-rest-enter-from,
+.tv-rest-leave-to {
+  opacity: 0;
+}
+
+/* Vue Transitions: tv-countdown (pop for 3-2-1 numbers) */
+.tv-countdown-enter-active {
+  animation: countdown-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.tv-countdown-leave-active {
+  transition: opacity 0.15s ease;
+}
+.tv-countdown-leave-to {
+  opacity: 0;
+}
+
+/* Vue Transitions: tv-phrase (fade + slide-Y for motivational phrases) */
+.tv-phrase-enter-active,
+.tv-phrase-leave-active {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.tv-phrase-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.tv-phrase-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }

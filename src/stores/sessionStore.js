@@ -12,6 +12,15 @@ import { useAuthStore } from './auth'
 import { useScreenStore } from './screenStore'
 import { validateSessionInputs } from '../utils/validation'
 
+let countdownTimeoutId = null
+
+function clearCountdownTimeout() {
+  if (countdownTimeoutId) {
+    clearTimeout(countdownTimeoutId)
+    countdownTimeoutId = null
+  }
+}
+
 export const useSessionStore = defineStore('session', () => {
   const session = ref(null)
   const loading = ref(false)
@@ -60,7 +69,35 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
+  async function startCountdown(sessionId) {
+    clearCountdownTimeout()
+    error.value = null
+    try {
+      await updateDoc(doc(db, 'sessions', sessionId), {
+        clockState: 'countdown',
+        startTimestamp: serverTimestamp(),
+        accumulatedTime: 0,
+      })
+      countdownTimeoutId = setTimeout(async () => {
+        countdownTimeoutId = null
+        try {
+          await updateDoc(doc(db, 'sessions', sessionId), {
+            clockState: 'running',
+            startTimestamp: serverTimestamp(),
+          })
+        } catch (e) {
+          console.error('countdown→running transition error:', e)
+        }
+      }, 3000)
+    } catch (e) {
+      error.value = 'Error al iniciar la cuenta regresiva.'
+      console.error('startCountdown error:', e)
+      throw e
+    }
+  }
+
   async function play(sessionId) {
+    clearCountdownTimeout()
     error.value = null
     try {
       await updateDoc(doc(db, 'sessions', sessionId), {
@@ -75,6 +112,7 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   async function pause(sessionId, elapsedSeconds) {
+    clearCountdownTimeout()
     error.value = null
     try {
       await updateDoc(doc(db, 'sessions', sessionId), {
@@ -90,6 +128,7 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   async function nextBlock(sessionId, nextIndex) {
+    clearCountdownTimeout()
     error.value = null
     try {
       await updateDoc(doc(db, 'sessions', sessionId), {
@@ -106,6 +145,26 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
+  async function completeSession(sessionId, finalElapsed) {
+    clearCountdownTimeout()
+    error.value = null
+    try {
+      const updateData = {
+        sessionState: 'completed',
+        clockState: 'finished',
+        startTimestamp: null,
+      }
+      if (finalElapsed != null) {
+        updateData.accumulatedTime = finalElapsed
+      }
+      await updateDoc(doc(db, 'sessions', sessionId), updateData)
+    } catch (e) {
+      error.value = 'Error al completar la sesión.'
+      console.error('completeSession error:', e)
+      throw e
+    }
+  }
+
   async function endSession(sessionId, screenId) {
     error.value = null
     try {
@@ -113,8 +172,6 @@ export const useSessionStore = defineStore('session', () => {
 
       await updateDoc(doc(db, 'sessions', sessionId), {
         sessionState: 'finished',
-        clockState: 'finished',
-        startTimestamp: null,
       })
 
       // Unlink session from screen
@@ -161,9 +218,11 @@ export const useSessionStore = defineStore('session', () => {
     loading,
     error,
     startSession,
+    startCountdown,
     play,
     pause,
     nextBlock,
+    completeSession,
     endSession,
     subscribeToSession,
     unsubscribeFromSession,

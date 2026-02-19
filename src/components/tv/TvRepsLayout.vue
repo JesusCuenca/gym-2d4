@@ -4,6 +4,7 @@ import { getRepsSubcase } from '../../models/blockTypes'
 import { formatTimer } from '../../utils/time'
 import TvExerciseList from './TvExerciseList.vue'
 import TvInfoPill from './TvInfoPill.vue'
+import TvProgressBar from './TvProgressBar.vue'
 
 const props = defineProps({
   block: Object,
@@ -18,6 +19,13 @@ const elapsedDisplay = computed(() => formatTimer(props.timer.displaySeconds.val
 
 <template>
   <div class="flex h-full relative">
+    <TvProgressBar
+      :block="block"
+      :timer="timer"
+      :blockIndex="session.currentBlockIndex"
+      :totalBlocks="session.blocks?.length || 0"
+    />
+
     <!-- Left Panel (30%) — Round Info & Reps -->
     <div class="w-[30%] flex flex-col items-center justify-center border-r border-white/10 px-6">
       <!-- Block name -->

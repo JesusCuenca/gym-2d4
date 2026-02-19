@@ -9,7 +9,7 @@ export function useTimer(sessionRef) {
 
   function tick() {
     const s = sessionRef.value
-    if (!s || s.clockState !== 'running' || !s.startTimestamp) {
+    if (!s || (s.clockState !== 'running' && s.clockState !== 'countdown') || !s.startTimestamp) {
       return
     }
 
@@ -38,7 +38,7 @@ export function useTimer(sessionRef) {
   watch(
     () => sessionRef.value?.clockState,
     (state) => {
-      if (state === 'running') {
+      if (state === 'running' || state === 'countdown') {
         startTicking()
       } else {
         stopTicking()
@@ -118,6 +118,13 @@ export function useTimer(sessionRef) {
     return last ? displaySeconds.value >= last.startAt + last.duration : false
   })
 
+  const isCountingDown = computed(() => sessionRef.value?.clockState === 'countdown')
+  const countdownSecondsLeft = computed(() => {
+    if (!isCountingDown.value) return null
+    const left = Math.ceil(3 - displaySeconds.value)
+    return left > 0 ? left : null
+  })
+
   return {
     displaySeconds,
     currentSegment,
@@ -128,5 +135,7 @@ export function useTimer(sessionRef) {
     currentExerciseIndex,
     nextExerciseName,
     isBlockFinished,
+    isCountingDown,
+    countdownSecondsLeft,
   }
 }

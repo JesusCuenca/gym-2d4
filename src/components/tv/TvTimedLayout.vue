@@ -5,6 +5,7 @@ import TvTimerCountdown from './TvTimerCountdown.vue'
 import TvExerciseList from './TvExerciseList.vue'
 import TvSingleExercise from './TvSingleExercise.vue'
 import TvInfoPill from './TvInfoPill.vue'
+import TvProgressBar from './TvProgressBar.vue'
 
 const props = defineProps({
   block: Object,
@@ -30,25 +31,29 @@ const currentExercise = computed(() => {
 
 const isRotating = computed(() => props.timer.currentExerciseIndex.value != null)
 const isResting = computed(() => props.timer.isResting.value)
+
+const exercisePositionText = computed(() => {
+  const idx = props.timer.currentExerciseIndex.value
+  if (idx == null) return null
+  return `EJERCICIO ${idx + 1} / ${props.block.exercises?.length || 0}`
+})
 </script>
 
 <template>
   <div class="flex h-full relative">
+    <TvProgressBar :block="block" :timer="timer" :blockIndex="session.currentBlockIndex"
+      :totalBlocks="session.blocks?.length || 0" />
+
     <!-- Left Panel (30%) — Timer & Block Info -->
     <div class="w-[30%] flex flex-col items-center justify-center border-r border-white/10 px-6">
       <!-- Round info -->
-      <p
-        class="text-3xl font-black uppercase tracking-normal font-condensed mb-4"
-        :class="showRoundInfo ? 'text-gymOrange' : 'text-white/60'"
-      >
+      <p class="text-3xl font-black uppercase tracking-normal font-condensed mb-4"
+        :class="showRoundInfo ? 'text-gymOrange' : 'text-white/60'">
         {{ roundInfoText }}
       </p>
 
       <!-- Timer countdown -->
-      <TvTimerCountdown
-        :secondsLeft="timer.phaseSecondsLeft.value"
-        :isResting="isResting"
-      />
+      <TvTimerCountdown :secondsLeft="timer.phaseSecondsLeft.value" :isResting="isResting" />
 
       <!-- Block name -->
       <p class="text-3xl font-black text-white/60 uppercase tracking-normal font-condensed mt-6">
@@ -58,35 +63,36 @@ const isResting = computed(() => props.timer.isResting.value)
 
     <!-- Right Panel (70%) — Exercises -->
     <div class="w-[70%] flex items-center justify-center px-12 relative">
-      <!-- Rotating mode: single exercise -->
+      <!-- Rotating mode: single exercise with transitions -->
       <template v-if="isRotating">
-        <TvSingleExercise
-          v-if="!isResting"
-          :exercise="currentExercise"
-        />
-        <div v-else class="flex items-center justify-center h-full">
-          <span class="text-8xl font-black text-gymRest uppercase font-condensed">DESCANSO</span>
-        </div>
+        <Transition name="tv-exercise" mode="out-in">
+          <div v-if="!isResting" :key="`ex-${timer.currentExerciseIndex.value}`"
+            class="flex flex-col items-center justify-center h-full">
+            <p v-if="exercisePositionText"
+              class="text-2xl text-white/40 uppercase tracking-widest font-condensed mb-4 mt-4">
+              {{ exercisePositionText }}
+            </p>
+            <TvSingleExercise :exercise="currentExercise" />
+          </div>
+          <div v-else key="rest" class="flex items-center justify-center h-full">
+            <span class="text-8xl font-black text-gymRest uppercase font-condensed">DESCANSO</span>
+          </div>
+        </Transition>
       </template>
 
       <!-- List mode: full exercise list -->
       <template v-else>
         <TvExerciseList :exercises="block.exercises" />
-        <!-- Rest overlay for list mode (e.g. EMOM with rest) -->
-        <div
-          v-if="isResting"
-          class="absolute inset-0 flex items-center justify-center bg-gymBlack/80"
-        >
-          <span class="text-8xl font-black text-gymRest uppercase font-condensed">DESCANSO</span>
-        </div>
+        <!-- Rest overlay for list mode with transition -->
+        <Transition name="tv-rest">
+          <div v-if="isResting" class="absolute inset-0 flex items-center justify-center bg-gymBlack/80">
+            <span class="text-8xl font-black text-gymRest uppercase font-condensed">DESCANSO</span>
+          </div>
+        </Transition>
       </template>
     </div>
 
     <!-- Info Pill — next exercise (rotating mode only) -->
-    <TvInfoPill
-      v-if="timer.nextExerciseName.value"
-      label="Siguiente"
-      :value="timer.nextExerciseName.value"
-    />
+    <TvInfoPill v-if="timer.nextExerciseName.value" label="Siguiente" :value="timer.nextExerciseName.value" />
   </div>
 </template>

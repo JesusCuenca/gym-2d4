@@ -5,8 +5,13 @@ import { useSessionStore } from '../stores/sessionStore'
 import { useScreenStore } from '../stores/screenStore'
 import { useTimer } from '../composables/useTimer'
 import { useConnectionStatus } from '../composables/useConnectionStatus'
+import { useAudioCues } from '../composables/useAudioCues'
 import TvWaitingScreen from '../components/tv/TvWaitingScreen.vue'
 import TvBlockDisplay from '../components/tv/TvBlockDisplay.vue'
+import {
+  SpeakerWaveIcon,
+  SpeakerXMarkIcon,
+} from '@heroicons/vue/24/solid'
 
 const route = useRoute()
 const sessionStore = useSessionStore()
@@ -17,6 +22,7 @@ let unsubscribeScreen = null
 
 const sessionRef = toRef(sessionStore, 'session')
 const timer = useTimer(sessionRef)
+const { audioEnabled, toggleAudio, playWorkStart, playRestStart, playCountdown, playFinished } = useAudioCues()
 
 const hasActiveSession = ref(false)
 const { isOnline } = useConnectionStatus()
@@ -48,10 +54,77 @@ onUnmounted(() => {
   }
   sessionStore.unsubscribeFromSession()
 })
+
+// --- Audio cue watchers ---
+
+// Work ↔ Rest transitions
+watch(
+  () => timer.isResting.value,
+  (isRest, wasRest) => {
+    if (sessionRef.value?.clockState !== 'running') return
+    if (wasRest === undefined) return
+    if (isRest) {
+      playRestStart()
+    } else {
+      playWorkStart()
+    }
+  },
+)
+
+// Countdown 3-2-1 beeps
+watch(
+  () => timer.countdownSecondsLeft.value,
+  (n, prev) => {
+    if (n != null && n !== prev && n >= 1 && n <= 3) {
+      playCountdown(n)
+    }
+  },
+)
+
+// Phase ending countdown (last 3 seconds of work/rest phases)
+watch(
+  () => Math.ceil(timer.phaseSecondsLeft.value),
+  (secs, prev) => {
+    if (sessionRef.value?.clockState !== 'running') return
+    if (secs === prev) return
+    if (secs >= 1 && secs <= 3) {
+      playCountdown(secs)
+    }
+  },
+)
+
+// Countdown → Running transition (block start)
+watch(
+  () => sessionRef.value?.clockState,
+  (state, prevState) => {
+    if (prevState === 'countdown' && state === 'running') {
+      playWorkStart()
+    }
+  },
+)
+
+// Session finished
+watch(
+  () => sessionRef.value?.sessionState,
+  (state, prevState) => {
+    if (prevState === 'active' && state === 'completed') {
+      playFinished()
+    }
+  },
+)
 </script>
 
 <template>
   <div class="w-screen h-screen overflow-hidden bg-gymBlack relative">
+    <!-- Audio toggle -->
+    <button
+      @click="toggleAudio"
+      class="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors"
+    >
+      <SpeakerWaveIcon v-if="audioEnabled" class="w-6 h-6 text-white" />
+      <SpeakerXMarkIcon v-else class="w-6 h-6 text-white/40" />
+    </button>
+
     <!-- Offline indicator -->
     <div
       v-if="!isOnline"
@@ -60,7 +133,8 @@ onUnmounted(() => {
       Reconectando...
     </div>
     <TvWaitingScreen
-      v-if="!sessionStore.session || sessionStore.session.sessionState !== 'active'"
+      v-if="!sessionStore.session || !['active', 'completed'].includes(sessionStore.session.sessionState)"
+      :screenName="screenData?.name"
     />
     <TvBlockDisplay
       v-else

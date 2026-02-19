@@ -13,11 +13,14 @@ export function buildTimeline(block) {
   let cursor = 0
 
   for (let round = 1; round <= block.rounds; round++) {
+    const isLastRound = round === block.rounds
+
     if (block.exerciseMode === 'rotate') {
       for (let i = 0; i < block.exercises.length; i++) {
+        const isLastExercise = isLastRound && i === block.exercises.length - 1
         segments.push({ startAt: cursor, duration: block.workSeconds, phase: 'work', round, exerciseIndex: i })
         cursor += block.workSeconds
-        if (block.restSeconds > 0) {
+        if (block.restSeconds > 0 && !isLastExercise) {
           segments.push({ startAt: cursor, duration: block.restSeconds, phase: 'rest', round, exerciseIndex: i })
           cursor += block.restSeconds
         }
@@ -25,7 +28,7 @@ export function buildTimeline(block) {
     } else {
       segments.push({ startAt: cursor, duration: block.workSeconds, phase: 'work', round, exerciseIndex: null })
       cursor += block.workSeconds
-      if (block.restSeconds > 0) {
+      if (block.restSeconds > 0 && !isLastRound) {
         segments.push({ startAt: cursor, duration: block.restSeconds, phase: 'rest', round, exerciseIndex: null })
         cursor += block.restSeconds
       }
@@ -40,8 +43,10 @@ export function buildTimeline(block) {
  */
 export function getTotalDuration(block) {
   if (block.type !== 'timed') return null
+  const exCount = block.exercises?.length || 1
   if (block.exerciseMode === 'rotate') {
-    return block.rounds * block.exercises.length * (block.workSeconds + block.restSeconds)
+    const totalIterations = block.rounds * exCount
+    return totalIterations * block.workSeconds + (totalIterations - 1) * block.restSeconds
   }
-  return block.rounds * (block.workSeconds + block.restSeconds)
+  return block.rounds * block.workSeconds + (block.rounds - 1) * block.restSeconds
 }

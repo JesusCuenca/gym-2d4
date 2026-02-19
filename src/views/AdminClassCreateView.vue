@@ -7,6 +7,21 @@ import { BLOCK_TYPES, TIMED_SUBTYPES, REPS_SUBTYPES, isTimed, getBlockLabel, get
 import { validateBlock } from '../utils/validation'
 import { ChevronUpIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { useExercisePicker } from '../composables/useExercisePicker'
+
+const { pickExercises } = useExercisePicker()
+
+async function openExercisePicker(bIndex) {
+  const picked = await pickExercises()
+  if (!picked.length) return
+  const cb = classBlocks.value[bIndex]
+  const hasOnlyEmpty = cb.form.exercises.length === 1 && !cb.form.exercises[0].name
+  if (hasOnlyEmpty) {
+    cb.form.exercises = picked
+  } else {
+    cb.form.exercises.push(...picked)
+  }
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -657,10 +672,16 @@ onMounted(async () => {
                   </div>
                 </div>
 
-                <button type="button" @click="addExercise(bIndex)"
-                  class="mt-2 w-full border border-dashed border-white/20 rounded-lg py-2 text-white/50 hover:text-white hover:border-white/40 text-xs transition-colors">
-                  + Añadir ejercicio
-                </button>
+                <div class="mt-2 flex gap-2">
+                  <button type="button" @click="openExercisePicker(bIndex)"
+                    class="flex-1 border border-gymOrange/30 bg-gymOrange/10 rounded-lg py-2 text-gymOrange/80 hover:text-gymOrange hover:border-gymOrange/50 text-xs transition-colors">
+                    Añadir ejercicios
+                  </button>
+                  <button type="button" @click="addExercise(bIndex)"
+                    class="w-10 border border-dashed border-white/20 rounded-lg py-2 text-white/50 hover:text-white hover:border-white/40 text-xs transition-colors">
+                    +
+                  </button>
+                </div>
               </div>
 
               <!-- Save to library -->

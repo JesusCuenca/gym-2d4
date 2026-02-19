@@ -1,0 +1,67 @@
+[
+  {
+    "id": "abdomen-padre",
+    "name": "Abdomen",
+    "children": [
+      { "id": "abdomen", "name": "Abdomen" },
+      { "id": "oblicuos", "name": "Oblicuos" }
+    ]
+  },
+  {
+    "id": "brazo",
+    "name": "Brazo",
+    "children": [
+      { "id": "biceps", "name": "Bíceps" },
+      { "id": "extensor-del-antebrazo", "name": "Extensor del antebrazo" },
+      { "id": "flexor-del-antebrazo", "name": "Flexor del antebrazo" },
+      { "id": "triceps", "name": "Tríceps" }
+    ]
+  },
+  {
+    "id": "pierna",
+    "name": "Pierna",
+    "children": [
+      { "id": "cuadriceps", "name": "Cuádriceps" },
+      { "id": "flexor-de-cadera", "name": "Flexor de cadera" },
+      { "id": "isquiotibial", "name": "Isquiotibial" },
+      { "id": "pantorrilla", "name": "Pantorrilla" },
+      { "id": "tibial-anterior", "name": "Tibial anterior" },
+      { "id": "aductor", "name": "Aductor" }
+    ]
+  },
+  {
+    "id": "gluteo-padre",
+    "name": "Glúteo",
+    "children": [
+      { "id": "abductor", "name": "Abductor" },
+      { "id": "gluteo", "name": "Glúteo" }
+    ]
+  },
+  {
+    "id": "espalda",
+    "name": "Espalda",
+    "children": [
+      { "id": "cuello", "name": "Cuello" },
+      { "id": "dorsal", "name": "Dorsal" },
+      { "id": "espalda-baja", "name": "Espalda baja" },
+      { "id": "trapecio", "name": "Trapecio" }
+    ]
+  },
+  {
+    "id": "hombro",
+    "name": "Hombro",
+    "children": [
+      { "id": "deltoides-anterior", "name": "Deltoides anterior" },
+      { "id": "deltoides-lateral", "name": "Deltoides lateral" },
+      { "id": "deltoides-posterior", "name": "Deltoides posterior" },
+      { "id": "manguito-rotador", "name": "Manguito rotador" }
+    ]
+  },
+  {
+    "id": "pecho",
+    "name": "Pecho",
+    "children": [
+      { "id": "pectoral", "name": "Pectoral" }
+    ]
+  }
+]

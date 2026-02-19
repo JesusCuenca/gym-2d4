@@ -3,7 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useClassStore } from '../stores/classStore'
 import { useBlockStore } from '../stores/blockStore'
-import { BLOCK_TYPES, TIMED_PRESETS, isTimed, getBlockLabel } from '../models/blockTypes'
+import { BLOCK_TYPES, TIMED_SUBTYPES, REPS_SUBTYPES, isTimed, getBlockLabel, getRepsSubcase } from '../models/blockTypes'
+import { validateBlock } from '../utils/validation'
 import { ChevronUpIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
@@ -31,7 +32,7 @@ function createEmptyForm() {
   return {
     name: '',
     type: 'timed',
-    preset: null,
+    subtype: 'custom',
     workMinutes: '15',
     workSeconds: '00',
     restMinutes: '0',
@@ -39,7 +40,7 @@ function createEmptyForm() {
     rounds: '',
     exerciseMode: 'all',
     repsEveryRound: '',
-    repsPerRound: '',
+    repsPerRound: [''],
     exercises: [createEmptyExercise()],
   }
 }
@@ -48,7 +49,8 @@ function blockDataToForm(bd) {
   return {
     name: bd.name || '',
     type: bd.type || 'timed',
-    preset: bd.preset || null,
+    // Backward compat: read subtype or legacy preset
+    subtype: bd.type === 'reps' ? getRepsSubcase(bd) : (bd.subtype || bd.preset || 'custom'),
     workMinutes: bd.workSeconds != null ? String(Math.floor(bd.workSeconds / 60)) : '0',
     workSeconds: bd.workSeconds != null ? String(bd.workSeconds % 60).padStart(2, '0') : '00',
     restMinutes: bd.restSeconds != null ? String(Math.floor(bd.restSeconds / 60)) : '0',
@@ -56,7 +58,7 @@ function blockDataToForm(bd) {
     rounds: bd.rounds ? String(bd.rounds) : '',
     exerciseMode: bd.exerciseMode || 'all',
     repsEveryRound: bd.repsEveryRound ? String(bd.repsEveryRound) : '',
-    repsPerRound: bd.repsPerRound ? bd.repsPerRound.join(', ') : '',
+    repsPerRound: bd.repsPerRound?.length ? bd.repsPerRound.map(String) : [''],
     exercises: (bd.exercises?.length ? bd.exercises : [{ name: '' }]).map((ex) => ({
       name: ex.name || '',
       repsEveryRound: ex.repsEveryRound ? String(ex.repsEveryRound) : '',
@@ -69,24 +71,30 @@ function formToBlockData(form) {
   const blockData = { name: form.name, type: form.type }
 
   if (isTimed(form.type)) {
-    blockData.preset = form.preset || null
+    blockData.subtype = form.subtype === 'custom' ? null : form.subtype
     blockData.workSeconds = parseInt(form.workMinutes || 0) * 60 + parseInt(form.workSeconds || 0)
-    blockData.restSeconds = form.preset === 'amrap' ? 0 : parseInt(form.restMinutes || 0) * 60 + parseInt(form.restSeconds || 0)
-    blockData.rounds = form.preset === 'amrap' ? 1 : parseInt(form.rounds) || 1
+    blockData.restSeconds = form.subtype === 'amrap' ? 0 : parseInt(form.restMinutes || 0) * 60 + parseInt(form.restSeconds || 0)
+    blockData.rounds = form.subtype === 'amrap' ? 1 : parseInt(form.rounds) || 1
     blockData.exerciseMode = form.exerciseMode
   } else {
-    blockData.rounds = parseInt(form.rounds) || 1
-    const repsPerRoundStr = (form.repsPerRound || '').trim()
-    if (repsPerRoundStr) {
-      blockData.repsPerRound = repsPerRoundStr.split(',').map((s) => parseInt(s.trim())).filter((n) => !isNaN(n))
-      blockData.rounds = blockData.repsPerRound.length
-    } else {
+    blockData.subtype = form.subtype
+    if (form.subtype === 'perRound') {
+      const parsed = form.repsPerRound.map((s) => parseInt(s)).filter((n) => !isNaN(n) && n > 0)
+      blockData.repsPerRound = parsed.length ? parsed : null
+      blockData.rounds = parsed.length || parseInt(form.rounds) || 1
+      blockData.repsEveryRound = null
+    } else if (form.subtype === 'sameReps') {
+      blockData.repsEveryRound = form.repsEveryRound ? parseInt(form.repsEveryRound) : null
       blockData.repsPerRound = null
+      blockData.rounds = parseInt(form.rounds) || 1
+    } else {
+      blockData.repsEveryRound = null
+      blockData.repsPerRound = null
+      blockData.rounds = parseInt(form.rounds) || 1
     }
-    blockData.repsEveryRound = form.repsEveryRound ? parseInt(form.repsEveryRound) : null
   }
 
-  const showExReps = isTimed(form.type) ? form.exerciseMode === 'all' : true
+  const showExReps = isTimed(form.type) ? form.exerciseMode === 'all' : form.subtype === 'perExercise'
   blockData.exercises = form.exercises
     .filter((ex) => ex.name.trim())
     .map((ex) => ({
@@ -101,38 +109,97 @@ function formToBlockData(form) {
 // --- Visibility helpers for inline form ---
 
 function isFormTimed(form) { return isTimed(form.type) }
-function showWorkTime(form) { return isTimed(form.type) }
-function showRestTime(form) { return isTimed(form.type) && form.preset !== 'amrap' }
-function showRounds(form) { return isTimed(form.type) ? form.preset !== 'amrap' : true }
-function showExerciseMode(form) { return isTimed(form.type) && !form.preset }
-function showBlockReps(form) { return !isTimed(form.type) }
-function showExerciseReps(form) {
+function formShowWorkTime(form) { return isTimed(form.type) }
+function formShowRestTime(form) { return isTimed(form.type) && form.subtype !== 'amrap' }
+function formShowRounds(form) {
+  if (isTimed(form.type)) return form.subtype !== 'amrap'
+  return form.subtype !== 'perRound'
+}
+function formShowExerciseMode(form) { return isTimed(form.type) && form.subtype === 'custom' }
+function formShowBlockReps(form) { return !isTimed(form.type) }
+function formShowExerciseReps(form) {
   if (isTimed(form.type)) return form.exerciseMode === 'all'
-  return true
+  return form.subtype === 'perExercise'
+}
+function formExerciseRepsRequired(form) {
+  if (isTimed(form.type)) return ['amrap', 'emom'].includes(form.subtype)
+  return form.subtype === 'perExercise'
 }
 
 function workTimeLabel(form) {
-  return form.preset === 'amrap' ? 'Tiempo total' : 'Tiempo de trabajo'
+  return form.subtype === 'amrap' ? 'Tiempo total' : 'Tiempo de trabajo'
 }
 
-function selectPreset(form, presetValue) {
-  if (form.preset === presetValue) {
-    form.preset = null
-    return
+function selectSubtype(form, subtypeValue) {
+  form.subtype = subtypeValue
+  const entry = TIMED_SUBTYPES.find((p) => p.value === subtypeValue)
+  if (!entry?.defaults) return
+  if (entry.defaults.rounds != null) form.rounds = String(entry.defaults.rounds)
+  if (entry.defaults.restSeconds != null) {
+    form.restMinutes = String(Math.floor(entry.defaults.restSeconds / 60))
+    form.restSeconds = String(entry.defaults.restSeconds % 60).padStart(2, '0')
   }
-  form.preset = presetValue
-  const preset = TIMED_PRESETS.find((p) => p.value === presetValue)
-  if (!preset) return
-  if (preset.defaults.rounds != null) form.rounds = String(preset.defaults.rounds)
-  if (preset.defaults.restSeconds != null) {
-    form.restMinutes = String(Math.floor(preset.defaults.restSeconds / 60))
-    form.restSeconds = String(preset.defaults.restSeconds % 60).padStart(2, '0')
+  if (entry.defaults.workSeconds != null) {
+    form.workMinutes = String(Math.floor(entry.defaults.workSeconds / 60))
+    form.workSeconds = String(entry.defaults.workSeconds % 60).padStart(2, '0')
   }
-  if (preset.defaults.workSeconds != null) {
-    form.workMinutes = String(Math.floor(preset.defaults.workSeconds / 60))
-    form.workSeconds = String(preset.defaults.workSeconds % 60).padStart(2, '0')
-  }
-  if (preset.defaults.exerciseMode) form.exerciseMode = preset.defaults.exerciseMode
+  if (entry.defaults.exerciseMode) form.exerciseMode = entry.defaults.exerciseMode
+}
+
+// --- Time stepper helpers ---
+
+const WORK_MIN = 10
+const WORK_MAX = 3600
+const REST_MIN = 0
+const REST_MAX = 600
+
+function getFormWorkTotal(form) {
+  return parseInt(form.workMinutes || 0) * 60 + parseInt(form.workSeconds || 0)
+}
+
+function setFormWorkTotal(form, total) {
+  total = Math.max(WORK_MIN, Math.min(WORK_MAX, total))
+  form.workMinutes = String(Math.floor(total / 60))
+  form.workSeconds = String(total % 60).padStart(2, '0')
+}
+
+function getFormRestTotal(form) {
+  return parseInt(form.restMinutes || 0) * 60 + parseInt(form.restSeconds || 0)
+}
+
+function setFormRestTotal(form, total) {
+  total = Math.max(REST_MIN, Math.min(REST_MAX, total))
+  form.restMinutes = String(Math.floor(total / 60))
+  form.restSeconds = String(total % 60).padStart(2, '0')
+}
+
+function stepFormWork(form, delta) {
+  setFormWorkTotal(form, getFormWorkTotal(form) + delta)
+}
+
+function stepFormRest(form, delta) {
+  setFormRestTotal(form, getFormRestTotal(form) + delta)
+}
+
+function canStepFormWork(form, delta) {
+  const next = getFormWorkTotal(form) + delta
+  return next >= WORK_MIN && next <= WORK_MAX
+}
+
+function canStepFormRest(form, delta) {
+  const next = getFormRestTotal(form) + delta
+  return next >= REST_MIN && next <= REST_MAX
+}
+
+// --- Reps per round dynamic inputs ---
+
+function addRepsRound(blockIndex) {
+  classBlocks.value[blockIndex].form.repsPerRound.push('')
+}
+
+function removeRepsRound(blockIndex, rIndex) {
+  const arr = classBlocks.value[blockIndex].form.repsPerRound
+  if (arr.length > 1) arr.splice(rIndex, 1)
 }
 
 // --- Summary text for collapsed block ---
@@ -150,7 +217,10 @@ function blockSummary(form) {
     }
   }
   if (form.rounds) parts.push(`${form.rounds} rondas`)
-  if (form.repsPerRound) parts.push(form.repsPerRound)
+  if (form.subtype === 'perRound' && Array.isArray(form.repsPerRound)) {
+    const nums = form.repsPerRound.filter((s) => s)
+    if (nums.length) parts.push(nums.join('-'))
+  }
   return parts.join(' · ')
 }
 
@@ -234,6 +304,16 @@ async function handleSubmit() {
   if (blockWithNoExercises) {
     validationError.value = `El bloque "${blockWithNoExercises.form.name || 'Sin nombre'}" necesita al menos un ejercicio.`
     return
+  }
+
+  // Validate each block
+  for (const cb of classBlocks.value) {
+    const blockData = formToBlockData(cb.form)
+    const result = validateBlock(blockData)
+    if (!result.valid) {
+      validationError.value = `Bloque "${cb.form.name || 'Sin nombre'}": ${result.message}`
+      return
+    }
   }
 
   submitting.value = true
@@ -345,7 +425,7 @@ onMounted(async () => {
                   {{ cb.form.name || 'Sin nombre' }}
                 </span>
                 <span class="text-white/40 text-xs">
-                  {{ cb.form.preset ? TIMED_PRESETS.find(p => p.value === cb.form.preset)?.label : BLOCK_TYPES.find(bt => bt.value === cb.form.type)?.label }}
+                  {{ cb.form.subtype && cb.form.subtype !== 'custom' ? TIMED_SUBTYPES.find(p => p.value === cb.form.subtype)?.label : BLOCK_TYPES.find(bt => bt.value === cb.form.type)?.label }}
                   <span v-if="blockSummary(cb.form)"> · {{ blockSummary(cb.form) }}</span>
                 </span>
               </div>
@@ -382,7 +462,7 @@ onMounted(async () => {
                     v-for="bt in BLOCK_TYPES"
                     :key="bt.value"
                     type="button"
-                    @click="cb.form.type = bt.value; cb.form.preset = null"
+                    @click="cb.form.type = bt.value; cb.form.subtype = isTimed(bt.value) ? 'custom' : 'sameReps'"
                     class="flex-1 rounded-lg px-3 py-2 font-bold text-xs transition-colors border"
                     :class="cb.form.type === bt.value
                       ? 'bg-gymOrange text-white border-gymOrange'
@@ -393,60 +473,93 @@ onMounted(async () => {
                 </div>
               </div>
 
-              <!-- Timed Presets -->
+              <!-- Timed Subtypes -->
               <div v-if="isFormTimed(cb.form)">
-                <label class="block text-xs text-white/50 mb-1">Configuración rápida</label>
+                <label class="block text-xs text-white/50 mb-1">Subtipo</label>
                 <div class="flex gap-2">
                   <button
-                    v-for="p in TIMED_PRESETS"
-                    :key="p.value"
+                    v-for="st in TIMED_SUBTYPES"
+                    :key="st.value"
                     type="button"
-                    @click="selectPreset(cb.form, p.value)"
+                    @click="selectSubtype(cb.form, st.value)"
                     class="rounded-lg px-3 py-1.5 text-xs font-bold transition-colors border"
-                    :class="cb.form.preset === p.value
+                    :class="cb.form.subtype === st.value
                       ? 'bg-white/20 text-white border-white/40'
                       : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30'"
                   >
-                    {{ p.label }}
+                    {{ st.label }}
                   </button>
                 </div>
               </div>
 
-              <!-- Work Time -->
-              <div v-if="showWorkTime(cb.form)">
-                <label class="block text-xs text-white/50 mb-1">{{ workTimeLabel(cb.form) }}</label>
-                <div class="flex items-center gap-2">
-                  <input v-model="cb.form.workMinutes" type="number" min="0" placeholder="15"
-                    class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
-                  <span class="text-white/50 text-sm">min</span>
-                  <input v-model="cb.form.workSeconds" type="number" min="0" max="59" placeholder="00"
-                    class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
-                  <span class="text-white/50 text-sm">seg</span>
+              <!-- Reps Subtypes -->
+              <div v-if="formShowBlockReps(cb.form)">
+                <label class="block text-xs text-white/50 mb-1">Subtipo</label>
+                <div class="flex gap-2">
+                  <button
+                    v-for="st in REPS_SUBTYPES"
+                    :key="st.value"
+                    type="button"
+                    @click="cb.form.subtype = st.value"
+                    class="rounded-lg px-3 py-1.5 text-xs font-bold transition-colors border"
+                    :class="cb.form.subtype === st.value
+                      ? 'bg-white/20 text-white border-white/40'
+                      : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30'"
+                  >
+                    {{ st.label }}
+                  </button>
                 </div>
               </div>
 
-              <!-- Rest Time -->
-              <div v-if="showRestTime(cb.form)">
+              <!-- Work Time with steppers -->
+              <div v-if="formShowWorkTime(cb.form)">
+                <label class="block text-xs text-white/50 mb-1">{{ workTimeLabel(cb.form) }}</label>
+                <div class="flex items-center gap-1">
+                  <button type="button" @click="stepFormWork(cb.form, -30)" :disabled="!canStepFormWork(cb.form, -30)"
+                    class="px-1.5 py-2 text-xs text-white/50 hover:text-white disabled:opacity-20 transition-colors">-30s</button>
+                  <button type="button" @click="stepFormWork(cb.form, -5)" :disabled="!canStepFormWork(cb.form, -5)"
+                    class="px-1.5 py-2 text-xs text-white/50 hover:text-white disabled:opacity-20 transition-colors">-5s</button>
+                  <input v-model="cb.form.workMinutes" type="number" min="0" placeholder="15"
+                    class="w-14 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
+                  <span class="text-white/50 text-sm">:</span>
+                  <input v-model="cb.form.workSeconds" type="number" min="0" max="59" placeholder="00"
+                    class="w-14 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
+                  <button type="button" @click="stepFormWork(cb.form, 5)" :disabled="!canStepFormWork(cb.form, 5)"
+                    class="px-1.5 py-2 text-xs text-white/50 hover:text-white disabled:opacity-20 transition-colors">+5s</button>
+                  <button type="button" @click="stepFormWork(cb.form, 30)" :disabled="!canStepFormWork(cb.form, 30)"
+                    class="px-1.5 py-2 text-xs text-white/50 hover:text-white disabled:opacity-20 transition-colors">+30s</button>
+                </div>
+              </div>
+
+              <!-- Rest Time with steppers -->
+              <div v-if="formShowRestTime(cb.form)">
                 <label class="block text-xs text-white/50 mb-1">Tiempo de descanso</label>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1">
+                  <button type="button" @click="stepFormRest(cb.form, -30)" :disabled="!canStepFormRest(cb.form, -30)"
+                    class="px-1.5 py-2 text-xs text-white/50 hover:text-white disabled:opacity-20 transition-colors">-30s</button>
+                  <button type="button" @click="stepFormRest(cb.form, -5)" :disabled="!canStepFormRest(cb.form, -5)"
+                    class="px-1.5 py-2 text-xs text-white/50 hover:text-white disabled:opacity-20 transition-colors">-5s</button>
                   <input v-model="cb.form.restMinutes" type="number" min="0" placeholder="0"
-                    class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
-                  <span class="text-white/50 text-sm">min</span>
+                    class="w-14 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
+                  <span class="text-white/50 text-sm">:</span>
                   <input v-model="cb.form.restSeconds" type="number" min="0" max="59" placeholder="00"
-                    class="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
-                  <span class="text-white/50 text-sm">seg</span>
+                    class="w-14 bg-white/10 border border-white/20 rounded-lg px-2 py-2 text-white text-center text-sm focus:outline-none focus:border-gymOrange" />
+                  <button type="button" @click="stepFormRest(cb.form, 5)" :disabled="!canStepFormRest(cb.form, 5)"
+                    class="px-1.5 py-2 text-xs text-white/50 hover:text-white disabled:opacity-20 transition-colors">+5s</button>
+                  <button type="button" @click="stepFormRest(cb.form, 30)" :disabled="!canStepFormRest(cb.form, 30)"
+                    class="px-1.5 py-2 text-xs text-white/50 hover:text-white disabled:opacity-20 transition-colors">+30s</button>
                 </div>
               </div>
 
               <!-- Rounds -->
-              <div v-if="showRounds(cb.form)">
+              <div v-if="formShowRounds(cb.form)">
                 <label class="block text-xs text-white/50 mb-1">Rondas</label>
                 <input v-model="cb.form.rounds" type="number" min="1" placeholder="Ej. 5"
                   class="w-24 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
               </div>
 
               <!-- Exercise Mode -->
-              <div v-if="showExerciseMode(cb.form)">
+              <div v-if="formShowExerciseMode(cb.form)">
                 <label class="block text-xs text-white/50 mb-1">Modo de ejercicios</label>
                 <div class="flex gap-2">
                   <button type="button" @click="cb.form.exerciseMode = 'all'"
@@ -466,17 +579,40 @@ onMounted(async () => {
                 </div>
               </div>
 
-              <!-- Block-level reps (reps type) -->
-              <div v-if="showBlockReps(cb.form)" class="space-y-3">
-                <div>
-                  <label class="block text-xs text-white/50 mb-1">Reps por ronda (todas iguales)</label>
-                  <input v-model="cb.form.repsEveryRound" type="number" min="1" placeholder="Ej. 10"
-                    class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
-                </div>
-                <div>
-                  <label class="block text-xs text-white/50 mb-1">Reps por ronda (variable)</label>
-                  <input v-model="cb.form.repsPerRound" type="text" placeholder="Ej. 21, 15, 9"
-                    class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
+              <!-- Block-level reps: sameReps -->
+              <div v-if="formShowBlockReps(cb.form) && cb.form.subtype === 'sameReps'">
+                <label class="block text-xs text-white/50 mb-1">Reps por ronda</label>
+                <input v-model="cb.form.repsEveryRound" type="number" min="1" placeholder="Ej. 10"
+                  class="w-24 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
+              </div>
+
+              <!-- Block-level reps: perRound (dynamic inputs) -->
+              <div v-if="formShowBlockReps(cb.form) && cb.form.subtype === 'perRound'" class="space-y-2">
+                <label class="block text-xs text-white/50 mb-1">Reps por ronda</label>
+                <div class="flex flex-wrap gap-2 items-end">
+                  <div v-for="(_, rIndex) in cb.form.repsPerRound" :key="rIndex" class="flex items-center gap-0.5">
+                    <div class="text-center">
+                      <span class="block text-xs text-white/40 mb-0.5">R{{ rIndex + 1 }}</span>
+                      <input
+                        v-model="cb.form.repsPerRound[rIndex]"
+                        type="number"
+                        min="1"
+                        placeholder="0"
+                        class="w-14 bg-white/10 border border-white/20 rounded-lg px-1.5 py-1.5 text-white text-center text-sm focus:outline-none focus:border-gymOrange"
+                      />
+                    </div>
+                    <button
+                      v-if="cb.form.repsPerRound.length > 1"
+                      type="button"
+                      @click="removeRepsRound(bIndex, rIndex)"
+                      class="text-red-400/50 hover:text-red-400 p-0.5 mt-4"
+                    ><TrashIcon class="w-3 h-3" /></button>
+                  </div>
+                  <button
+                    type="button"
+                    @click="addRepsRound(bIndex)"
+                    class="rounded-lg border border-dashed border-white/20 px-2.5 py-1.5 text-white/50 hover:text-white hover:border-white/40 text-xs transition-colors mt-4"
+                  >+</button>
                 </div>
               </div>
 
@@ -505,10 +641,12 @@ onMounted(async () => {
                       class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
 
                     <div class="flex gap-2">
-                      <div v-if="showExerciseReps(cb.form)" class="w-24">
-                        <label class="block text-xs text-white/40 mb-0.5">Reps</label>
-                        <input v-model="ex.repsEveryRound" type="number" min="1" placeholder="—"
-                          class="w-full bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-gymOrange" />
+                      <div v-if="formShowExerciseReps(cb.form)" class="w-24">
+                        <label class="block text-xs text-white/40 mb-0.5">Reps <span v-if="formExerciseRepsRequired(cb.form)" class="text-gymOrange">*</span></label>
+                        <input v-model="ex.repsEveryRound" type="number" min="1"
+                          :placeholder="formExerciseRepsRequired(cb.form) ? 'Req.' : '—'"
+                          class="w-full bg-white/10 border rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-gymOrange"
+                          :class="formExerciseRepsRequired(cb.form) && !ex.repsEveryRound ? 'border-gymOrange/50' : 'border-white/20'" />
                       </div>
                       <div class="flex-1">
                         <label class="block text-xs text-white/40 mb-0.5">Notas</label>

@@ -4,6 +4,8 @@
  * Messages are user-facing (Spanish).
  */
 
+import { getRepsSubcase } from '../models/blockTypes'
+
 export function validateBlock(blockData) {
   if (!blockData.name?.trim()) {
     return { valid: false, message: 'El bloque debe tener un nombre.' }
@@ -30,20 +32,41 @@ export function validateBlock(blockData) {
     if (!blockData.exerciseMode || !['all', 'rotate'].includes(blockData.exerciseMode)) {
       return { valid: false, message: 'El modo de ejercicios debe ser "all" o "rotate".' }
     }
+    if (
+      ['amrap', 'emom'].includes(blockData.subtype) &&
+      blockData.exercises.some((ex) => !ex.repsEveryRound)
+    ) {
+      return {
+        valid: false,
+        message: `Cada ejercicio debe tener repeticiones en ${blockData.subtype.toUpperCase()}.`,
+      }
+    }
   }
 
   if (blockData.type === 'reps') {
     if (!blockData.rounds || blockData.rounds < 1) {
       return { valid: false, message: 'El bloque debe tener al menos 1 ronda.' }
     }
-    if (
-      blockData.repsPerRound?.length &&
-      blockData.repsPerRound.some((r) => !Number.isFinite(r) || r < 1)
-    ) {
-      return {
-        valid: false,
-        message: 'Todas las repeticiones por ronda deben ser números positivos.',
+    const subcase = getRepsSubcase(blockData)
+    if (subcase === 'sameReps' && (!blockData.repsEveryRound || blockData.repsEveryRound < 1)) {
+      return { valid: false, message: 'Las repeticiones por ronda deben ser mayor a 0.' }
+    }
+    if (subcase === 'perRound') {
+      if (!blockData.repsPerRound?.length) {
+        return { valid: false, message: 'Debes añadir al menos una ronda con repeticiones.' }
       }
+      if (blockData.repsPerRound.some((r) => !Number.isFinite(r) || r < 1)) {
+        return {
+          valid: false,
+          message: 'Todas las repeticiones por ronda deben ser números positivos.',
+        }
+      }
+    }
+    if (
+      subcase === 'perExercise' &&
+      blockData.exercises.some((ex) => !ex.repsEveryRound || ex.repsEveryRound < 1)
+    ) {
+      return { valid: false, message: 'Cada ejercicio debe tener repeticiones.' }
     }
   }
 

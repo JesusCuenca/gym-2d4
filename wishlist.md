@@ -5,12 +5,12 @@
 ### UX / Funcionalidad
 
 - [x] **1. Busqueda y filtrado** — Las listas de bloques y clases no tienen buscador ni filtros. Anadir input de busqueda por nombre y filtros por tipo (timed/reps).
-- [ ] **2. Drag & drop** — Reordenar ejercicios y bloques con drag & drop (ej. `vuedraggable`) en lugar de solo flechas arriba/abajo.
+- [x] **2. Drag & drop** — Reordenar ejercicios y bloques con drag & drop (ej. `vuedraggable`) en lugar de solo flechas arriba/abajo.
 - [ ] **3. Preview del TV** — Vista previa inline o modal de como se vera un bloque/clase en el TV antes de lanzar la sesion.
 - [ ] **4. Historial de sesiones** — Guardar log de sesiones pasadas con fecha, duracion y bloques completados para que el trainer pueda revisar y repetir.
 - [ ] **5. Duplicar clases con fecha** — Mejorar el clon para poder asignar fecha/dia, como base para un calendario semanal.
 - [ ] **6. Edicion en vivo** — Permitir ajustar tiempo restante o saltar a un bloque especifico durante una sesion live.
-- [ ] **7. Indicador de cambios sin guardar** — Avisar al usuario si navega fuera de un formulario con cambios sin guardar.
+- [x] **7. Indicador de cambios sin guardar** — Avisar al usuario si navega fuera de un formulario con cambios sin guardar.
 
 ### Calidad de codigo (stores)
 

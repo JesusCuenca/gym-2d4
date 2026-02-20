@@ -1,22 +1,27 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useBlockStore } from '../stores/blockStore'
 import { BLOCK_TYPES, TIMED_SUBTYPES, REPS_SUBTYPES, isTimed, getRepsSubcase } from '../models/blockTypes'
 import { validateBlock } from '../utils/validation'
-import { ChevronUpIcon, ChevronDownIcon, TrashIcon } from '@heroicons/vue/20/solid'
+import { Bars2Icon, TrashIcon } from '@heroicons/vue/20/solid'
 import { useExercisePicker } from '../composables/useExercisePicker'
+import { useUnsavedChanges } from '../composables/useUnsavedChanges'
+import draggable from 'vuedraggable'
 
 const { pickExercises } = useExercisePicker()
+
+let exerciseIdCounter = 0
 
 async function openExercisePicker() {
   const picked = await pickExercises()
   if (!picked.length) return
+  const withIds = picked.map((ex) => ({ ...ex, _id: ++exerciseIdCounter }))
   const hasOnlyEmpty = form.value.exercises.length === 1 && !form.value.exercises[0].name
   if (hasOnlyEmpty) {
-    form.value.exercises = picked
+    form.value.exercises = withIds
   } else {
-    form.value.exercises.push(...picked)
+    form.value.exercises.push(...withIds)
   }
 }
 
@@ -47,8 +52,10 @@ const form = ref({
   exercises: [createEmptyExercise()],
 })
 
+const { isDirty, markClean, takeSnapshot } = useUnsavedChanges(() => form.value)
+
 function createEmptyExercise() {
-  return { name: '', repsEveryRound: '', notes: '' }
+  return { _id: ++exerciseIdCounter, name: '', repsEveryRound: '', notes: '' }
 }
 
 // Computed visibility
@@ -165,13 +172,6 @@ function removeExercise(index) {
   }
 }
 
-function moveExercise(index, direction) {
-  const target = index + direction
-  if (target < 0 || target >= form.value.exercises.length) return
-  const exercises = form.value.exercises
-  ;[exercises[index], exercises[target]] = [exercises[target], exercises[index]]
-}
-
 function buildBlockData() {
   const blockData = { name: form.value.name, type: form.value.type }
 
@@ -228,6 +228,7 @@ async function handleSubmit() {
     } else {
       await blockStore.createBlock(blockData)
     }
+    markClean()
     router.push({ name: 'admin-blocks' })
   } finally {
     submitting.value = false
@@ -260,6 +261,7 @@ onMounted(async () => {
         : ['']
       form.value.exercises = block.exercises?.length
         ? block.exercises.map((ex) => ({
+            _id: ++exerciseIdCounter,
             name: ex.name || '',
             repsEveryRound: ex.repsEveryRound ? String(ex.repsEveryRound) : '',
             notes: ex.notes || '',
@@ -267,6 +269,8 @@ onMounted(async () => {
         : [createEmptyExercise()]
     }
   }
+  await nextTick()
+  takeSnapshot()
 })
 </script>
 
@@ -274,6 +278,7 @@ onMounted(async () => {
   <div class="max-w-2xl mx-auto">
     <h1 class="text-2xl font-bold text-gymOrange mb-6">
       {{ isEditMode ? 'Editar bloque' : 'Crear bloque' }}
+      <span v-if="isDirty" class="inline-block w-2 h-2 bg-gymOrange rounded-full ml-2 align-middle" title="Cambios sin guardar" />
     </h1>
 
     <!-- Loading -->
@@ -497,27 +502,21 @@ onMounted(async () => {
       <!-- Exercises -->
       <div>
         <label class="block text-sm text-white/70 mb-3">Ejercicios</label>
-        <div class="space-y-3">
-          <div
-            v-for="(exercise, index) in form.exercises"
-            :key="index"
-            class="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3"
-          >
-            <div class="flex items-center justify-between">
-              <span class="text-white/50 text-sm font-medium">#{{ index + 1 }}</span>
-              <div class="flex items-center gap-1">
-                <button
-                  type="button"
-                  @click="moveExercise(index, -1)"
-                  :disabled="index === 0"
-                  class="text-white/30 hover:text-white disabled:opacity-20 p-1"
-                ><ChevronUpIcon class="w-4 h-4" /></button>
-                <button
-                  type="button"
-                  @click="moveExercise(index, 1)"
-                  :disabled="index === form.exercises.length - 1"
-                  class="text-white/30 hover:text-white disabled:opacity-20 p-1"
-                ><ChevronDownIcon class="w-4 h-4" /></button>
+        <draggable
+          v-model="form.exercises"
+          item-key="_id"
+          handle=".drag-handle"
+          ghost-class="opacity-30"
+          :animation="200"
+          class="space-y-3"
+        >
+          <template #item="{ element: exercise, index }">
+            <div class="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <Bars2Icon class="drag-handle w-5 h-5 text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0" />
+                  <span class="text-white/50 text-sm font-medium">#{{ index + 1 }}</span>
+                </div>
                 <button
                   type="button"
                   @click="removeExercise(index)"
@@ -525,40 +524,40 @@ onMounted(async () => {
                   class="text-red-400/70 hover:text-red-400 disabled:opacity-20 p-1"
                 ><TrashIcon class="w-4 h-4" /></button>
               </div>
-            </div>
 
-            <input
-              v-model="exercise.name"
-              type="text"
-              required
-              placeholder="Nombre del ejercicio"
-              class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
-            />
+              <input
+                v-model="exercise.name"
+                type="text"
+                required
+                placeholder="Nombre del ejercicio"
+                class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
+              />
 
-            <div class="flex gap-2">
-              <div v-if="showExerciseReps" class="w-32">
-                <label class="block text-xs text-white/50 mb-1">Reps <span v-if="exerciseRepsRequired" class="text-gymOrange">*</span></label>
-                <input
-                  v-model="exercise.repsEveryRound"
-                  type="number"
-                  min="1"
-                  :placeholder="exerciseRepsRequired ? 'Obligatorio' : '—'"
-                  class="w-full bg-white/10 border rounded-lg px-3 py-2 text-white text-sm text-center focus:outline-none focus:border-gymOrange"
-                  :class="exerciseRepsRequired && !exercise.repsEveryRound ? 'border-gymOrange/50' : 'border-white/20'"
-                />
-              </div>
-              <div class="flex-1">
-                <label class="block text-xs text-white/50 mb-1">Notas</label>
-                <input
-                  v-model="exercise.notes"
-                  type="text"
-                  placeholder="Opcional"
-                  class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
-                />
+              <div class="flex gap-2">
+                <div v-if="showExerciseReps" class="w-32">
+                  <label class="block text-xs text-white/50 mb-1">Reps <span v-if="exerciseRepsRequired" class="text-gymOrange">*</span></label>
+                  <input
+                    v-model="exercise.repsEveryRound"
+                    type="number"
+                    min="1"
+                    :placeholder="exerciseRepsRequired ? 'Obligatorio' : '—'"
+                    class="w-full bg-white/10 border rounded-lg px-3 py-2 text-white text-sm text-center focus:outline-none focus:border-gymOrange"
+                    :class="exerciseRepsRequired && !exercise.repsEveryRound ? 'border-gymOrange/50' : 'border-white/20'"
+                  />
+                </div>
+                <div class="flex-1">
+                  <label class="block text-xs text-white/50 mb-1">Notas</label>
+                  <input
+                    v-model="exercise.notes"
+                    type="text"
+                    placeholder="Opcional"
+                    class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </template>
+        </draggable>
 
         <div class="mt-3 flex gap-2">
           <button

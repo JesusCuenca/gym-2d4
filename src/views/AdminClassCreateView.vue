@@ -1,26 +1,32 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useClassStore } from '../stores/classStore'
 import { useBlockStore } from '../stores/blockStore'
 import { BLOCK_TYPES, TIMED_SUBTYPES, REPS_SUBTYPES, isTimed, getBlockLabel, getRepsSubcase } from '../models/blockTypes'
 import { validateBlock } from '../utils/validation'
-import { ChevronUpIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { Bars2Icon, XMarkIcon } from '@heroicons/vue/20/solid'
 import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { useExercisePicker } from '../composables/useExercisePicker'
 import { useBlockPicker } from '../composables/useBlockPicker'
+import { useUnsavedChanges } from '../composables/useUnsavedChanges'
+import draggable from 'vuedraggable'
 
 const { pickExercises } = useExercisePicker()
+
+let exerciseIdCounter = 0
+let blockKeyCounter = 0
 
 async function openExercisePicker(bIndex) {
   const picked = await pickExercises()
   if (!picked.length) return
+  const withIds = picked.map((ex) => ({ ...ex, _id: ++exerciseIdCounter }))
   const cb = classBlocks.value[bIndex]
   const hasOnlyEmpty = cb.form.exercises.length === 1 && !cb.form.exercises[0].name
   if (hasOnlyEmpty) {
-    cb.form.exercises = picked
+    cb.form.exercises = withIds
   } else {
-    cb.form.exercises.push(...picked)
+    cb.form.exercises.push(...withIds)
   }
 }
 
@@ -37,12 +43,18 @@ const name = ref('')
 const description = ref('')
 const classBlocks = ref([]) // { sourceBlockId, form, editing }
 
+const { isDirty, markClean, takeSnapshot } = useUnsavedChanges(() => ({
+  name: name.value,
+  description: description.value,
+  classBlocks: classBlocks.value,
+}))
+
 const { pickBlocks } = useBlockPicker()
 
 // --- Helpers ---
 
 function createEmptyExercise() {
-  return { name: '', repsEveryRound: '', notes: '' }
+  return { _id: ++exerciseIdCounter, name: '', repsEveryRound: '', notes: '' }
 }
 
 function createEmptyForm() {
@@ -77,6 +89,7 @@ function blockDataToForm(bd) {
     repsEveryRound: bd.repsEveryRound ? String(bd.repsEveryRound) : '',
     repsPerRound: bd.repsPerRound?.length ? bd.repsPerRound.map(String) : [''],
     exercises: (bd.exercises?.length ? bd.exercises : [{ name: '' }]).map((ex) => ({
+      _id: ++exerciseIdCounter,
       name: ex.name || '',
       repsEveryRound: ex.repsEveryRound ? String(ex.repsEveryRound) : '',
       notes: ex.notes || '',
@@ -248,6 +261,7 @@ async function openBlockPicker() {
   if (!picked.length) return
   for (const block of picked) {
     classBlocks.value.push({
+      _key: ++blockKeyCounter,
       sourceBlockId: block.id,
       form: blockDataToForm(block),
       editing: false,
@@ -257,6 +271,7 @@ async function openBlockPicker() {
 
 function addNewBlock() {
   classBlocks.value.push({
+    _key: ++blockKeyCounter,
     sourceBlockId: null,
     form: createEmptyForm(),
     editing: true,
@@ -265,13 +280,6 @@ function addNewBlock() {
 
 function removeBlock(index) {
   classBlocks.value.splice(index, 1)
-}
-
-function moveBlock(index, direction) {
-  const target = index + direction
-  if (target < 0 || target >= classBlocks.value.length) return
-  const arr = classBlocks.value
-  ;[arr[index], arr[target]] = [arr[target], arr[index]]
 }
 
 function toggleEdit(index) {
@@ -287,13 +295,6 @@ function addExercise(blockIndex) {
 function removeExercise(blockIndex, exIndex) {
   const exercises = classBlocks.value[blockIndex].form.exercises
   if (exercises.length > 1) exercises.splice(exIndex, 1)
-}
-
-function moveExercise(blockIndex, exIndex, direction) {
-  const target = exIndex + direction
-  const exercises = classBlocks.value[blockIndex].form.exercises
-  if (target < 0 || target >= exercises.length) return
-  ;[exercises[exIndex], exercises[target]] = [exercises[target], exercises[exIndex]]
 }
 
 // --- Save block to library ---
@@ -354,6 +355,7 @@ async function handleSubmit() {
       await classStore.createClass(classData)
     }
 
+    markClean()
     router.push({ name: 'admin-classes' })
   } finally {
     submitting.value = false
@@ -371,6 +373,7 @@ onMounted(async () => {
       name.value = cls.name
       description.value = cls.description || ''
       classBlocks.value = (cls.blocks || []).map((b) => ({
+        _key: ++blockKeyCounter,
         sourceBlockId: b.blockId,
         form: blockDataToForm(b.blockData),
         editing: false,
@@ -378,6 +381,8 @@ onMounted(async () => {
     }
   }
   loading.value = false
+  await nextTick()
+  takeSnapshot()
 })
 </script>
 
@@ -385,6 +390,7 @@ onMounted(async () => {
   <div class="max-w-2xl mx-auto">
     <h1 class="text-2xl font-bold text-gymOrange mb-6">
       {{ isEditMode ? 'Editar clase' : 'Crear clase' }}
+      <span v-if="isDirty" class="inline-block w-2 h-2 bg-gymOrange rounded-full ml-2 align-middle" title="Cambios sin guardar" />
     </h1>
 
     <!-- Loading -->
@@ -431,14 +437,20 @@ onMounted(async () => {
         </div>
 
         <!-- Block list -->
-        <div v-else class="space-y-3 mb-4">
-          <div
-            v-for="(cb, bIndex) in classBlocks"
-            :key="bIndex"
-            class="bg-white/5 border border-white/10 rounded-lg overflow-hidden"
-          >
+        <draggable
+          v-else
+          v-model="classBlocks"
+          item-key="_key"
+          handle=".block-drag-handle"
+          ghost-class="opacity-30"
+          :animation="200"
+          class="space-y-3 mb-4"
+        >
+          <template #item="{ element: cb, index: bIndex }">
+          <div class="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
             <!-- Block header (always visible) -->
             <div class="flex items-center gap-3 px-4 py-3">
+              <Bars2Icon class="block-drag-handle w-5 h-5 text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0" />
               <span class="text-gymOrange font-bold text-sm w-6">{{ bIndex + 1 }}</span>
               <div class="flex-1 min-w-0">
                 <span class="text-white font-medium text-sm truncate block">
@@ -450,12 +462,8 @@ onMounted(async () => {
                 </span>
               </div>
               <div class="flex items-center gap-0.5 shrink-0">
-                <button type="button" @click="moveBlock(bIndex, -1)" :disabled="bIndex === 0"
-                  class="text-white/30 hover:text-white disabled:opacity-20 p-1"><ChevronUpIcon class="w-4 h-4" /></button>
-                <button type="button" @click="moveBlock(bIndex, 1)" :disabled="bIndex === classBlocks.length - 1"
-                  class="text-white/30 hover:text-white disabled:opacity-20 p-1"><ChevronDownIcon class="w-4 h-4" /></button>
                 <button type="button" @click="toggleEdit(bIndex)"
-                  class="text-gymOrange/70 hover:text-gymOrange p-1 ml-1"><PencilSquareIcon class="w-4 h-4" /></button>
+                  class="text-gymOrange/70 hover:text-gymOrange p-1"><PencilSquareIcon class="w-4 h-4" /></button>
                 <button type="button" @click="removeBlock(bIndex)"
                   class="text-red-400/70 hover:text-red-400 p-1 ml-1"><XMarkIcon class="w-4 h-4" /></button>
               </div>
@@ -639,43 +647,45 @@ onMounted(async () => {
               <!-- Exercises -->
               <div>
                 <label class="block text-xs text-white/50 mb-2">Ejercicios</label>
-                <div class="space-y-2">
-                  <div
-                    v-for="(ex, eIndex) in cb.form.exercises"
-                    :key="eIndex"
-                    class="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2"
-                  >
-                    <div class="flex items-center justify-between">
-                      <span class="text-white/40 text-xs font-medium">#{{ eIndex + 1 }}</span>
-                      <div class="flex items-center gap-1">
-                        <button type="button" @click="moveExercise(bIndex, eIndex, -1)" :disabled="eIndex === 0"
-                          class="text-white/30 hover:text-white disabled:opacity-20 p-0.5"><ChevronUpIcon class="w-3.5 h-3.5" /></button>
-                        <button type="button" @click="moveExercise(bIndex, eIndex, 1)" :disabled="eIndex === cb.form.exercises.length - 1"
-                          class="text-white/30 hover:text-white disabled:opacity-20 p-0.5"><ChevronDownIcon class="w-3.5 h-3.5" /></button>
+                <draggable
+                  v-model="cb.form.exercises"
+                  item-key="_id"
+                  handle=".exercise-drag-handle"
+                  ghost-class="opacity-30"
+                  :animation="200"
+                  class="space-y-2"
+                >
+                  <template #item="{ element: ex, index: eIndex }">
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                          <Bars2Icon class="exercise-drag-handle w-4 h-4 text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0" />
+                          <span class="text-white/40 text-xs font-medium">#{{ eIndex + 1 }}</span>
+                        </div>
                         <button type="button" @click="removeExercise(bIndex, eIndex)" :disabled="cb.form.exercises.length === 1"
                           class="text-red-400/70 hover:text-red-400 disabled:opacity-20 p-0.5"><TrashIcon class="w-3.5 h-3.5" /></button>
                       </div>
-                    </div>
 
-                    <input v-model="ex.name" type="text" placeholder="Nombre del ejercicio"
-                      class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
+                      <input v-model="ex.name" type="text" placeholder="Nombre del ejercicio"
+                        class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
 
-                    <div class="flex gap-2">
-                      <div v-if="formShowExerciseReps(cb.form)" class="w-24">
-                        <label class="block text-xs text-white/40 mb-0.5">Reps <span v-if="formExerciseRepsRequired(cb.form)" class="text-gymOrange">*</span></label>
-                        <input v-model="ex.repsEveryRound" type="number" min="1"
-                          :placeholder="formExerciseRepsRequired(cb.form) ? 'Req.' : '—'"
-                          class="w-full bg-white/10 border rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-gymOrange"
-                          :class="formExerciseRepsRequired(cb.form) && !ex.repsEveryRound ? 'border-gymOrange/50' : 'border-white/20'" />
-                      </div>
-                      <div class="flex-1">
-                        <label class="block text-xs text-white/40 mb-0.5">Notas</label>
-                        <input v-model="ex.notes" type="text" placeholder="Opcional"
-                          class="w-full bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
+                      <div class="flex gap-2">
+                        <div v-if="formShowExerciseReps(cb.form)" class="w-24">
+                          <label class="block text-xs text-white/40 mb-0.5">Reps <span v-if="formExerciseRepsRequired(cb.form)" class="text-gymOrange">*</span></label>
+                          <input v-model="ex.repsEveryRound" type="number" min="1"
+                            :placeholder="formExerciseRepsRequired(cb.form) ? 'Req.' : '—'"
+                            class="w-full bg-white/10 border rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-gymOrange"
+                            :class="formExerciseRepsRequired(cb.form) && !ex.repsEveryRound ? 'border-gymOrange/50' : 'border-white/20'" />
+                        </div>
+                        <div class="flex-1">
+                          <label class="block text-xs text-white/40 mb-0.5">Notas</label>
+                          <input v-model="ex.notes" type="text" placeholder="Opcional"
+                            class="w-full bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </template>
+                </draggable>
 
                 <div class="mt-2 flex gap-2">
                   <button type="button" @click="openExercisePicker(bIndex)"
@@ -707,7 +717,8 @@ onMounted(async () => {
               </button>
             </div>
           </div>
-        </div>
+          </template>
+        </draggable>
       </div>
 
       <!-- Add block actions -->

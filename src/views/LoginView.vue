@@ -2,9 +2,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useUserStore } from '../stores/userStore'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 
 const email = ref('')
 const password = ref('')
@@ -14,6 +16,7 @@ async function handleSubmit() {
   submitting.value = true
   try {
     await authStore.login(email.value, password.value)
+    await userStore.fetchProfile(authStore.user.uid)
     router.push('/admin')
   } catch {
     // error is already set in authStore

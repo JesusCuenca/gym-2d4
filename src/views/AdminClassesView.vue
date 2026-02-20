@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useClassStore } from '../stores/classStore'
+import { useUserStore } from '../stores/userStore'
 import { useToastStore } from '../stores/toastStore'
 import { useConfirm } from '../composables/useConfirm'
 import { getTotalDuration } from '../utils/timeline'
@@ -13,6 +14,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const classStore = useClassStore()
+const userStore = useUserStore()
 const toastStore = useToastStore()
 const { confirm } = useConfirm()
 
@@ -98,7 +100,7 @@ onMounted(() => {
         </div>
 
         <!-- Block preview -->
-        <div v-if="cls.blocks?.length" class="flex flex-wrap gap-1 mb-4">
+        <div v-if="cls.blocks?.length" class="flex flex-wrap gap-1 mb-3">
           <span
             v-for="(block, i) in cls.blocks"
             :key="i"
@@ -106,6 +108,10 @@ onMounted(() => {
           >
             {{ block.blockData?.name || 'Bloque' }}
           </span>
+        </div>
+
+        <div class="text-white/30 text-xs mb-4">
+          Creado por {{ userStore.profile?.displayName }}
         </div>
 
         <div class="flex gap-2">

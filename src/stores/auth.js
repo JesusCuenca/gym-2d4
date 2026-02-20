@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { auth } from '../firebase'
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth'
+import { useUserStore } from './userStore'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -47,6 +48,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
+    const userStore = useUserStore()
+    userStore.clearProfile()
     await signOut(auth)
   }
 

@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "../stores/auth";
+import { useUserStore } from "../stores/userStore";
 import AdminLayout from "../layouts/AdminLayout.vue";
-import { log } from "firebase/firestore/pipelines";
 
 const routes = [
   // TV (public — no auth required)
@@ -66,6 +66,17 @@ const routes = [
         name: "admin-class-live",
         component: () => import("../views/AdminClassLiveView.vue"),
       },
+      {
+        path: "perfil/setup",
+        name: "admin-profile-setup",
+        component: () => import("../views/AdminProfileSetupView.vue"),
+        meta: { isOnboarding: true },
+      },
+      {
+        path: "perfil",
+        name: "admin-profile",
+        component: () => import("../views/AdminProfileView.vue"),
+      },
     ],
   },
 
@@ -83,12 +94,21 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const authStore = useAuthStore();
+  const userStore = useUserStore();
 
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
     return { name: "login" };
   }
 
   if (to.name === "login" && authStore.isLoggedIn) {
+    return { name: "admin-dashboard" };
+  }
+
+  if (to.meta.requiresAuth && authStore.isLoggedIn && !userStore.hasProfile && !to.meta.isOnboarding) {
+    return { name: "admin-profile-setup" };
+  }
+
+  if (to.meta.isOnboarding && userStore.hasProfile) {
     return { name: "admin-dashboard" };
   }
 });

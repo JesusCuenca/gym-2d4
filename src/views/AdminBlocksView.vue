@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useBlockStore } from '../stores/blockStore'
+import { useUserStore } from '../stores/userStore'
 import { useToastStore } from '../stores/toastStore'
 import { useConfirm } from '../composables/useConfirm'
 import { getBlockLabel } from '../models/blockTypes'
@@ -9,6 +10,7 @@ import { formatTimer } from '../utils/time'
 import { PencilSquareIcon, DocumentDuplicateIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 const blockStore = useBlockStore()
+const userStore = useUserStore()
 const toastStore = useToastStore()
 const { confirm } = useConfirm()
 
@@ -97,11 +99,15 @@ onMounted(() => {
           {{ blockMeta(block) }}
         </p>
 
-        <div class="text-white/40 text-sm mb-4">
+        <div class="text-white/40 text-sm mb-3">
           {{ block.exercises?.length || 0 }} ejercicio{{ (block.exercises?.length || 0) !== 1 ? 's' : '' }}
           <span v-if="block.exercises?.length" class="text-white/30">
             — {{ block.exercises.map((e) => e.name).join(', ') }}
           </span>
+        </div>
+
+        <div class="text-white/30 text-xs mb-4">
+          Creado por {{ userStore.profile?.displayName }}
         </div>
 
         <div class="flex gap-2">

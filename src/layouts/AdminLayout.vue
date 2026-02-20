@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useUserStore } from '../stores/userStore'
 import { useConnectionStatus } from '../composables/useConnectionStatus'
 import {
   Bars3Icon,
@@ -10,10 +11,12 @@ import {
   CubeIcon,
   CalendarDaysIcon,
   ArrowRightOnRectangleIcon,
+  UserCircleIcon,
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 const menuOpen = ref(false)
 const { isOnline } = useConnectionStatus()
 
@@ -55,7 +58,10 @@ function closeMenu() {
             <CalendarDaysIcon class="w-4 h-4" />
             Clases
           </RouterLink>
-          <span class="text-white/50 text-sm">{{ authStore.user?.email }}</span>
+          <RouterLink to="/admin/perfil" class="nav-link">
+            <UserCircleIcon class="w-4 h-4" />
+            {{ userStore.profile?.displayName || authStore.user?.email }}
+          </RouterLink>
           <button @click="handleLogout" class="nav-link">
             <ArrowRightOnRectangleIcon class="w-4 h-4" />
             Salir
@@ -124,7 +130,9 @@ function closeMenu() {
             </nav>
 
             <div class="pt-3 border-t border-white/10 flex items-center justify-between">
-              <span class="text-white/40 text-sm truncate">{{ authStore.user?.email }}</span>
+              <RouterLink to="/admin/perfil" class="text-white/40 text-sm truncate hover:text-white transition-colors" @click="closeMenu">
+                {{ userStore.profile?.displayName || authStore.user?.email }}
+              </RouterLink>
               <button @click="handleLogout" class="nav-link text-base">
                 <ArrowRightOnRectangleIcon class="w-5 h-5" />
                 Salir

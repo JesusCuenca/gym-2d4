@@ -50,6 +50,19 @@ const isLastBlock = computed(() => {
   return s.currentBlockIndex >= (s.blocks?.length || 0) - 1
 })
 
+const canAdjustTime = computed(() => {
+  const block = currentBlock.value
+  const s = sessionStore.session
+  if (!block || !s) return false
+  return isTimed(block.type) && (s.clockState === 'running' || s.clockState === 'paused')
+})
+
+const totalBlockDuration = computed(() => {
+  const block = currentBlock.value
+  if (!block || !isTimed(block.type)) return null
+  return getTotalDuration(block)
+})
+
 const timerDisplay = computed(() => {
   const block = currentBlock.value
   if (!block) return '00:00'
@@ -126,7 +139,7 @@ async function handlePlay() {
 }
 
 async function handlePause() {
-  if (sessionId.value) await sessionStore.pause(sessionId.value, timer.displaySeconds.value)
+  if (sessionId.value) await sessionStore.pause(sessionId.value)
 }
 
 async function handleNextBlock() {
@@ -138,6 +151,31 @@ async function handleNextBlock() {
   }
 }
 
+async function handleAdjustTime(clockDelta) {
+  if (!sessionId.value || !canAdjustTime.value) return
+  const newDisplay = timer.displaySeconds.value - clockDelta
+  const maxDuration = totalBlockDuration.value
+  if (newDisplay < 0) return
+  if (maxDuration && newDisplay >= maxDuration) return
+  await sessionStore.adjustTime(sessionId.value, clockDelta)
+}
+
+async function handleGoToBlock(targetIndex) {
+  const s = sessionStore.session
+  if (!s || !sessionId.value) return
+  if (targetIndex === s.currentBlockIndex) return
+  if (targetIndex < 0 || targetIndex >= s.blocks.length) return
+  const blockName = s.blocks[targetIndex]?.blockData?.name || `Bloque ${targetIndex + 1}`
+  const ok = await confirm({
+    title: 'Saltar a bloque',
+    message: `¿Saltar a "${blockName}"? Se perderá el progreso del bloque actual.`,
+    confirmLabel: 'Saltar',
+  })
+  if (ok) {
+    await sessionStore.goToBlock(sessionId.value, targetIndex)
+  }
+}
+
 async function handleComplete() {
   if (!sessionId.value) return
   const ok = await confirm({
@@ -146,7 +184,7 @@ async function handleComplete() {
     confirmLabel: 'Completar',
   })
   if (ok) {
-    await sessionStore.completeSession(sessionId.value, timer.displaySeconds.value)
+    await sessionStore.completeSession(sessionId.value)
   }
 }
 
@@ -261,6 +299,26 @@ onUnmounted(() => {
         <p class="text-white/30 text-xs mt-2">{{ timerLabel }}</p>
       </div>
 
+      <!-- Time Adjustment (timed blocks only) -->
+      <div v-if="canAdjustTime" class="flex justify-center gap-2 mb-4">
+        <button @click="handleAdjustTime(-30)"
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 transition-colors">
+          -30s
+        </button>
+        <button @click="handleAdjustTime(-10)"
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 transition-colors">
+          -10s
+        </button>
+        <button @click="handleAdjustTime(10)"
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 transition-colors">
+          +10s
+        </button>
+        <button @click="handleAdjustTime(30)"
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 transition-colors">
+          +30s
+        </button>
+      </div>
+
       <!-- Control Buttons -->
       <div class="grid grid-cols-2 gap-3 mb-6">
         <button v-if="isCountdown" disabled
@@ -296,30 +354,38 @@ onUnmounted(() => {
         <div class="space-y-1">
           <div v-for="(block, i) in sessionStore.session?.blocks" :key="i">
             <!-- Block row -->
-            <button type="button" @click="toggleBlockExpand(i)"
-              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors"
-              :class="i === currentBlockIndex ? 'bg-gymOrange/10' : 'hover:bg-white/5'">
-              <!-- Status icon -->
-              <span class="w-5 flex justify-center shrink-0">
-                <CheckIcon v-if="i < currentBlockIndex" class="w-4 h-4 text-green-400" />
-                <PlayIcon v-else-if="i === currentBlockIndex" class="w-4 h-4 text-gymOrange" />
-                <span v-else class="w-2 h-2 rounded-full bg-white/20" />
-              </span>
-              <!-- Block info -->
-              <span class="flex-1 min-w-0">
-                <span class="text-sm font-medium truncate block"
-                  :class="i === currentBlockIndex ? 'text-white' : i < currentBlockIndex ? 'text-white/40' : 'text-white/60'">
-                  {{ block.blockData?.name || 'Bloque' }}
+            <div class="flex items-center gap-1">
+              <button type="button" @click="toggleBlockExpand(i)"
+                class="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors"
+                :class="i === currentBlockIndex ? 'bg-gymOrange/10' : 'hover:bg-white/5'">
+                <!-- Status icon -->
+                <span class="w-5 flex justify-center shrink-0">
+                  <CheckIcon v-if="i < currentBlockIndex" class="w-4 h-4 text-green-400" />
+                  <PlayIcon v-else-if="i === currentBlockIndex" class="w-4 h-4 text-gymOrange" />
+                  <span v-else class="w-2 h-2 rounded-full bg-white/20" />
                 </span>
-              </span>
-              <span class="text-xs text-white/30 shrink-0">
-                {{ block.blockData ? getBlockLabel(block.blockData) : '' }}
-              </span>
-              <span class="text-white/20 shrink-0">
-                <ChevronUpIcon v-if="expandedBlockIndex === i" class="w-4 h-4" />
-                <ChevronDownIcon v-else class="w-4 h-4" />
-              </span>
-            </button>
+                <!-- Block info -->
+                <span class="flex-1 min-w-0">
+                  <span class="text-sm font-medium truncate block"
+                    :class="i === currentBlockIndex ? 'text-white' : i < currentBlockIndex ? 'text-white/40' : 'text-white/60'">
+                    {{ block.blockData?.name || 'Bloque' }}
+                  </span>
+                </span>
+                <span class="text-xs text-white/30 shrink-0">
+                  {{ block.blockData ? getBlockLabel(block.blockData) : '' }}
+                </span>
+                <span class="text-white/20 shrink-0">
+                  <ChevronUpIcon v-if="expandedBlockIndex === i" class="w-4 h-4" />
+                  <ChevronDownIcon v-else class="w-4 h-4" />
+                </span>
+              </button>
+              <!-- Jump to block button -->
+              <button v-if="i !== currentBlockIndex" @click="handleGoToBlock(i)"
+                class="shrink-0 p-2 rounded-lg text-white/30 hover:text-gymOrange hover:bg-gymOrange/10 transition-colors"
+                title="Saltar a este bloque">
+                <ForwardIcon class="w-4 h-4" />
+              </button>
+            </div>
 
             <!-- Expanded block details -->
             <div v-if="expandedBlockIndex === i && block.blockData"

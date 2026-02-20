@@ -111,14 +111,24 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
-  async function pause(sessionId, elapsedSeconds) {
+  async function pause(sessionId) {
     clearCountdownTimeout()
     error.value = null
     try {
+      const s = session.value
+      if (!s || !s.startTimestamp) return
+
+      // Compute elapsed directly from session data instead of relying on
+      // rAF-updated displaySeconds, which can be stale if the screen was off.
+      const startMs = s.startTimestamp.toMillis
+        ? s.startTimestamp.toMillis()
+        : s.startTimestamp.seconds * 1000
+      const elapsed = s.accumulatedTime + (Date.now() - startMs) / 1000
+
       await updateDoc(doc(db, 'sessions', sessionId), {
         clockState: 'paused',
         startTimestamp: null,
-        accumulatedTime: elapsedSeconds,
+        accumulatedTime: elapsed,
       })
     } catch (e) {
       error.value = 'Error al pausar el temporizador.'
@@ -145,18 +155,61 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
-  async function completeSession(sessionId, finalElapsed) {
+  async function adjustTime(sessionId, clockDelta) {
+    error.value = null
+    try {
+      const s = session.value
+      if (!s) return
+      // clockDelta > 0 = "add time to clock" (more remaining) → decrease accumulatedTime
+      // clockDelta < 0 = "remove time" (less remaining) → increase accumulatedTime
+      const newAccumulated = Math.max(0, s.accumulatedTime - clockDelta)
+      await updateDoc(doc(db, 'sessions', sessionId), {
+        accumulatedTime: newAccumulated,
+      })
+    } catch (e) {
+      error.value = 'Error al ajustar el tiempo.'
+      console.error('adjustTime error:', e)
+      throw e
+    }
+  }
+
+  async function goToBlock(sessionId, targetIndex) {
     clearCountdownTimeout()
     error.value = null
     try {
+      await updateDoc(doc(db, 'sessions', sessionId), {
+        currentBlockIndex: targetIndex,
+        clockState: 'stopped',
+        startTimestamp: null,
+        accumulatedTime: 0,
+        currentRound: null,
+      })
+    } catch (e) {
+      error.value = 'Error al saltar al bloque.'
+      console.error('goToBlock error:', e)
+      throw e
+    }
+  }
+
+  async function completeSession(sessionId) {
+    clearCountdownTimeout()
+    error.value = null
+    try {
+      const s = session.value
       const updateData = {
         sessionState: 'completed',
         clockState: 'finished',
         startTimestamp: null,
       }
-      if (finalElapsed != null) {
-        updateData.accumulatedTime = finalElapsed
+
+      // Compute elapsed directly from session data (same fix as pause)
+      if (s?.startTimestamp) {
+        const startMs = s.startTimestamp.toMillis
+          ? s.startTimestamp.toMillis()
+          : s.startTimestamp.seconds * 1000
+        updateData.accumulatedTime = s.accumulatedTime + (Date.now() - startMs) / 1000
       }
+
       await updateDoc(doc(db, 'sessions', sessionId), updateData)
     } catch (e) {
       error.value = 'Error al completar la sesión.'
@@ -222,6 +275,8 @@ export const useSessionStore = defineStore('session', () => {
     play,
     pause,
     nextBlock,
+    adjustTime,
+    goToBlock,
     completeSession,
     endSession,
     subscribeToSession,

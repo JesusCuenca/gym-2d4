@@ -50,6 +50,19 @@ export function useTimer(sessionRef) {
     { immediate: true },
   )
 
+  // Sync displaySeconds when accumulatedTime changes while clock is not ticking
+  // (e.g. trainer adjusts time while paused)
+  watch(
+    () => sessionRef.value?.accumulatedTime,
+    (newAcc) => {
+      const s = sessionRef.value
+      if (!s || newAcc == null) return
+      if (s.clockState !== 'running' && s.clockState !== 'countdown') {
+        displaySeconds.value = newAcc
+      }
+    },
+  )
+
   onUnmounted(() => stopTicking())
 
   // --- Timeline-based computed values ---

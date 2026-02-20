@@ -9,7 +9,7 @@
 - [ ] **3. Preview del TV** — Vista previa inline o modal de como se vera un bloque/clase en el TV antes de lanzar la sesion.
 - [ ] **4. Historial de sesiones** — Guardar log de sesiones pasadas con fecha, duracion y bloques completados para que el trainer pueda revisar y repetir.
 - [ ] **5. Duplicar clases con fecha** — Mejorar el clon para poder asignar fecha/dia, como base para un calendario semanal.
-- [ ] **6. Edicion en vivo** — Permitir ajustar tiempo restante o saltar a un bloque especifico durante una sesion live.
+- [x] **6. Edicion en vivo** — Permitir ajustar tiempo restante o saltar a un bloque especifico durante una sesion live.
 - [x] **7. Indicador de cambios sin guardar** — Avisar al usuario si navega fuera de un formulario con cambios sin guardar.
 
 ### Calidad de codigo (stores)

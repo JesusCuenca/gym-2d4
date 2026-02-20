@@ -1,18 +1,32 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useBlockStore } from '../stores/blockStore'
 import { useUserStore } from '../stores/userStore'
+import { useAuthStore } from '../stores/auth'
 import { useToastStore } from '../stores/toastStore'
 import { useConfirm } from '../composables/useConfirm'
+import { useListFilters } from '../composables/useListFilters'
 import { getBlockLabel } from '../models/blockTypes'
 import { formatTimer } from '../utils/time'
+import ListFilterBar from '../components/ListFilterBar.vue'
 import { PencilSquareIcon, DocumentDuplicateIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 const blockStore = useBlockStore()
 const userStore = useUserStore()
+const authStore = useAuthStore()
 const toastStore = useToastStore()
 const { confirm } = useConfirm()
+
+const {
+  searchText, userMode, selectedUserUids, dateFrom, dateTo,
+  typeFilter, subtypeFilter,
+  currentPage, totalPages, totalFilteredCount, paginatedItems,
+  nextPage, prevPage, clearFilters, hasActiveFilters,
+} = useListFilters({
+  items: computed(() => blockStore.blocks),
+  currentUserUid: computed(() => authStore.user?.uid),
+})
 
 async function handleDelete(block) {
   const ok = await confirm({
@@ -31,7 +45,7 @@ async function handleClone(block) {
     ...data,
     name: `${block.name} (copia)`,
   })
-  await blockStore.fetchBlocks()
+  await blockStore.fetchAllBlocks()
   toastStore.show('Bloque duplicado')
 }
 
@@ -49,7 +63,8 @@ function blockMeta(block) {
 }
 
 onMounted(() => {
-  blockStore.fetchBlocks()
+  userStore.fetchAllUsers()
+  blockStore.fetchAllBlocks()
 })
 </script>
 
@@ -65,12 +80,33 @@ onMounted(() => {
       </RouterLink>
     </div>
 
+    <!-- Filters & pagination -->
+    <ListFilterBar
+      v-model:searchText="searchText"
+      v-model:userMode="userMode"
+      v-model:selectedUserUids="selectedUserUids"
+      v-model:dateFrom="dateFrom"
+      v-model:dateTo="dateTo"
+      v-model:typeFilter="typeFilter"
+      v-model:subtypeFilter="subtypeFilter"
+      :currentPage="currentPage"
+      :totalPages="totalPages"
+      :totalFilteredCount="totalFilteredCount"
+      :showTypeFilter="true"
+      :allUsers="userStore.allUsers"
+      :currentUserUid="authStore.user?.uid"
+      :hasActiveFilters="hasActiveFilters"
+      @nextPage="nextPage"
+      @prevPage="prevPage"
+      @clearFilters="clearFilters"
+    />
+
     <!-- Loading -->
     <div v-if="blockStore.loading" class="flex justify-center py-12">
       <AppSpinner size="lg" />
     </div>
 
-    <!-- Empty state -->
+    <!-- Empty state: no data at all -->
     <div v-else-if="blockStore.blocks.length === 0" class="text-center py-12">
       <p class="text-white/50 mb-4">No hay bloques todavía. Crea tu primer bloque de ejercicios.</p>
       <RouterLink
@@ -81,10 +117,29 @@ onMounted(() => {
       </RouterLink>
     </div>
 
+    <!-- Empty state: filters produced no results -->
+    <div v-else-if="totalFilteredCount === 0" class="text-center py-12">
+      <p class="text-white/50 mb-4">No hay resultados para estos filtros.</p>
+      <button @click="clearFilters" class="text-gymOrange text-sm hover:underline">
+        Limpiar filtros
+      </button>
+    </div>
+
     <!-- Block list -->
-    <div v-else class="grid gap-4 sm:grid-cols-2">
+    <TransitionGroup
+      v-else
+      tag="div"
+      class="grid gap-4 sm:grid-cols-2"
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition-all duration-200 ease-in absolute"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+      move-class="transition-all duration-300 ease-out"
+    >
       <div
-        v-for="block in blockStore.blocks"
+        v-for="block in paginatedItems"
         :key="block.id"
         class="bg-white/5 border border-white/10 rounded-lg p-4"
       >
@@ -107,7 +162,7 @@ onMounted(() => {
         </div>
 
         <div class="text-white/30 text-xs mb-4">
-          Creado por {{ userStore.profile?.displayName }}
+          Creado por {{ userStore.getUserName(block.uid) }}
         </div>
 
         <div class="flex gap-2">
@@ -134,6 +189,6 @@ onMounted(() => {
           </button>
         </div>
       </div>
-    </div>
+    </TransitionGroup>
   </div>
 </template>

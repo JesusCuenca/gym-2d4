@@ -1,11 +1,14 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useClassStore } from '../stores/classStore'
 import { useUserStore } from '../stores/userStore'
+import { useAuthStore } from '../stores/auth'
 import { useToastStore } from '../stores/toastStore'
 import { useConfirm } from '../composables/useConfirm'
+import { useListFilters } from '../composables/useListFilters'
 import { getTotalDuration } from '../utils/timeline'
+import ListFilterBar from '../components/ListFilterBar.vue'
 import {
   PencilSquareIcon,
   DocumentDuplicateIcon,
@@ -15,8 +18,18 @@ import {
 
 const classStore = useClassStore()
 const userStore = useUserStore()
+const authStore = useAuthStore()
 const toastStore = useToastStore()
 const { confirm } = useConfirm()
+
+const {
+  searchText, userMode, selectedUserUids, dateFrom, dateTo,
+  currentPage, totalPages, totalFilteredCount, paginatedItems,
+  nextPage, prevPage, clearFilters, hasActiveFilters,
+} = useListFilters({
+  items: computed(() => classStore.classes),
+  currentUserUid: computed(() => authStore.user?.uid),
+})
 
 function getTotalTime(cls) {
   return cls.blocks?.reduce((sum, b) => {
@@ -47,12 +60,13 @@ async function handleClone(cls) {
     description: cls.description,
     blocks: cls.blocks,
   })
-  await classStore.fetchClasses()
+  await classStore.fetchAllClasses()
   toastStore.show('Clase duplicada')
 }
 
 onMounted(() => {
-  classStore.fetchClasses()
+  userStore.fetchAllUsers()
+  classStore.fetchAllClasses()
 })
 </script>
 
@@ -68,12 +82,31 @@ onMounted(() => {
       </RouterLink>
     </div>
 
+    <!-- Filters & pagination -->
+    <ListFilterBar
+      v-model:searchText="searchText"
+      v-model:userMode="userMode"
+      v-model:selectedUserUids="selectedUserUids"
+      v-model:dateFrom="dateFrom"
+      v-model:dateTo="dateTo"
+      :currentPage="currentPage"
+      :totalPages="totalPages"
+      :totalFilteredCount="totalFilteredCount"
+      :showTypeFilter="false"
+      :allUsers="userStore.allUsers"
+      :currentUserUid="authStore.user?.uid"
+      :hasActiveFilters="hasActiveFilters"
+      @nextPage="nextPage"
+      @prevPage="prevPage"
+      @clearFilters="clearFilters"
+    />
+
     <!-- Loading -->
     <div v-if="classStore.loading" class="flex justify-center py-12">
       <AppSpinner size="lg" />
     </div>
 
-    <!-- Empty state -->
+    <!-- Empty state: no data at all -->
     <div v-else-if="classStore.classes.length === 0" class="text-center py-12">
       <p class="text-white/50 mb-4">No hay clases todavía. Crea tu primera clase.</p>
       <RouterLink
@@ -84,10 +117,29 @@ onMounted(() => {
       </RouterLink>
     </div>
 
+    <!-- Empty state: filters produced no results -->
+    <div v-else-if="totalFilteredCount === 0" class="text-center py-12">
+      <p class="text-white/50 mb-4">No hay resultados para estos filtros.</p>
+      <button @click="clearFilters" class="text-gymOrange text-sm hover:underline">
+        Limpiar filtros
+      </button>
+    </div>
+
     <!-- Class list -->
-    <div v-else class="grid gap-4 sm:grid-cols-2">
+    <TransitionGroup
+      v-else
+      tag="div"
+      class="grid gap-4 sm:grid-cols-2"
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 scale-95"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition-all duration-200 ease-in absolute"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
+      move-class="transition-all duration-300 ease-out"
+    >
       <div
-        v-for="cls in classStore.classes"
+        v-for="cls in paginatedItems"
         :key="cls.id"
         class="bg-white/5 border border-white/10 rounded-lg p-4"
       >
@@ -111,7 +163,7 @@ onMounted(() => {
         </div>
 
         <div class="text-white/30 text-xs mb-4">
-          Creado por {{ userStore.profile?.displayName }}
+          Creado por {{ userStore.getUserName(cls.uid) }}
         </div>
 
         <div class="flex gap-2">
@@ -145,6 +197,6 @@ onMounted(() => {
           </button>
         </div>
       </div>
-    </div>
+    </TransitionGroup>
   </div>
 </template>

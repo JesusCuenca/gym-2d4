@@ -8,6 +8,7 @@ import { validateBlock } from '../utils/validation'
 import { ChevronUpIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { useExercisePicker } from '../composables/useExercisePicker'
+import { useBlockPicker } from '../composables/useBlockPicker'
 
 const { pickExercises } = useExercisePicker()
 
@@ -35,7 +36,8 @@ const validationError = ref('')
 const name = ref('')
 const description = ref('')
 const classBlocks = ref([]) // { sourceBlockId, form, editing }
-const showCatalog = ref(false)
+
+const { pickBlocks } = useBlockPicker()
 
 // --- Helpers ---
 
@@ -241,13 +243,16 @@ function blockSummary(form) {
 
 // --- Block management ---
 
-function addBlockFromCatalog(block) {
-  classBlocks.value.push({
-    sourceBlockId: block.id,
-    form: blockDataToForm(block),
-    editing: false,
-  })
-  showCatalog.value = false
+async function openBlockPicker() {
+  const picked = await pickBlocks()
+  if (!picked.length) return
+  for (const block of picked) {
+    classBlocks.value.push({
+      sourceBlockId: block.id,
+      form: blockDataToForm(block),
+      editing: false,
+    })
+  }
 }
 
 function addNewBlock() {
@@ -709,10 +714,10 @@ onMounted(async () => {
       <div class="flex gap-2">
         <button
           type="button"
-          @click="showCatalog = !showCatalog"
+          @click="openBlockPicker"
           class="flex-1 border border-dashed border-white/20 rounded-lg py-3 text-white/50 hover:text-white hover:border-white/40 text-sm transition-colors"
         >
-          {{ showCatalog ? 'Ocultar catálogo' : '+ Añadir del catálogo' }}
+          + Añadir del catálogo
         </button>
         <button
           type="button"
@@ -721,39 +726,6 @@ onMounted(async () => {
         >
           + Crear bloque nuevo
         </button>
-      </div>
-
-      <!-- Block catalog (collapsible) -->
-      <div v-if="showCatalog">
-        <label class="block text-sm text-white/70 mb-3">Catálogo de bloques</label>
-
-        <div v-if="blockStore.loading" class="text-white/50 text-sm text-center py-4">
-          Cargando bloques...
-        </div>
-
-        <div v-else-if="blockStore.blocks.length === 0" class="text-white/30 text-sm py-4 text-center border border-dashed border-white/10 rounded-lg">
-          No hay bloques en el catálogo. Puedes crear uno nuevo arriba.
-        </div>
-
-        <div v-else class="grid gap-2">
-          <button
-            v-for="block in blockStore.blocks"
-            :key="block.id"
-            type="button"
-            @click="addBlockFromCatalog(block)"
-            class="text-left bg-white/5 border border-white/10 hover:border-white/30 rounded-lg px-4 py-3 transition-colors"
-          >
-            <div class="flex items-center justify-between">
-              <span class="text-white text-sm font-medium">{{ block.name }}</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60">
-                {{ getBlockLabel(block) }}
-              </span>
-            </div>
-            <span class="text-white/40 text-xs">
-              {{ block.exercises?.length || 0 }} ejercicio{{ (block.exercises?.length || 0) !== 1 ? 's' : '' }}
-            </span>
-          </button>
-        </div>
       </div>
 
       <!-- Validation error -->

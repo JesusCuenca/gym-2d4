@@ -100,6 +100,24 @@ export const useBlockStore = defineStore('blocks', () => {
     }
   }
 
+  async function fetchAllBlocks() {
+    loading.value = true
+    error.value = null
+    try {
+      const q = query(
+        collection(db, 'blocks'),
+        orderBy('createdAt', 'desc'),
+      )
+      const snapshot = await getDocs(q)
+      blocks.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+    } catch (e) {
+      error.value = 'No se pudieron cargar los bloques. Intenta de nuevo.'
+      console.error('fetchAllBlocks error:', e)
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function deleteBlock(blockId) {
     error.value = null
     try {
@@ -112,5 +130,5 @@ export const useBlockStore = defineStore('blocks', () => {
     }
   }
 
-  return { blocks, loading, error, fetchBlocks, getBlock, createBlock, updateBlock, deleteBlock }
+  return { blocks, loading, error, fetchBlocks, fetchAllBlocks, getBlock, createBlock, updateBlock, deleteBlock }
 })

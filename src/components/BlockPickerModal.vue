@@ -1,14 +1,16 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { XMarkIcon, MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
-import { useExercisePicker } from '../composables/useExercisePicker'
-import { parentGroups, exercises, filterExercises } from '../utils/exerciseIndex'
+import { useBlockPicker } from '../composables/useBlockPicker'
+import { useBlockStore } from '../stores/blockStore'
+import { BLOCK_TYPES, TIMED_SUBTYPES, REPS_SUBTYPES, getBlockLabel, getRepsSubcase } from '../models/blockTypes'
 
-const { state, respond, cancel } = useExercisePicker()
+const { state, respond, cancel } = useBlockPicker()
+const blockStore = useBlockStore()
 
 const searchQuery = ref('')
-const selectedParentId = ref(null)
-const selectedChildName = ref(null)
+const selectedType = ref(null)
+const selectedSubtype = ref(null)
 const selectedSet = ref(new Set())
 
 watch(
@@ -16,50 +18,73 @@ watch(
   (open) => {
     if (open) {
       searchQuery.value = ''
-      selectedParentId.value = null
-      selectedChildName.value = null
+      selectedType.value = null
+      selectedSubtype.value = null
       selectedSet.value = new Set()
     }
   },
 )
 
-const activeParentGroup = computed(() =>
-  selectedParentId.value
-    ? parentGroups.find((g) => g.id === selectedParentId.value)
-    : null,
-)
+const subtypeOptions = computed(() => {
+  if (selectedType.value === 'timed') return TIMED_SUBTYPES
+  if (selectedType.value === 'reps') return REPS_SUBTYPES
+  return []
+})
 
-const filteredExercises = computed(() =>
-  filterExercises(searchQuery.value, selectedParentId.value, selectedChildName.value),
-)
+const filteredBlocks = computed(() => {
+  let result = blockStore.blocks
 
-function toggleParent(id) {
-  if (selectedParentId.value === id) {
-    selectedParentId.value = null
-    selectedChildName.value = null
+  if (selectedType.value) {
+    result = result.filter((b) => b.type === selectedType.value)
+  }
+
+  if (selectedSubtype.value) {
+    result = result.filter((b) => {
+      if (b.type === 'reps') return getRepsSubcase(b) === selectedSubtype.value
+      const sub = b.subtype || 'custom'
+      return sub === selectedSubtype.value
+    })
+  }
+
+  if (searchQuery.value.trim()) {
+    const needle = searchQuery.value.trim().toLowerCase()
+    result = result.filter((b) => b.name?.toLowerCase().includes(needle))
+  }
+
+  return result
+})
+
+function toggleType(type) {
+  if (selectedType.value === type) {
+    selectedType.value = null
+    selectedSubtype.value = null
   } else {
-    selectedParentId.value = id
-    selectedChildName.value = null
+    selectedType.value = type
+    selectedSubtype.value = null
   }
 }
 
-function toggleChild(name) {
-  selectedChildName.value = selectedChildName.value === name ? null : name
+function toggleSubtype(subtype) {
+  selectedSubtype.value = selectedSubtype.value === subtype ? null : subtype
 }
 
-function toggleExercise(ex) {
+function toggleBlock(block) {
   const next = new Set(selectedSet.value)
-  if (next.has(ex.displayName)) {
-    next.delete(ex.displayName)
+  if (next.has(block.id)) {
+    next.delete(block.id)
   } else {
-    next.add(ex.displayName)
+    next.add(block.id)
   }
   selectedSet.value = next
 }
 
 function handleConfirm() {
-  const picked = exercises.filter((ex) => selectedSet.value.has(ex.displayName))
+  const picked = blockStore.blocks.filter((b) => selectedSet.value.has(b.id))
   respond(picked)
+}
+
+function exerciseCount(block) {
+  return block.exercises?.length || 0
 }
 </script>
 
@@ -101,7 +126,7 @@ function handleConfirm() {
 
         <!-- Header -->
         <div class="flex items-center justify-between px-4 pt-2 pb-3 border-b border-white/10 flex-shrink-0">
-          <h2 class="text-white font-bold text-base">Añadir ejercicios</h2>
+          <h2 class="text-white font-bold text-base">Añadir bloques</h2>
           <button @click="cancel" class="text-white/50 hover:text-white transition-colors p-1">
             <XMarkIcon class="w-5 h-5" />
           </button>
@@ -114,77 +139,80 @@ function handleConfirm() {
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Buscar ejercicio..."
+              placeholder="Buscar bloque..."
               class="w-full bg-white/10 border border-white/20 rounded-lg pl-9 pr-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
             />
           </div>
         </div>
 
-        <!-- Parent chips -->
+        <!-- Type chips -->
         <div class="px-4 pb-2 overflow-x-auto scrollbar-hide flex-shrink-0">
           <div class="flex gap-2 min-w-max">
             <button
-              v-for="group in parentGroups"
-              :key="group.id"
+              v-for="bt in BLOCK_TYPES"
+              :key="bt.value"
               type="button"
-              @click="toggleParent(group.id)"
+              @click="toggleType(bt.value)"
               class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap"
               :class="
-                selectedParentId === group.id
+                selectedType === bt.value
                   ? 'bg-gymOrange text-white'
                   : 'bg-white/10 text-white/60 hover:bg-white/20'
               "
             >
-              {{ group.name }}
+              {{ bt.label }}
             </button>
           </div>
         </div>
 
-        <!-- Child chips -->
+        <!-- Subtype chips -->
         <div
-          v-if="activeParentGroup && activeParentGroup.children.length"
+          v-if="subtypeOptions.length"
           class="px-4 pb-3 overflow-x-auto scrollbar-hide flex-shrink-0"
         >
           <div class="flex gap-2 min-w-max">
             <button
-              v-for="child in activeParentGroup.children"
-              :key="child.id"
+              v-for="st in subtypeOptions"
+              :key="st.value"
               type="button"
-              @click="toggleChild(child.name)"
+              @click="toggleSubtype(st.value)"
               class="px-3 py-1 rounded-full text-xs transition-colors whitespace-nowrap"
               :class="
-                selectedChildName === child.name
+                selectedSubtype === st.value
                   ? 'bg-gymOrange/80 text-white'
                   : 'bg-white/5 text-white/50 hover:bg-white/10 border border-white/15'
               "
             >
-              {{ child.name }}
+              {{ st.label }}
             </button>
           </div>
         </div>
 
-        <!-- Exercise list -->
+        <!-- Block list -->
         <div class="flex-1 overflow-y-auto px-4 pb-2 min-h-0">
-          <div v-if="filteredExercises.length === 0" class="text-center text-white/40 text-sm py-10">
-            No hay ejercicios con ese filtro.
+          <div v-if="blockStore.loading" class="text-center text-white/40 text-sm py-10">
+            Cargando bloques...
+          </div>
+          <div v-else-if="filteredBlocks.length === 0" class="text-center text-white/40 text-sm py-10">
+            No hay bloques con ese filtro.
           </div>
           <div
-            v-for="ex in filteredExercises"
-            :key="ex.displayName"
-            @click="toggleExercise(ex)"
+            v-for="block in filteredBlocks"
+            :key="block.id"
+            @click="toggleBlock(block)"
             class="flex items-center gap-3 py-3 border-b border-white/5 cursor-pointer hover:bg-white/5 -mx-4 px-4 transition-colors"
           >
             <!-- Checkbox -->
             <div
               class="w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border transition-colors"
               :class="
-                selectedSet.has(ex.displayName)
+                selectedSet.has(block.id)
                   ? 'bg-gymOrange border-gymOrange'
                   : 'border-white/30 bg-transparent'
               "
             >
               <svg
-                v-if="selectedSet.has(ex.displayName)"
+                v-if="selectedSet.has(block.id)"
                 class="w-3 h-3 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -195,19 +223,17 @@ function handleConfirm() {
               </svg>
             </div>
 
-            <!-- Name + muscles -->
+            <!-- Name + info -->
             <div class="flex-1 min-w-0">
-              <p class="text-white text-sm font-medium truncate">{{ ex.name }}</p>
+              <p class="text-white text-sm font-medium truncate">{{ block.name }}</p>
               <p class="text-white/40 text-xs mt-0.5 truncate">
-                {{ ex.musculoPrincipal }}
-                <span v-if="ex.musculosSecundarios && ex.musculosSecundarios.length">
-                  · {{ ex.musculosSecundarios.join(' · ') }}
-                </span>
+                {{ exerciseCount(block) }} ejercicio{{ exerciseCount(block) !== 1 ? 's' : '' }}
+                <span v-if="block.rounds && block.rounds > 1"> · {{ block.rounds }} rondas</span>
               </p>
             </div>
 
-            <!-- Display name -->
-            <span class="text-gymOrange text-xs font-bold flex-shrink-0">{{ ex.displayName }}</span>
+            <!-- Type label -->
+            <span class="text-gymOrange text-xs font-bold flex-shrink-0">{{ getBlockLabel(block) }}</span>
           </div>
         </div>
 
@@ -219,7 +245,7 @@ function handleConfirm() {
             :disabled="selectedSet.size === 0"
             class="w-full bg-gymOrange text-white font-bold rounded-lg py-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gymOrange/90 transition-colors"
           >
-            Añadir {{ selectedSet.size > 0 ? selectedSet.size : '' }} ejercicio{{ selectedSet.size !== 1 ? 's' : '' }}
+            Añadir {{ selectedSet.size > 0 ? selectedSet.size : '' }} bloque{{ selectedSet.size !== 1 ? 's' : '' }}
           </button>
         </div>
       </div>

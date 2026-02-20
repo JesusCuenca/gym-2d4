@@ -100,6 +100,24 @@ export const useClassStore = defineStore('classes', () => {
     }
   }
 
+  async function fetchAllClasses() {
+    loading.value = true
+    error.value = null
+    try {
+      const q = query(
+        collection(db, 'classes'),
+        orderBy('createdAt', 'desc'),
+      )
+      const snapshot = await getDocs(q)
+      classes.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+    } catch (e) {
+      error.value = 'No se pudieron cargar las clases. Intenta de nuevo.'
+      console.error('fetchAllClasses error:', e)
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function deleteClass(classId) {
     error.value = null
     try {
@@ -112,5 +130,5 @@ export const useClassStore = defineStore('classes', () => {
     }
   }
 
-  return { classes, loading, error, fetchClasses, getClassById, createClass, updateClass, deleteClass }
+  return { classes, loading, error, fetchClasses, fetchAllClasses, getClassById, createClass, updateClass, deleteClass }
 })

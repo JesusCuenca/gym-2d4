@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { db, serverTimestamp } from '../firebase'
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore'
 
 export const useUserStore = defineStore('user', () => {
   const profile = ref(null)
@@ -51,9 +51,25 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const allUsers = ref([])
+
+  async function fetchAllUsers() {
+    try {
+      const snapshot = await getDocs(collection(db, 'users'))
+      allUsers.value = snapshot.docs.map((d) => ({ uid: d.id, ...d.data() }))
+    } catch (e) {
+      console.error('fetchAllUsers error:', e)
+    }
+  }
+
+  function getUserName(uid) {
+    const user = allUsers.value.find((u) => u.uid === uid)
+    return user?.displayName || 'Desconocido'
+  }
+
   function clearProfile() {
     profile.value = null
   }
 
-  return { profile, loading, error, hasProfile, fetchProfile, createProfile, updateProfile, clearProfile }
+  return { profile, loading, error, hasProfile, allUsers, fetchProfile, createProfile, updateProfile, clearProfile, fetchAllUsers, getUserName }
 })

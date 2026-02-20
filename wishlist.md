@@ -4,7 +4,7 @@
 
 ### UX / Funcionalidad
 
-- [ ] **1. Busqueda y filtrado** — Las listas de bloques y clases no tienen buscador ni filtros. Anadir input de busqueda por nombre y filtros por tipo (timed/reps).
+- [x] **1. Busqueda y filtrado** — Las listas de bloques y clases no tienen buscador ni filtros. Anadir input de busqueda por nombre y filtros por tipo (timed/reps).
 - [ ] **2. Drag & drop** — Reordenar ejercicios y bloques con drag & drop (ej. `vuedraggable`) en lugar de solo flechas arriba/abajo.
 - [ ] **3. Preview del TV** — Vista previa inline o modal de como se vera un bloque/clase en el TV antes de lanzar la sesion.
 - [ ] **4. Historial de sesiones** — Guardar log de sesiones pasadas con fecha, duracion y bloques completados para que el trainer pueda revisar y repetir.
@@ -43,4 +43,4 @@
 ### Interfaz
 
 - [x] **23. Administración muy tosca** - La interfaz del panel administrador poco elegante. La barra de navegación superior no destaca la ruta en la que estás; el menú en desplegable en movil hace que toda la página se desplace hacia abajo; todo es texto: prácticamente no hay iconos ni otras referencias visiuales; no hay estados de carga mientras se obtienen las clases, bloques, o se cargan sus datos; los pocos avisos que existen utilizan diálogos del propio navegador en lugar de personalizados.
-- [ ] **24. Logotipo del gimnasio** - en public/gym-2d4-logo.jpg está el logo del gimnasio, debería aparecer en la cabecera del admin y en algún lado en las pantallas de la tv.
+- [x] **24. Logotipo del gimnasio** - en public/gym-2d4-logo.jpg está el logo del gimnasio, debería aparecer en la cabecera del admin y en algún lado en las pantallas de la tv.

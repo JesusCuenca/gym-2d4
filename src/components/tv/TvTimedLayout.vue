@@ -45,19 +45,21 @@ const exercisePositionText = computed(() => {
       :totalBlocks="session.blocks?.length || 0" />
 
     <!-- Left Panel (30%) — Timer & Block Info -->
-    <div class="w-[30%] flex flex-col items-center justify-center border-r border-white/10 px-6">
-      <!-- Round info -->
-      <p class="text-3xl font-black uppercase tracking-normal font-condensed mb-4"
-        :class="showRoundInfo ? 'text-gymOrange' : 'text-white/60'">
-        {{ roundInfoText }}
+    <div class="w-[30%] flex flex-col items-center border-r border-white/10 px-6">
+      <!-- Top: block name -->
+      <p class="pt-10 text-3xl font-black text-white/60 uppercase tracking-normal font-condensed">
+        {{ block.name }}
       </p>
 
-      <!-- Timer countdown -->
-      <TvTimerCountdown :secondsLeft="timer.phaseSecondsLeft.value" :isResting="isResting" />
+      <!-- Center: timer countdown -->
+      <div class="flex-1 flex items-center justify-center">
+        <TvTimerCountdown :secondsLeft="timer.phaseSecondsLeft.value" :isResting="isResting" />
+      </div>
 
-      <!-- Block name -->
-      <p class="text-3xl font-black text-white/60 uppercase tracking-normal font-condensed mt-6">
-        {{ block.name }}
+      <!-- Bottom: round info -->
+      <p class="pb-10 text-3xl font-black uppercase tracking-normal font-condensed"
+        :class="showRoundInfo ? 'text-gymOrange' : 'text-white/60'">
+        {{ roundInfoText }}
       </p>
     </div>
 
@@ -67,9 +69,9 @@ const exercisePositionText = computed(() => {
       <template v-if="isRotating">
         <Transition name="tv-exercise" mode="out-in">
           <div v-if="!isResting" :key="`ex-${timer.currentExerciseIndex.value}`"
-            class="flex flex-col items-center justify-center h-full">
+            class="relative flex flex-col items-center justify-center h-full">
             <p v-if="exercisePositionText"
-              class="text-2xl text-white/40 uppercase tracking-widest font-condensed mb-4 mt-4">
+              class="absolute top-10 text-2xl text-white/60 uppercase tracking-widest font-condensed">
               {{ exercisePositionText }}
             </p>
             <TvSingleExercise :exercise="currentExercise" />

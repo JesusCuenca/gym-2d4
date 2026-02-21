@@ -58,7 +58,7 @@ const tierClasses = computed(() => {
         </p>
         <p
           v-if="exercise.notes"
-          class="text-white/50 font-condensed uppercase"
+          class="text-white/70 font-condensed uppercase"
           :class="tierClasses.notes"
         >
           {{ exercise.notes }}

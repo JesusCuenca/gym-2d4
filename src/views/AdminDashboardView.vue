@@ -53,21 +53,21 @@ onMounted(() => {
           class="bg-white/5 border border-white/10 hover:border-gymOrange/50 rounded-lg p-4 text-center transition-colors"
         >
           <div class="text-3xl font-bold text-white">{{ blockStore.blocks.length }}</div>
-          <div class="text-white/50 text-sm mt-1">Bloques</div>
+          <div class="text-white/60 text-sm mt-1">Bloques</div>
         </RouterLink>
         <RouterLink
           :to="{ name: 'admin-classes' }"
           class="bg-white/5 border border-white/10 hover:border-gymOrange/50 rounded-lg p-4 text-center transition-colors"
         >
           <div class="text-3xl font-bold text-white">{{ classStore.classes.length }}</div>
-          <div class="text-white/50 text-sm mt-1">Clases</div>
+          <div class="text-white/60 text-sm mt-1">Clases</div>
         </RouterLink>
         <RouterLink
           :to="{ name: 'admin-screens' }"
           class="bg-white/5 border border-white/10 hover:border-gymOrange/50 rounded-lg p-4 text-center transition-colors"
         >
           <div class="text-3xl font-bold text-white">{{ screenStore.screens.length }}</div>
-          <div class="text-white/50 text-sm mt-1">Pantallas</div>
+          <div class="text-white/60 text-sm mt-1">Pantallas</div>
         </RouterLink>
       </div>
 
@@ -99,7 +99,7 @@ onMounted(() => {
           >
             <div>
               <span class="text-white font-medium text-sm">{{ cls.name }}</span>
-              <span class="text-white/40 text-xs ml-2">{{ cls.blocks?.length || 0 }} bloques</span>
+              <span class="text-white/50 text-xs ml-2">{{ cls.blocks?.length || 0 }} bloques</span>
             </div>
             <RouterLink
               :to="{ name: 'admin-class-live', params: { id: cls.id } }"

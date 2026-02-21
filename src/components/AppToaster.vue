@@ -30,7 +30,7 @@ const borderColor = {
       >
         <span class="text-white text-sm flex-1">{{ toast.message }}</span>
         <button
-          class="text-white/40 hover:text-white/70 transition-colors shrink-0"
+          class="text-white/50 hover:text-white/70 transition-colors shrink-0"
           @click="toastStore.dismiss(toast.id)"
         >
           <XMarkIcon class="w-4 h-4" />

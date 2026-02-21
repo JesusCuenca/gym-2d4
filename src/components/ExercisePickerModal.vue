@@ -102,7 +102,7 @@ function handleConfirm() {
         <!-- Header -->
         <div class="flex items-center justify-between px-4 pt-2 pb-3 border-b border-white/10 flex-shrink-0">
           <h2 class="text-white font-bold text-base">Añadir ejercicios</h2>
-          <button @click="cancel" class="text-white/50 hover:text-white transition-colors p-1">
+          <button @click="cancel" class="text-white/60 hover:text-white transition-colors p-1">
             <XMarkIcon class="w-5 h-5" />
           </button>
         </div>
@@ -110,12 +110,12 @@ function handleConfirm() {
         <!-- Search -->
         <div class="px-4 pt-3 pb-2 flex-shrink-0">
           <div class="relative">
-            <MagnifyingGlassIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+            <MagnifyingGlassIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Buscar ejercicio..."
-              class="w-full bg-white/10 border border-white/20 rounded-lg pl-9 pr-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
+              class="w-full bg-white/10 border border-white/20 rounded-lg pl-9 pr-3 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-gymOrange"
             />
           </div>
         </div>
@@ -132,7 +132,7 @@ function handleConfirm() {
               :class="
                 selectedParentId === group.id
                   ? 'bg-gymOrange text-white'
-                  : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  : 'bg-white/10 text-white/70 hover:bg-white/20'
               "
             >
               {{ group.name }}
@@ -155,7 +155,7 @@ function handleConfirm() {
               :class="
                 selectedChildName === child.name
                   ? 'bg-gymOrange/80 text-white'
-                  : 'bg-white/5 text-white/50 hover:bg-white/10 border border-white/15'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 border border-white/15'
               "
             >
               {{ child.name }}
@@ -165,7 +165,7 @@ function handleConfirm() {
 
         <!-- Exercise list -->
         <div class="flex-1 overflow-y-auto px-4 pb-2 min-h-0">
-          <div v-if="filteredExercises.length === 0" class="text-center text-white/40 text-sm py-10">
+          <div v-if="filteredExercises.length === 0" class="text-center text-white/50 text-sm py-10">
             No hay ejercicios con ese filtro.
           </div>
           <div
@@ -198,7 +198,7 @@ function handleConfirm() {
             <!-- Name + muscles -->
             <div class="flex-1 min-w-0">
               <p class="text-white text-sm font-medium truncate">{{ ex.name }}</p>
-              <p class="text-white/40 text-xs mt-0.5 truncate">
+              <p class="text-white/50 text-xs mt-0.5 truncate">
                 {{ ex.musculoPrincipal }}
                 <span v-if="ex.musculosSecundarios && ex.musculosSecundarios.length">
                   · {{ ex.musculosSecundarios.join(' · ') }}

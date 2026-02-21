@@ -45,7 +45,7 @@ onUnmounted(() => {
     <!-- Screen name pill -->
     <div v-if="screenName"
       class="absolute top-6 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-2">
-      <span class="text-white/60 text-lg font-condensed uppercase tracking-wider">{{ screenName }}</span>
+      <span class="text-white/70 text-lg font-condensed uppercase tracking-wider">{{ screenName }}</span>
     </div>
 
     <!-- Logo -->
@@ -56,7 +56,7 @@ onUnmounted(() => {
       <p class="text-8xl font-black font-condensed text-white">
         {{ timeString }}
       </p>
-      <p class="text-2xl text-white/40 font-condensed uppercase tracking-wider mt-2">
+      <p class="text-2xl text-white/60 font-condensed uppercase tracking-wider mt-2">
         {{ dateString }}
       </p>
     </div>

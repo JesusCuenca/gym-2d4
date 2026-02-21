@@ -198,7 +198,7 @@ onMounted(async () => {
           type="text"
           required
           placeholder="Ej. WOD Lunes"
-          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-gymOrange"
+          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange"
         />
       </div>
 
@@ -209,7 +209,7 @@ onMounted(async () => {
           v-model="description"
           rows="2"
           placeholder="Breve descripción de la clase"
-          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-gymOrange resize-none"
+          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange resize-none"
         />
       </div>
 
@@ -221,7 +221,7 @@ onMounted(async () => {
 
         <div
           v-if="classBlocks.length === 0"
-          class="text-white/30 text-sm py-4 text-center border border-dashed border-white/10 rounded-lg"
+          class="text-white/50 text-sm py-4 text-center border border-dashed border-white/10 rounded-lg"
         >
           Aún no hay bloques. Añade bloques del catálogo o crea uno nuevo.
         </div>
@@ -239,13 +239,13 @@ onMounted(async () => {
             <div class="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
               <!-- Block header (always visible) -->
               <div class="flex items-center gap-3 px-4 py-3">
-                <Bars2Icon class="block-drag-handle w-5 h-5 text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0" />
+                <Bars2Icon class="block-drag-handle w-5 h-5 text-white/50 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0" />
                 <span class="text-gymOrange font-bold text-sm w-6">{{ bIndex + 1 }}</span>
                 <div class="flex-1 min-w-0">
                   <span class="text-white font-medium text-sm truncate block">
                     {{ cb.form.name || 'Sin nombre' }}
                   </span>
-                  <span class="text-white/40 text-xs">
+                  <span class="text-white/50 text-xs">
                     {{ cb.form.subtype && cb.form.subtype !== 'custom' ? TIMED_SUBTYPES.find(p => p.value === cb.form.subtype)?.label : BLOCK_TYPES.find(bt => bt.value === cb.form.type)?.label }}
                     <span v-if="blockSummary(cb.form)"> · {{ blockSummary(cb.form) }}</span>
                   </span>
@@ -272,7 +272,7 @@ onMounted(async () => {
                   >
                     Guardar en el catálogo de bloques
                   </button>
-                  <span v-else class="text-xs text-white/30">
+                  <span v-else class="text-xs text-white/50">
                     Basado en bloque del catálogo (los cambios solo afectan a esta clase)
                   </span>
                 </div>
@@ -281,7 +281,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   @click="toggleEdit(bIndex)"
-                  class="w-full text-center text-xs text-white/40 hover:text-white/70 py-1 mt-1 transition-colors"
+                  class="w-full text-center text-xs text-white/50 hover:text-white/70 py-1 mt-1 transition-colors"
                 >
                   Cerrar editor
                 </button>
@@ -296,7 +296,7 @@ onMounted(async () => {
         <button
           type="button"
           @click="openBlockPicker"
-          class="flex-1 border border-dashed border-white/20 rounded-lg py-3 text-white/50 hover:text-white hover:border-white/40 text-sm transition-colors"
+          class="flex-1 border border-dashed border-white/20 rounded-lg py-3 text-white/60 hover:text-white hover:border-white/40 text-sm transition-colors"
         >
           + Añadir del catálogo
         </button>

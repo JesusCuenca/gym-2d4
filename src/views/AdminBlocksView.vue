@@ -108,7 +108,7 @@ onMounted(() => {
 
     <!-- Empty state: no data at all -->
     <div v-else-if="blockStore.blocks.length === 0" class="text-center py-12">
-      <p class="text-white/50 mb-4">No hay bloques todavía. Crea tu primer bloque de ejercicios.</p>
+      <p class="text-white/60 mb-4">No hay bloques todavía. Crea tu primer bloque de ejercicios.</p>
       <RouterLink
         :to="{ name: 'admin-block-create' }"
         class="inline-block bg-gymOrange text-white font-bold rounded-lg px-6 py-3 hover:bg-gymOrange/90 transition-colors"
@@ -119,7 +119,7 @@ onMounted(() => {
 
     <!-- Empty state: filters produced no results -->
     <div v-else-if="totalFilteredCount === 0" class="text-center py-12">
-      <p class="text-white/50 mb-4">No hay resultados para estos filtros.</p>
+      <p class="text-white/60 mb-4">No hay resultados para estos filtros.</p>
       <button @click="clearFilters" class="text-gymOrange text-sm hover:underline">
         Limpiar filtros
       </button>
@@ -150,32 +150,32 @@ onMounted(() => {
           </span>
         </div>
 
-        <p v-if="blockMeta(block)" class="text-white/50 text-sm mb-3">
+        <p v-if="blockMeta(block)" class="text-white/60 text-sm mb-3">
           {{ blockMeta(block) }}
         </p>
 
-        <div class="text-white/40 text-sm mb-3">
+        <div class="text-white/50 text-sm mb-3">
           {{ block.exercises?.length || 0 }} ejercicio{{ (block.exercises?.length || 0) !== 1 ? 's' : '' }}
-          <span v-if="block.exercises?.length" class="text-white/30">
+          <span v-if="block.exercises?.length" class="text-white/50">
             — {{ block.exercises.map((e) => e.name).join(', ') }}
           </span>
         </div>
 
-        <div class="text-white/30 text-xs mb-4">
+        <div class="text-white/50 text-xs mb-4">
           Creado por {{ userStore.getUserName(block.uid) }}
         </div>
 
         <div class="flex gap-2">
           <RouterLink
             :to="{ name: 'admin-block-edit', params: { id: block.id } }"
-            class="flex items-center gap-1.5 text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
           >
             <PencilSquareIcon class="w-4 h-4" />
             Editar
           </RouterLink>
           <button
             @click="handleClone(block)"
-            class="flex items-center gap-1.5 text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
           >
             <DocumentDuplicateIcon class="w-4 h-4" />
             Clonar

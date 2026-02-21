@@ -127,31 +127,31 @@ onMounted(() => {
     <BottomSheet :open="sheetOpen" title="Nueva pantalla" @close="closeSheet">
       <div class="space-y-4">
         <div>
-          <label class="block text-xs text-white/50 mb-1">Nombre</label>
+          <label class="block text-xs text-white/60 mb-1">Nombre</label>
           <input
             v-model="newName"
             type="text"
             placeholder="Ej. Sala Funcional"
             autofocus
             @keyup.enter="handleCreate"
-            class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
+            class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-gymOrange"
           />
         </div>
 
         <div>
-          <label class="block text-xs text-white/50 mb-1">Identificador (URL)</label>
+          <label class="block text-xs text-white/60 mb-1">Identificador (URL)</label>
           <div class="flex items-center gap-2">
-            <span class="text-white/30 text-sm shrink-0">/tv/</span>
+            <span class="text-white/50 text-sm shrink-0">/tv/</span>
             <input
               :value="newId"
               type="text"
               placeholder="sala-funcional"
               @input="onIdInput"
               @keyup.enter="handleCreate"
-              class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange font-mono"
+              class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-gymOrange font-mono"
             />
           </div>
-          <p class="text-white/30 text-xs mt-1">Se genera automáticamente desde el nombre. Puedes editarlo.</p>
+          <p class="text-white/50 text-xs mt-1">Se genera automáticamente desde el nombre. Puedes editarlo.</p>
         </div>
 
         <div v-if="createError" class="text-red-400 text-sm">
@@ -168,7 +168,7 @@ onMounted(() => {
           </button>
           <button
             @click="closeSheet"
-            class="text-white/50 hover:text-white border border-white/20 rounded-lg px-4 py-2 text-sm transition-colors"
+            class="text-white/60 hover:text-white border border-white/20 rounded-lg px-4 py-2 text-sm transition-colors"
           >
             Cancelar
           </button>
@@ -184,9 +184,9 @@ onMounted(() => {
     <!-- Empty state -->
     <div
       v-else-if="screenStore.screens.length === 0"
-      class="text-center py-12 text-white/50"
+      class="text-center py-12 text-white/60"
     >
-      <TvIcon class="w-12 h-12 mx-auto mb-3 text-white/20" />
+      <TvIcon class="w-12 h-12 mx-auto mb-3 text-white/40" />
       <p>No hay pantallas todavía. Crea una pantalla por cada TV de tu gimnasio.</p>
     </div>
 
@@ -209,7 +209,7 @@ onMounted(() => {
                   <span class="text-xs text-green-400 font-medium">En vivo</span>
                 </div>
               </div>
-              <span class="text-white/30 text-sm font-mono">/tv/{{ screen.id }}</span>
+              <span class="text-white/50 text-sm font-mono">/tv/{{ screen.id }}</span>
             </div>
 
             <!-- Edit mode -->
@@ -222,7 +222,7 @@ onMounted(() => {
                 @keyup.enter="saveEdit"
                 @keyup.esc="cancelEdit"
               />
-              <span class="block text-white/30 text-xs font-mono">/tv/{{ screen.id }}</span>
+              <span class="block text-white/50 text-xs font-mono">/tv/{{ screen.id }}</span>
               <div v-if="screenStore.error" class="text-red-400 text-xs">
                 {{ screenStore.error }}
               </div>
@@ -236,7 +236,7 @@ onMounted(() => {
                 </button>
                 <button
                   @click="cancelEdit"
-                  class="text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 text-sm transition-colors"
+                  class="text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 text-sm transition-colors"
                 >
                   Cancelar
                 </button>
@@ -249,7 +249,7 @@ onMounted(() => {
             <button
               v-if="editingScreenId !== screen.id"
               @click="startEdit(screen)"
-              class="flex items-center gap-1.5 text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+              class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
             >
               <PencilSquareIcon class="w-4 h-4" />
               Editar

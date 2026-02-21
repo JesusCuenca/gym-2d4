@@ -144,7 +144,7 @@ watch(
       class="absolute top-4 right-4 z-50 bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors"
     >
       <SpeakerWaveIcon v-if="audioEnabled" class="w-6 h-6 text-white" />
-      <SpeakerXMarkIcon v-else class="w-6 h-6 text-white/40" />
+      <SpeakerXMarkIcon v-else class="w-6 h-6 text-white/60" />
     </button>
 
     <!-- Offline indicator -->
@@ -163,8 +163,8 @@ watch(
       <p class="text-5xl font-black font-condensed uppercase text-red-500 mb-4">
         Error de conexión
       </p>
-      <p class="text-2xl text-white/60 font-condensed">{{ subscriptionError }}</p>
-      <p class="text-xl text-white/30 font-condensed mt-6 animate-pulse">Reconectando...</p>
+      <p class="text-2xl text-white/70 font-condensed">{{ subscriptionError }}</p>
+      <p class="text-xl text-white/60 font-condensed mt-6 animate-pulse">Reconectando...</p>
     </div>
 
     <TvWaitingScreen

@@ -268,15 +268,15 @@ onUnmounted(() => {
     <!-- Pre-start: Select screen -->
     <div v-if="!started">
       <h1 class="text-2xl font-bold text-gymOrange mb-2">Iniciar sesión en vivo</h1>
-      <p class="text-white/50 text-sm mb-6">{{ classData?.name }}</p>
+      <p class="text-white/60 text-sm mb-6">{{ classData?.name }}</p>
 
       <div v-if="classData?.blocks?.length" class="mb-6">
         <label class="block text-sm text-white/70 mb-3">Bloques de esta clase:</label>
         <div class="space-y-1">
-          <div v-for="(block, i) in classData.blocks" :key="i" class="flex items-center gap-2 text-sm text-white/60">
-            <span class="text-white/30">{{ i + 1 }}.</span>
+          <div v-for="(block, i) in classData.blocks" :key="i" class="flex items-center gap-2 text-sm text-white/70">
+            <span class="text-white/50">{{ i + 1 }}.</span>
             <span>{{ block.blockData?.name }}</span>
-            <span class="text-xs text-white/30">{{ block.blockData ? getBlockLabel(block.blockData) : '' }}</span>
+            <span class="text-xs text-white/50">{{ block.blockData ? getBlockLabel(block.blockData) : '' }}</span>
           </div>
         </div>
       </div>
@@ -315,8 +315,8 @@ onUnmounted(() => {
         {{ sessionStore.error }}
       </div>
       <div class="text-center mb-4">
-        <p class="text-white/50 text-sm mb-1">{{ classData?.name }}</p>
-        <p class="text-white/40 text-xs">
+        <p class="text-white/60 text-sm mb-1">{{ classData?.name }}</p>
+        <p class="text-white/50 text-xs">
           Bloque {{ currentBlockIndex + 1 }} de {{ sessionStore.session?.blocks?.length || 0 }}
         </p>
       </div>
@@ -331,7 +331,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Block metadata -->
-        <div class="flex flex-wrap gap-3 text-sm text-white/50 mb-3">
+        <div class="flex flex-wrap gap-3 text-sm text-white/60 mb-3">
           <span v-for="(meta, i) in blockMeta(currentBlock)" :key="i">{{ meta }}</span>
         </div>
 
@@ -341,7 +341,7 @@ onUnmounted(() => {
             class="text-sm text-white/70 flex items-baseline gap-2">
             <span class="text-gymOrange/50">•</span>
             <span>{{ exerciseSummary(ex) }}</span>
-            <span v-if="ex.notes" class="text-white/30 text-xs italic">{{ ex.notes }}</span>
+            <span v-if="ex.notes" class="text-white/50 text-xs italic">{{ ex.notes }}</span>
           </div>
         </div>
       </div>
@@ -352,25 +352,25 @@ onUnmounted(() => {
           :class="isRunning ? (timer.isResting.value ? 'text-gymRest' : 'text-gymOrange') : 'text-white/70'">
           {{ timerDisplay }}
         </div>
-        <p class="text-white/30 text-xs mt-2">{{ timerLabel }}</p>
+        <p class="text-white/50 text-xs mt-2">{{ timerLabel }}</p>
       </div>
 
       <!-- Time Adjustment (timed blocks only) -->
       <div v-if="canAdjustTime" class="flex justify-center gap-2 mb-4">
         <button @click="handleAdjustTime(-30)" :disabled="actionLoading"
-          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/70 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
           -30s
         </button>
         <button @click="handleAdjustTime(-10)" :disabled="actionLoading"
-          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/70 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
           -10s
         </button>
         <button @click="handleAdjustTime(10)" :disabled="actionLoading"
-          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/70 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
           +10s
         </button>
         <button @click="handleAdjustTime(30)" :disabled="actionLoading"
-          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/70 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
           +30s
         </button>
       </div>
@@ -393,7 +393,7 @@ onUnmounted(() => {
         </button>
 
         <button @click="handleNextBlock" :disabled="isLastBlock || actionLoading"
-          class="flex items-center justify-center gap-2 bg-blue-600 text-white font-bold rounded-xl px-4 py-4 hover:bg-blue-500 disabled:opacity-30 transition-colors">
+          class="flex items-center justify-center gap-2 bg-blue-600 text-white font-bold rounded-xl px-4 py-4 hover:bg-blue-500 disabled:opacity-40 transition-colors">
           SIGUIENTE
           <ForwardIcon class="w-5 h-5" />
         </button>
@@ -406,7 +406,7 @@ onUnmounted(() => {
 
       <!-- Block Progress List -->
       <div class="border-t border-white/10 pt-4">
-        <h3 class="text-sm font-bold text-white/60 mb-3">Bloques</h3>
+        <h3 class="text-sm font-bold text-white/70 mb-3">Bloques</h3>
         <div class="space-y-1">
           <div v-for="(block, i) in sessionStore.session?.blocks" :key="i">
             <!-- Block row -->
@@ -423,21 +423,21 @@ onUnmounted(() => {
                 <!-- Block info -->
                 <span class="flex-1 min-w-0">
                   <span class="text-sm font-medium truncate block"
-                    :class="i === currentBlockIndex ? 'text-white' : i < currentBlockIndex ? 'text-white/40' : 'text-white/60'">
+                    :class="i === currentBlockIndex ? 'text-white' : i < currentBlockIndex ? 'text-white/50' : 'text-white/70'">
                     {{ block.blockData?.name || 'Bloque' }}
                   </span>
                 </span>
-                <span class="text-xs text-white/30 shrink-0">
+                <span class="text-xs text-white/50 shrink-0">
                   {{ block.blockData ? getBlockLabel(block.blockData) : '' }}
                 </span>
-                <span class="text-white/20 shrink-0">
+                <span class="text-white/40 shrink-0">
                   <ChevronUpIcon v-if="expandedBlockIndex === i" class="w-4 h-4" />
                   <ChevronDownIcon v-else class="w-4 h-4" />
                 </span>
               </button>
               <!-- Jump to block button -->
               <button v-if="i !== currentBlockIndex" @click="handleGoToBlock(i)"
-                class="shrink-0 p-2 rounded-lg text-white/30 hover:text-gymOrange hover:bg-gymOrange/10 transition-colors"
+                class="shrink-0 p-2 rounded-lg text-white/50 hover:text-gymOrange hover:bg-gymOrange/10 transition-colors"
                 title="Saltar a este bloque">
                 <ForwardIcon class="w-4 h-4" />
               </button>
@@ -446,14 +446,14 @@ onUnmounted(() => {
             <!-- Expanded block details -->
             <div v-if="expandedBlockIndex === i && block.blockData"
               class="ml-8 mr-2 mb-2 bg-white/5 border border-white/10 rounded-lg p-3">
-              <div class="flex flex-wrap gap-2 text-xs text-white/40 mb-2">
+              <div class="flex flex-wrap gap-2 text-xs text-white/50 mb-2">
                 <span v-for="(meta, j) in blockMeta(block.blockData)" :key="j">{{ meta }}</span>
               </div>
               <div v-if="block.blockData.exercises?.length" class="space-y-0.5">
-                <div v-for="(ex, j) in block.blockData.exercises" :key="j" class="text-xs text-white/50">
+                <div v-for="(ex, j) in block.blockData.exercises" :key="j" class="text-xs text-white/60">
                   <span class="text-gymOrange/40">•</span>
                   {{ exerciseSummary(ex) }}
-                  <span v-if="ex.notes" class="text-white/25 italic">{{ ex.notes }}</span>
+                  <span v-if="ex.notes" class="text-white/50 italic">{{ ex.notes }}</span>
                 </div>
               </div>
             </div>
@@ -463,7 +463,7 @@ onUnmounted(() => {
 
       <!-- TV URL info -->
       <div class="text-center bg-white/5 rounded-lg p-3 mt-4">
-        <p class="text-white/30 text-xs mb-1">URL de la TV</p>
+        <p class="text-white/50 text-xs mb-1">URL de la TV</p>
         <p class="text-gymOrange text-sm font-mono">/tv/{{ selectedScreenId }}</p>
       </div>
     </div>
@@ -471,21 +471,21 @@ onUnmounted(() => {
     <!-- Session Completed (showing on TV) -->
     <div v-else-if="isCompleted" class="text-center py-8">
       <h2 class="text-2xl font-bold text-gymOrange mb-2">Clase completada</h2>
-      <p class="text-white/50 text-sm mb-6">{{ classData?.name }}</p>
+      <p class="text-white/60 text-sm mb-6">{{ classData?.name }}</p>
 
       <div class="flex justify-center gap-4 mb-8">
         <div class="bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-center">
-          <p class="text-xs text-white/40 uppercase mb-1">Tiempo total</p>
+          <p class="text-xs text-white/50 uppercase mb-1">Tiempo total</p>
           <p class="text-3xl font-black text-gymOrange tabular-nums">{{
             formatTimer(sessionStore.session?.accumulatedTime || 0) }}</p>
         </div>
         <div class="bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-center">
-          <p class="text-xs text-white/40 uppercase mb-1">Bloques</p>
+          <p class="text-xs text-white/50 uppercase mb-1">Bloques</p>
           <p class="text-3xl font-black text-gymOrange tabular-nums">{{ sessionStore.session?.blocks?.length || 0 }}</p>
         </div>
       </div>
 
-      <p class="text-white/30 text-sm mb-6">La pantalla de resumen se está mostrando en la TV.</p>
+      <p class="text-white/50 text-sm mb-6">La pantalla de resumen se está mostrando en la TV.</p>
 
       <button @click="handleEnd"
         class="bg-gymOrange text-white font-bold rounded-lg px-6 py-3 hover:bg-gymOrange/90 transition-colors">
@@ -496,7 +496,7 @@ onUnmounted(() => {
     <!-- Session Finished -->
     <div v-else class="text-center py-12">
       <h2 class="text-3xl font-bold text-gymOrange mb-4">Sesión finalizada</h2>
-      <p class="text-white/50 mb-8">{{ classData?.name }}</p>
+      <p class="text-white/60 mb-8">{{ classData?.name }}</p>
       <button @click="handleBack"
         class="bg-gymOrange text-white font-bold rounded-lg px-6 py-3 hover:bg-gymOrange/90 transition-colors">
         Volver a clases

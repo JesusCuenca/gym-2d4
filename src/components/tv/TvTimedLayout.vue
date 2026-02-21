@@ -47,7 +47,7 @@ const exercisePositionText = computed(() => {
     <!-- Left Panel (30%) — Timer & Block Info -->
     <div class="w-[30%] flex flex-col items-center border-r border-white/10 px-6">
       <!-- Top: block name -->
-      <p class="pt-10 text-3xl font-black text-white/60 uppercase tracking-normal font-condensed">
+      <p class="pt-10 text-3xl font-black text-white/70 uppercase tracking-normal font-condensed">
         {{ block.name }}
       </p>
 
@@ -58,7 +58,7 @@ const exercisePositionText = computed(() => {
 
       <!-- Bottom: round info -->
       <p class="pb-10 text-3xl font-black uppercase tracking-normal font-condensed"
-        :class="showRoundInfo ? 'text-gymOrange' : 'text-white/60'">
+        :class="showRoundInfo ? 'text-gymOrange' : 'text-white/70'">
         {{ roundInfoText }}
       </p>
     </div>
@@ -71,7 +71,7 @@ const exercisePositionText = computed(() => {
           <div v-if="!isResting" :key="`ex-${timer.currentExerciseIndex}`"
             class="relative flex flex-col items-center justify-center h-full">
             <p v-if="exercisePositionText"
-              class="absolute top-10 text-2xl text-white/60 uppercase tracking-widest font-condensed">
+              class="absolute top-10 text-2xl text-white/70 uppercase tracking-widest font-condensed">
               {{ exercisePositionText }}
             </p>
             <TvSingleExercise :exercise="currentExercise" />

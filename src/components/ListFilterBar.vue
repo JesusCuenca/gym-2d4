@@ -64,7 +64,7 @@ const showingTo = computed(() => Math.min(props.currentPage * pageSize, props.to
 
 const chipBase = 'px-3 py-1.5 text-xs rounded-lg border transition-colors'
 const chipActive = 'bg-gymOrange/20 text-gymOrange border-gymOrange/30'
-const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-white/30'
+const chipInactive = 'bg-white/5 text-white/60 border-white/10 hover:border-white/30'
 </script>
 
 <template>
@@ -72,18 +72,18 @@ const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-whit
     <!-- Search + filter toggle -->
     <div class="flex gap-2">
       <div class="relative flex-1">
-        <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+        <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
         <input
           :value="searchText"
           @input="emit('update:searchText', $event.target.value)"
           type="text"
           placeholder="Buscar por nombre..."
-          class="w-full bg-white/10 border border-white/20 rounded-lg pl-9 pr-8 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
+          class="w-full bg-white/10 border border-white/20 rounded-lg pl-9 pr-8 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-gymOrange"
         />
         <button
           v-if="searchText"
           @click="emit('update:searchText', '')"
-          class="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white"
+          class="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
         >
           <XMarkIcon class="w-4 h-4" />
         </button>
@@ -93,7 +93,7 @@ const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-whit
         class="flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm transition-colors shrink-0"
         :class="hasActiveFilters
           ? 'border-gymOrange/50 text-gymOrange bg-gymOrange/10'
-          : 'border-white/20 text-white/50 hover:text-white hover:border-white/40'"
+          : 'border-white/20 text-white/60 hover:text-white hover:border-white/40'"
       >
         <FunnelIcon class="w-4 h-4" />
         Filtros
@@ -101,21 +101,21 @@ const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-whit
     </div>
 
     <!-- Results count + pagination -->
-    <div v-if="totalFilteredCount > 0" class="flex items-center justify-between text-xs text-white/40">
+    <div v-if="totalFilteredCount > 0" class="flex items-center justify-between text-xs text-white/50">
       <span>Mostrando {{ showingFrom }}–{{ showingTo }} de {{ totalFilteredCount }}</span>
       <div v-if="totalPages > 1" class="flex items-center gap-2">
         <button
           @click="emit('prevPage')"
           :disabled="currentPage <= 1"
-          class="p-1 disabled:opacity-20 hover:text-white transition-colors"
+          class="p-1 disabled:opacity-40 hover:text-white transition-colors"
         >
           <ChevronLeftIcon class="w-4 h-4" />
         </button>
-        <span class="text-white/60">{{ currentPage }} / {{ totalPages }}</span>
+        <span class="text-white/70">{{ currentPage }} / {{ totalPages }}</span>
         <button
           @click="emit('nextPage')"
           :disabled="currentPage >= totalPages"
-          class="p-1 disabled:opacity-20 hover:text-white transition-colors"
+          class="p-1 disabled:opacity-40 hover:text-white transition-colors"
         >
           <ChevronRightIcon class="w-4 h-4" />
         </button>
@@ -162,7 +162,7 @@ const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-whit
         <!-- Header -->
         <div class="flex items-center justify-between px-4 pt-2 pb-3 border-b border-white/10 shrink-0">
           <h2 class="text-white font-bold text-base">Filtros</h2>
-          <button @click="sheetOpen = false" class="text-white/50 hover:text-white transition-colors p-1">
+          <button @click="sheetOpen = false" class="text-white/60 hover:text-white transition-colors p-1">
             <XMarkIcon class="w-5 h-5" />
           </button>
         </div>
@@ -171,7 +171,7 @@ const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-whit
         <div class="flex-1 overflow-y-auto px-4 py-4 space-y-5 min-h-0">
           <!-- User filter -->
           <div>
-            <label class="block text-xs text-white/50 mb-2">Creado por</label>
+            <label class="block text-xs text-white/60 mb-2">Creado por</label>
             <div class="flex flex-wrap gap-2">
               <button
                 @click="emit('update:userMode', 'mine')"
@@ -196,14 +196,14 @@ const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-whit
                 @click="toggleUserUid(user.uid)"
                 :class="[chipBase, selectedUserUids.includes(user.uid)
                   ? 'bg-white/20 text-white border-white/40'
-                  : 'bg-white/5 text-white/40 border-white/10 hover:border-white/30']"
+                  : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30']"
               >{{ user.displayName || user.email }}</button>
             </div>
           </div>
 
           <!-- Type + Subtype (blocks only) -->
           <div v-if="showTypeFilter">
-            <label class="block text-xs text-white/50 mb-2">Tipo</label>
+            <label class="block text-xs text-white/60 mb-2">Tipo</label>
             <div class="flex flex-wrap gap-2">
               <button
                 @click="emit('update:typeFilter', '')"
@@ -219,7 +219,7 @@ const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-whit
 
             <!-- Subtype -->
             <div v-if="subtypeOptions.length > 0" class="mt-3">
-              <label class="block text-xs text-white/50 mb-2">Subtipo</label>
+              <label class="block text-xs text-white/60 mb-2">Subtipo</label>
               <div class="flex flex-wrap gap-2">
                 <button
                   @click="emit('update:subtypeFilter', '')"
@@ -237,10 +237,10 @@ const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-whit
 
           <!-- Date range -->
           <div>
-            <label class="block text-xs text-white/50 mb-2">Fecha de creación</label>
+            <label class="block text-xs text-white/60 mb-2">Fecha de creación</label>
             <div class="flex gap-3">
               <div class="flex-1">
-                <label class="block text-xs text-white/30 mb-1">Desde</label>
+                <label class="block text-xs text-white/50 mb-1">Desde</label>
                 <div class="relative">
                   <input
                     :value="dateFrom"
@@ -251,14 +251,14 @@ const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-whit
                   <button
                     v-if="dateFrom"
                     @click="emit('update:dateFrom', '')"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
                   >
                     <XMarkIcon class="w-4 h-4" />
                   </button>
                 </div>
               </div>
               <div class="flex-1">
-                <label class="block text-xs text-white/30 mb-1">Hasta</label>
+                <label class="block text-xs text-white/50 mb-1">Hasta</label>
                 <div class="relative">
                   <input
                     :value="dateTo"
@@ -269,7 +269,7 @@ const chipInactive = 'bg-white/5 text-white/50 border-white/10 hover:border-whit
                   <button
                     v-if="dateTo"
                     @click="emit('update:dateTo', '')"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
                   >
                     <XMarkIcon class="w-4 h-4" />
                   </button>

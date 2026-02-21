@@ -17,7 +17,7 @@ const { pickExercises } = useExercisePicker()
 const sz = computed(() => {
   const c = props.compact
   return {
-    label:            c ? 'text-xs text-white/50'   : 'text-sm text-white/70',
+    label:            c ? 'text-xs text-white/60'   : 'text-sm text-white/70',
     nameInput:        c ? 'px-3 py-2 text-sm'        : 'px-4 py-3',
     typeBtn:          c ? 'px-3 py-2 text-xs'         : 'px-4 py-3 text-sm',
     subtypeBtn:       c ? 'px-3 py-1.5 text-xs'      : 'px-4 py-2 text-sm',
@@ -32,11 +32,11 @@ const sz = computed(() => {
     exCard:           c ? 'p-3 space-y-2'             : 'p-4 space-y-3',
     exHeaderGap:      c ? 'gap-1.5'                  : 'gap-2',
     exDragIcon:       c ? 'w-4 h-4'                  : 'w-5 h-5',
-    exNum:            c ? 'text-xs text-white/40'     : 'text-sm text-white/50',
+    exNum:            c ? 'text-xs text-white/50'     : 'text-sm text-white/60',
     exTrashBtn:       c ? 'p-0.5'                    : 'p-1',
     exTrashIcon:      c ? 'w-3.5 h-3.5'              : 'w-4 h-4',
     exNameInput:      c ? 'px-3 py-1.5 text-sm'      : 'px-3 py-2 text-sm',
-    exSubLabel:       c ? 'text-xs text-white/40 mb-0.5' : 'text-xs text-white/50 mb-1',
+    exSubLabel:       c ? 'text-xs text-white/50 mb-0.5' : 'text-xs text-white/60 mb-1',
     exRepsW:          c ? 'w-24'                     : 'w-32',
     exRepsInput:      c ? 'px-2 py-1.5 text-sm'      : 'px-3 py-2 text-sm',
     exNotesInput:     c ? 'px-2 py-1.5 text-sm'      : 'px-3 py-2 text-sm',
@@ -151,7 +151,7 @@ async function openExercisePicker() {
         v-model="form.name"
         type="text"
         placeholder="Ej. AMRAP 15 min"
-        :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-gymOrange', sz.nameInput]"
+        :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-gymOrange', sz.nameInput]"
       />
     </div>
 
@@ -186,7 +186,7 @@ async function openExercisePicker() {
           :class="['rounded-lg font-bold transition-colors border', sz.subtypeBtn,
             form.subtype === st.value
               ? 'bg-white/20 text-white border-white/40'
-              : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30']"
+              : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30']"
         >
           {{ st.label }}
         </button>
@@ -205,7 +205,7 @@ async function openExercisePicker() {
           :class="['rounded-lg font-bold transition-colors border', sz.subtypeBtn,
             form.subtype === st.value
               ? 'bg-white/20 text-white border-white/40'
-              : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30']"
+              : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30']"
         >
           {{ st.label }}
         </button>
@@ -217,9 +217,9 @@ async function openExercisePicker() {
       <label :class="['block mb-1', sz.label]">{{ workTimeLabel }}</label>
       <div class="flex items-center gap-1">
         <button type="button" @click="stepWork(-30)" :disabled="!canStepWork(-30)"
-          :class="['text-white/50 hover:text-white disabled:opacity-20 transition-colors', sz.stepBtn]">-30s</button>
+          :class="['text-white/60 hover:text-white disabled:opacity-40 transition-colors', sz.stepBtn]">-30s</button>
         <button type="button" @click="stepWork(-5)" :disabled="!canStepWork(-5)"
-          :class="['text-white/50 hover:text-white disabled:opacity-20 transition-colors', sz.stepBtn]">-5s</button>
+          :class="['text-white/60 hover:text-white disabled:opacity-40 transition-colors', sz.stepBtn]">-5s</button>
         <input
           v-model="form.workMinutes"
           type="number"
@@ -227,7 +227,7 @@ async function openExercisePicker() {
           placeholder="15"
           :class="['bg-white/10 border border-white/20 rounded-lg text-white text-center focus:outline-none focus:border-gymOrange', sz.timeInput]"
         />
-        <span class="text-white/50">:</span>
+        <span class="text-white/60">:</span>
         <input
           v-model="form.workSeconds"
           type="number"
@@ -237,9 +237,9 @@ async function openExercisePicker() {
           :class="['bg-white/10 border border-white/20 rounded-lg text-white text-center focus:outline-none focus:border-gymOrange', sz.timeInput]"
         />
         <button type="button" @click="stepWork(5)" :disabled="!canStepWork(5)"
-          :class="['text-white/50 hover:text-white disabled:opacity-20 transition-colors', sz.stepBtn]">+5s</button>
+          :class="['text-white/60 hover:text-white disabled:opacity-40 transition-colors', sz.stepBtn]">+5s</button>
         <button type="button" @click="stepWork(30)" :disabled="!canStepWork(30)"
-          :class="['text-white/50 hover:text-white disabled:opacity-20 transition-colors', sz.stepBtn]">+30s</button>
+          :class="['text-white/60 hover:text-white disabled:opacity-40 transition-colors', sz.stepBtn]">+30s</button>
       </div>
     </div>
 
@@ -248,9 +248,9 @@ async function openExercisePicker() {
       <label :class="['block mb-1', sz.label]">Tiempo de descanso</label>
       <div class="flex items-center gap-1">
         <button type="button" @click="stepRest(-30)" :disabled="!canStepRest(-30)"
-          :class="['text-white/50 hover:text-white disabled:opacity-20 transition-colors', sz.stepBtn]">-30s</button>
+          :class="['text-white/60 hover:text-white disabled:opacity-40 transition-colors', sz.stepBtn]">-30s</button>
         <button type="button" @click="stepRest(-5)" :disabled="!canStepRest(-5)"
-          :class="['text-white/50 hover:text-white disabled:opacity-20 transition-colors', sz.stepBtn]">-5s</button>
+          :class="['text-white/60 hover:text-white disabled:opacity-40 transition-colors', sz.stepBtn]">-5s</button>
         <input
           v-model="form.restMinutes"
           type="number"
@@ -258,7 +258,7 @@ async function openExercisePicker() {
           placeholder="0"
           :class="['bg-white/10 border border-white/20 rounded-lg text-white text-center focus:outline-none focus:border-gymOrange', sz.timeInput]"
         />
-        <span class="text-white/50">:</span>
+        <span class="text-white/60">:</span>
         <input
           v-model="form.restSeconds"
           type="number"
@@ -268,9 +268,9 @@ async function openExercisePicker() {
           :class="['bg-white/10 border border-white/20 rounded-lg text-white text-center focus:outline-none focus:border-gymOrange', sz.timeInput]"
         />
         <button type="button" @click="stepRest(5)" :disabled="!canStepRest(5)"
-          :class="['text-white/50 hover:text-white disabled:opacity-20 transition-colors', sz.stepBtn]">+5s</button>
+          :class="['text-white/60 hover:text-white disabled:opacity-40 transition-colors', sz.stepBtn]">+5s</button>
         <button type="button" @click="stepRest(30)" :disabled="!canStepRest(30)"
-          :class="['text-white/50 hover:text-white disabled:opacity-20 transition-colors', sz.stepBtn]">+30s</button>
+          :class="['text-white/60 hover:text-white disabled:opacity-40 transition-colors', sz.stepBtn]">+30s</button>
       </div>
     </div>
 
@@ -282,7 +282,7 @@ async function openExercisePicker() {
         type="number"
         min="1"
         placeholder="Ej. 5"
-        :class="['bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-gymOrange', sz.roundsInput]"
+        :class="['bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-gymOrange', sz.roundsInput]"
       />
     </div>
 
@@ -296,7 +296,7 @@ async function openExercisePicker() {
           :class="['flex-1 rounded-lg font-bold transition-colors border', sz.subtypeBtn,
             form.exerciseMode === 'all'
               ? 'bg-white/20 text-white border-white/40'
-              : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30']"
+              : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30']"
         >
           Todos a la vez
         </button>
@@ -306,7 +306,7 @@ async function openExercisePicker() {
           :class="['flex-1 rounded-lg font-bold transition-colors border', sz.subtypeBtn,
             form.exerciseMode === 'rotate'
               ? 'bg-white/20 text-white border-white/40'
-              : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30']"
+              : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30']"
         >
           Uno por uno
         </button>
@@ -321,7 +321,7 @@ async function openExercisePicker() {
         type="number"
         min="1"
         placeholder="Ej. 10"
-        :class="['bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-gymOrange', sz.repsInput]"
+        :class="['bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-gymOrange', sz.repsInput]"
       />
     </div>
 
@@ -331,7 +331,7 @@ async function openExercisePicker() {
       <div :class="['flex flex-wrap items-end', sz.perRoundGap]">
         <div v-for="(_, rIndex) in form.repsPerRound" :key="rIndex" :class="['flex items-center', sz.perRoundGap]">
           <div class="text-center">
-            <span class="block text-xs text-white/40 mb-0.5">R{{ rIndex + 1 }}</span>
+            <span class="block text-xs text-white/50 mb-0.5">R{{ rIndex + 1 }}</span>
             <input
               v-model="form.repsPerRound[rIndex]"
               type="number"
@@ -370,14 +370,14 @@ async function openExercisePicker() {
           <div :class="['bg-white/5 border border-white/10 rounded-lg', sz.exCard]">
             <div :class="['flex items-center justify-between']">
               <div :class="['flex items-center', sz.exHeaderGap]">
-                <Bars2Icon :class="['block-form-drag-handle text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0', sz.exDragIcon]" />
+                <Bars2Icon :class="['block-form-drag-handle text-white/50 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0', sz.exDragIcon]" />
                 <span :class="['font-medium', sz.exNum]">#{{ index + 1 }}</span>
               </div>
               <button
                 type="button"
                 @click="removeExercise(index)"
                 :disabled="form.exercises.length === 1"
-                :class="['text-red-400/70 hover:text-red-400 disabled:opacity-20', sz.exTrashBtn]"
+                :class="['text-red-400/70 hover:text-red-400 disabled:opacity-40', sz.exTrashBtn]"
               ><TrashIcon :class="sz.exTrashIcon" /></button>
             </div>
 
@@ -385,7 +385,7 @@ async function openExercisePicker() {
               v-model="exercise.name"
               type="text"
               placeholder="Nombre del ejercicio"
-              :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-gymOrange', sz.exNameInput]"
+              :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-gymOrange', sz.exNameInput]"
             />
 
             <div class="flex gap-2">
@@ -406,7 +406,7 @@ async function openExercisePicker() {
                   v-model="exercise.notes"
                   type="text"
                   placeholder="Opcional"
-                  :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-gymOrange', sz.exNotesInput]"
+                  :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-gymOrange', sz.exNotesInput]"
                 />
               </div>
             </div>
@@ -425,7 +425,7 @@ async function openExercisePicker() {
         <button
           type="button"
           @click="addExercise"
-          :class="['border border-dashed border-white/20 rounded-lg text-white/50 hover:text-white hover:border-white/40 transition-colors', sz.addPlusBtn]"
+          :class="['border border-dashed border-white/20 rounded-lg text-white/60 hover:text-white hover:border-white/40 transition-colors', sz.addPlusBtn]"
         >
           +
         </button>

@@ -45,7 +45,7 @@ async function handleDelete(screen) {
         type="text"
         placeholder="Nombre de la pantalla (ej. Sala 1)"
         @keyup.enter="handleAdd"
-        class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/30 text-sm focus:outline-none focus:border-gymOrange"
+        class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-gymOrange"
       />
       <button
         @click="handleAdd"
@@ -57,7 +57,7 @@ async function handleDelete(screen) {
     </div>
 
     <!-- Screens list -->
-    <div v-if="screenStore.screens.length === 0" class="text-white/30 text-sm text-center py-4 border border-dashed border-white/10 rounded-lg">
+    <div v-if="screenStore.screens.length === 0" class="text-white/50 text-sm text-center py-4 border border-dashed border-white/10 rounded-lg">
       No hay pantallas todavía. Añade una pantalla por cada TV de tu gimnasio.
     </div>
 
@@ -69,7 +69,7 @@ async function handleDelete(screen) {
       >
         <div>
           <span class="text-white font-medium text-sm">{{ screen.name }}</span>
-          <span class="text-white/30 text-xs ml-2">/tv/{{ screen.id }}</span>
+          <span class="text-white/50 text-xs ml-2">/tv/{{ screen.id }}</span>
         </div>
         <div class="flex items-center gap-2">
           <span

@@ -104,7 +104,7 @@ function closeMenu() {
                 <img src="/gym-2d4-logo.jpg" alt="2D4 Gym" class="h-8 w-8 object-contain rounded-md" />
                 2D4 Gym TV
               </span>
-              <button @click="closeMenu" class="text-white/60 hover:text-white p-1">
+              <button @click="closeMenu" class="text-white/70 hover:text-white p-1">
                 <XMarkIcon class="w-6 h-6" />
               </button>
             </div>
@@ -147,7 +147,7 @@ function closeMenu() {
             </nav>
 
             <div class="pt-3 border-t border-white/10 flex items-center justify-between">
-              <RouterLink to="/admin/perfil" class="text-white/40 text-sm truncate hover:text-white transition-colors" @click="closeMenu">
+              <RouterLink to="/admin/perfil" class="text-white/50 text-sm truncate hover:text-white transition-colors" @click="closeMenu">
                 {{ userStore.profile?.displayName || authStore.user?.email }}
               </RouterLink>
               <button @click="handleLogout" class="nav-link text-base">

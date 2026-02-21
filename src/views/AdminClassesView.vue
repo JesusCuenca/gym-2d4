@@ -108,7 +108,7 @@ onMounted(() => {
 
     <!-- Empty state: no data at all -->
     <div v-else-if="classStore.classes.length === 0" class="text-center py-12">
-      <p class="text-white/50 mb-4">No hay clases todavía. Crea tu primera clase.</p>
+      <p class="text-white/60 mb-4">No hay clases todavía. Crea tu primera clase.</p>
       <RouterLink
         :to="{ name: 'admin-class-create' }"
         class="inline-block bg-gymOrange text-white font-bold rounded-lg px-6 py-3 hover:bg-gymOrange/90 transition-colors"
@@ -119,7 +119,7 @@ onMounted(() => {
 
     <!-- Empty state: filters produced no results -->
     <div v-else-if="totalFilteredCount === 0" class="text-center py-12">
-      <p class="text-white/50 mb-4">No hay resultados para estos filtros.</p>
+      <p class="text-white/60 mb-4">No hay resultados para estos filtros.</p>
       <button @click="clearFilters" class="text-gymOrange text-sm hover:underline">
         Limpiar filtros
       </button>
@@ -144,9 +144,9 @@ onMounted(() => {
         class="bg-white/5 border border-white/10 rounded-lg p-4"
       >
         <h3 class="font-bold text-white text-lg mb-1">{{ cls.name }}</h3>
-        <p v-if="cls.description" class="text-white/40 text-sm mb-3">{{ cls.description }}</p>
+        <p v-if="cls.description" class="text-white/50 text-sm mb-3">{{ cls.description }}</p>
 
-        <div class="text-white/50 text-sm mb-3">
+        <div class="text-white/60 text-sm mb-3">
           {{ cls.blocks?.length || 0 }} bloque{{ (cls.blocks?.length || 0) !== 1 ? 's' : '' }}
           <span v-if="getTotalTime(cls)"> · ~{{ formatMinutes(getTotalTime(cls)) }}</span>
         </div>
@@ -156,13 +156,13 @@ onMounted(() => {
           <span
             v-for="(block, i) in cls.blocks"
             :key="i"
-            class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/60"
+            class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70"
           >
             {{ block.blockData?.name || 'Bloque' }}
           </span>
         </div>
 
-        <div class="text-white/30 text-xs mb-4">
+        <div class="text-white/50 text-xs mb-4">
           Creado por {{ userStore.getUserName(cls.uid) }}
         </div>
 
@@ -176,14 +176,14 @@ onMounted(() => {
           </RouterLink>
           <RouterLink
             :to="{ name: 'admin-class-edit', params: { id: cls.id } }"
-            class="flex items-center gap-1.5 text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
           >
             <PencilSquareIcon class="w-4 h-4" />
             Editar
           </RouterLink>
           <button
             @click="handleClone(cls)"
-            class="flex items-center gap-1.5 text-sm text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
           >
             <DocumentDuplicateIcon class="w-4 h-4" />
             Clonar

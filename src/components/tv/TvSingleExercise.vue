@@ -20,7 +20,7 @@ defineProps({
     </h2>
 
     <!-- Notes -->
-    <p v-if="exercise?.notes" class="text-4xl text-white/50 font-condensed uppercase">
+    <p v-if="exercise?.notes" class="text-4xl text-white/70 font-condensed uppercase">
       {{ exercise.notes }}
     </p>
   </div>

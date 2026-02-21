@@ -32,7 +32,7 @@ const perRoundTier = computed(() => {
     <!-- Left Panel (30%) — Round Info & Reps -->
     <div class="w-[30%] flex flex-col items-center border-r border-white/10 px-6">
       <!-- Top: block name -->
-      <p class="pt-10 text-3xl font-black text-white/60 uppercase tracking-normal font-condensed">
+      <p class="pt-10 text-3xl font-black text-white/70 uppercase tracking-normal font-condensed">
         {{ block.name }}
       </p>
 
@@ -44,14 +44,14 @@ const perRoundTier = computed(() => {
             class="inline-flex items-center justify-center w-44 h-44 bg-gymOrange rounded-3xl text-[8rem] font-black text-white font-condensed leading-none">
             {{ block.repsEveryRound }}
           </span>
-          <span class="text-2xl text-white/50 font-condensed uppercase">reps cada ronda</span>
+          <span class="text-2xl text-white/70 font-condensed uppercase">reps cada ronda</span>
         </div>
 
         <!-- perRound: series breakdown -->
         <div v-else-if="subcase === 'perRound' && block.repsPerRound" class="flex flex-col items-center"
           :class="perRoundTier.gap">
           <div v-for="(reps, i) in block.repsPerRound" :key="i" class="flex items-center gap-3">
-            <span class="text-white/50 font-condensed uppercase" :class="perRoundTier.text">
+            <span class="text-white/70 font-condensed uppercase" :class="perRoundTier.text">
               ronda {{ i + 1 }}
             </span>
             <span class="inline-flex items-center justify-center bg-gymOrange font-black text-white font-condensed"

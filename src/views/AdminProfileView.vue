@@ -61,7 +61,7 @@ onMounted(() => {
 
       <!-- Display Name -->
       <div class="mb-4">
-        <label class="block text-sm text-white/50 mb-1">Nombre</label>
+        <label class="block text-sm text-white/60 mb-1">Nombre</label>
         <div v-if="!editing" class="flex items-center justify-between">
           <span class="text-white text-lg font-medium">{{ userStore.profile?.displayName }}</span>
           <button
@@ -76,7 +76,7 @@ onMounted(() => {
           <input
             v-model="editName"
             type="text"
-            class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-gymOrange"
+            class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange"
           />
           <div class="flex gap-2">
             <button
@@ -98,7 +98,7 @@ onMounted(() => {
 
       <!-- Email (read-only) -->
       <div>
-        <label class="block text-sm text-white/50 mb-1">Email</label>
+        <label class="block text-sm text-white/60 mb-1">Email</label>
         <span class="text-white/70">{{ authStore.user?.email }}</span>
       </div>
     </div>

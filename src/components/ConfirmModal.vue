@@ -21,7 +21,7 @@ const { state, respond } = useConfirm()
       >
         <div class="bg-[#111] border border-white/15 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
           <h3 class="text-white font-bold text-lg mb-2">{{ state.title }}</h3>
-          <p class="text-white/60 text-sm mb-6">{{ state.message }}</p>
+          <p class="text-white/70 text-sm mb-6">{{ state.message }}</p>
           <div class="flex gap-3 justify-end">
             <button
               class="px-4 py-2 rounded-lg border border-white/20 text-white/70 hover:text-white hover:border-white/40 text-sm transition-colors"

@@ -40,7 +40,7 @@ async function handleDelete(block) {
 }
 
 async function handleClone(block) {
-  const { id, createdAt, ...data } = block
+  const { id: _id, createdAt: _createdAt, ...data } = block
   await blockStore.createBlock({
     ...data,
     name: `${block.name} (copia)`,

@@ -62,7 +62,7 @@ onUnmounted(() => {
 
 // Work ↔ Rest transitions
 watch(
-  () => timer.isResting.value,
+  () => timer.isResting,
   (isRest, wasRest) => {
     if (sessionRef.value?.clockState !== 'running') return
     if (wasRest === undefined) return
@@ -76,7 +76,7 @@ watch(
 
 // Countdown 3-2-1 beeps
 watch(
-  () => timer.countdownSecondsLeft.value,
+  () => timer.countdownSecondsLeft,
   (n, prev) => {
     if (n != null && n !== prev && n >= 1 && n <= 3) {
       playCountdown(n)
@@ -86,7 +86,7 @@ watch(
 
 // Phase ending countdown (last 3 seconds of work/rest phases)
 watch(
-  () => Math.ceil(timer.phaseSecondsLeft.value),
+  () => Math.ceil(timer.phaseSecondsLeft),
   (secs, prev) => {
     if (sessionRef.value?.clockState !== 'running') return
     if (secs === prev) return
@@ -118,7 +118,7 @@ watch(
 
 // Self-heal: if countdown stays stuck >5s, force transition to running
 watch(
-  () => timer.isCountdownStuck.value,
+  () => timer.isCountdownStuck,
   async (stuck) => {
     if (!stuck) return
     const s = sessionRef.value

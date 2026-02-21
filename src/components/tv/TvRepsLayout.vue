@@ -14,7 +14,7 @@ const props = defineProps({
 
 const subcase = computed(() => getRepsSubcase(props.block))
 
-const elapsedDisplay = computed(() => formatTimer(props.timer.displaySeconds.value))
+const elapsedDisplay = computed(() => formatTimer(props.timer.displaySeconds))
 
 const perRoundTier = computed(() => {
   const count = props.block.repsPerRound?.length || 0

@@ -13,27 +13,27 @@ const props = defineProps({
   session: Object,
 })
 
-const showRoundInfo = computed(() => props.timer.totalRounds.value > 1)
+const showRoundInfo = computed(() => props.timer.totalRounds > 1)
 
 const roundInfoText = computed(() => {
   if (showRoundInfo.value) {
-    return `RONDA ${props.timer.currentRound.value} / ${props.timer.totalRounds.value}`
+    return `RONDA ${props.timer.currentRound} / ${props.timer.totalRounds}`
   }
   // Single round (e.g. AMRAP): show total time
   return formatTimer(props.block.workSeconds)
 })
 
 const currentExercise = computed(() => {
-  const idx = props.timer.currentExerciseIndex.value
+  const idx = props.timer.currentExerciseIndex
   if (idx == null) return null
   return props.block.exercises?.[idx] ?? null
 })
 
-const isRotating = computed(() => props.timer.currentExerciseIndex.value != null)
-const isResting = computed(() => props.timer.isResting.value)
+const isRotating = computed(() => props.timer.currentExerciseIndex != null)
+const isResting = computed(() => props.timer.isResting)
 
 const exercisePositionText = computed(() => {
-  const idx = props.timer.currentExerciseIndex.value
+  const idx = props.timer.currentExerciseIndex
   if (idx == null) return null
   return `EJERCICIO ${idx + 1} / ${props.block.exercises?.length || 0}`
 })
@@ -53,7 +53,7 @@ const exercisePositionText = computed(() => {
 
       <!-- Center: timer countdown -->
       <div class="flex-1 flex items-center justify-center">
-        <TvTimerCountdown :secondsLeft="timer.phaseSecondsLeft.value" :isResting="isResting" />
+        <TvTimerCountdown :secondsLeft="timer.phaseSecondsLeft" :isResting="isResting" />
       </div>
 
       <!-- Bottom: round info -->
@@ -68,7 +68,7 @@ const exercisePositionText = computed(() => {
       <!-- Rotating mode: single exercise with transitions -->
       <template v-if="isRotating">
         <Transition name="tv-exercise" mode="out-in">
-          <div v-if="!isResting" :key="`ex-${timer.currentExerciseIndex.value}`"
+          <div v-if="!isResting" :key="`ex-${timer.currentExerciseIndex}`"
             class="relative flex flex-col items-center justify-center h-full">
             <p v-if="exercisePositionText"
               class="absolute top-10 text-2xl text-white/60 uppercase tracking-widest font-condensed">
@@ -95,6 +95,6 @@ const exercisePositionText = computed(() => {
     </div>
 
     <!-- Info Pill — next exercise (rotating mode only) -->
-    <TvInfoPill v-if="timer.nextExerciseName.value" label="Siguiente" :value="timer.nextExerciseName.value" />
+    <TvInfoPill v-if="timer.nextExerciseName" label="Siguiente" :value="timer.nextExerciseName" />
   </div>
 </template>

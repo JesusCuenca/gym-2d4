@@ -16,12 +16,12 @@ const totalDuration = computed(() => getTotalDuration(props.block) || 0)
 
 const phaseProgress = computed(() => {
   if (!isTimedBlock.value || totalDuration.value <= 0) return 0
-  const elapsed = props.timer.displaySeconds.value
+  const elapsed = props.timer.displaySeconds
   return Math.min(1, Math.max(0, elapsed / totalDuration.value))
 })
 
 const phaseColorClass = computed(() =>
-  props.timer.isResting.value ? 'bg-gymRest' : 'bg-gymOrange'
+  props.timer.isResting ? 'bg-gymRest' : 'bg-gymOrange'
 )
 
 const classProgress = computed(() => {

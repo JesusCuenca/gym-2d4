@@ -41,7 +41,7 @@ const transitionKey = computed(() => {
       :block="currentBlock"
       :blockIndex="session.currentBlockIndex"
       :totalBlocks="session.blocks?.length || 0"
-      :countdownNumber="timer.countdownSecondsLeft?.value"
+      :countdownNumber="timer.countdownSecondsLeft"
     />
 
     <TvTimedLayout

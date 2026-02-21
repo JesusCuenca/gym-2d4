@@ -85,6 +85,13 @@ const routes = [
     path: "/",
     redirect: "/login",
   },
+
+  // 404 catch-all
+  {
+    path: "/:pathMatch(.*)*",
+    name: "not-found",
+    component: () => import("../views/NotFoundView.vue"),
+  },
 ];
 
 const router = createRouter({

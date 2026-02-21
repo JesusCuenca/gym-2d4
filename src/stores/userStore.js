@@ -67,9 +67,12 @@ export const useUserStore = defineStore('user', () => {
     return user?.displayName || 'Desconocido'
   }
 
-  function clearProfile() {
+  function $reset() {
     profile.value = null
+    allUsers.value = []
+    loading.value = false
+    error.value = null
   }
 
-  return { profile, loading, error, hasProfile, allUsers, fetchProfile, createProfile, updateProfile, clearProfile, fetchAllUsers, getUserName }
+  return { profile, loading, error, hasProfile, allUsers, fetchProfile, createProfile, updateProfile, $reset, fetchAllUsers, getUserName }
 })

@@ -1,4 +1,4 @@
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted, reactive } from 'vue'
 import { buildTimeline } from '../utils/timeline'
 
 export function useTimer(sessionRef) {
@@ -145,7 +145,7 @@ export function useTimer(sessionRef) {
     return displaySeconds.value > COUNTDOWN_STUCK_THRESHOLD
   })
 
-  return {
+  return reactive({
     displaySeconds,
     currentSegment,
     phaseSecondsLeft,
@@ -158,5 +158,5 @@ export function useTimer(sessionRef) {
     isCountingDown,
     countdownSecondsLeft,
     isCountdownStuck,
-  }
+  })
 }

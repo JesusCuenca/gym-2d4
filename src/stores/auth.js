@@ -3,6 +3,9 @@ import { defineStore } from 'pinia'
 import { auth } from '../firebase'
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth'
 import { useUserStore } from './userStore'
+import { useBlockStore } from './blockStore'
+import { useClassStore } from './classStore'
+import { useScreenStore } from './screenStore'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -58,9 +61,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
-    const userStore = useUserStore()
-    userStore.clearProfile()
-    await signOut(auth)
+    try {
+      await signOut(auth)
+    } finally {
+      useUserStore().$reset()
+      useBlockStore().$reset()
+      useClassStore().$reset()
+      useScreenStore().$reset()
+    }
   }
 
   return { user, isLoggedIn, loading, error, initAuth, login, logout }

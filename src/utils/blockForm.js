@@ -1,4 +1,4 @@
-import { isTimed, getRepsSubcase, TIMED_SUBTYPES } from '../models/blockTypes'
+import { isTimed, getRepsSubcase } from '../models/blockTypes'
 
 let exerciseIdCounter = 0
 

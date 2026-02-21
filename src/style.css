@@ -80,6 +80,24 @@ body {
   50% { filter: brightness(1.4); }
 }
 
+/* Vue Transitions: bottom-sheet (backdrop fade + panel slide-up) */
+.bottom-sheet-enter-active,
+.bottom-sheet-leave-active {
+  transition: opacity 200ms ease;
+}
+.bottom-sheet-enter-active .bottom-sheet-panel,
+.bottom-sheet-leave-active .bottom-sheet-panel {
+  transition: transform 300ms ease;
+}
+.bottom-sheet-enter-from,
+.bottom-sheet-leave-to {
+  opacity: 0;
+}
+.bottom-sheet-enter-from .bottom-sheet-panel,
+.bottom-sheet-leave-to .bottom-sheet-panel {
+  transform: translateY(100%);
+}
+
 /* Vue Transitions: tv-block (fade + slide-X for block/screen changes) */
 .tv-block-enter-active,
 .tv-block-leave-active {

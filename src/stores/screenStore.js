@@ -1,19 +1,75 @@
 import { defineStore } from 'pinia'
-import { db } from '../firebase'
-import { doc, updateDoc, onSnapshot } from 'firebase/firestore'
+import { db, serverTimestamp } from '../firebase'
+import { doc, updateDoc, setDoc, getDoc, onSnapshot } from 'firebase/firestore'
 import { useFirestoreCrud } from '../composables/useFirestoreCrud'
+import { useAuthStore } from '../stores/auth'
+
+export function slugify(text) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
 
 export const useScreenStore = defineStore('screens', () => {
   const crud = useFirestoreCrud('screens', {
     labels: { item: 'pantalla', items: 'pantallas' },
   })
 
-  async function createScreen(name) {
+  async function createScreen(name, customId) {
+    const authStore = useAuthStore()
     if (!name?.trim()) {
       crud.error.value = 'El nombre de la pantalla no puede estar vacío.'
       throw new Error(crud.error.value)
     }
-    return crud.create({ name: name.trim(), activeSessionId: null })
+    const id = customId?.trim() || slugify(name.trim())
+    if (!id) {
+      crud.error.value = 'El identificador no puede estar vacío.'
+      throw new Error(crud.error.value)
+    }
+    const existing = await getDoc(doc(db, 'screens', id))
+    if (existing.exists()) {
+      crud.error.value = `Ya existe una pantalla con el identificador "${id}".`
+      throw new Error(crud.error.value)
+    }
+    crud.error.value = null
+    try {
+      await setDoc(doc(db, 'screens', id), {
+        name: name.trim(),
+        activeSessionId: null,
+        uid: authStore.user.uid,
+        createdAt: serverTimestamp(),
+      })
+      crud.items.value = [
+        { id, name: name.trim(), activeSessionId: null, uid: authStore.user.uid },
+        ...crud.items.value,
+      ]
+      return id
+    } catch (e) {
+      crud.error.value = 'No se pudo crear la pantalla. Intenta de nuevo.'
+      console.error('createScreen error:', e)
+      throw e
+    }
+  }
+
+  async function renameScreen(id, name) {
+    if (!name?.trim()) {
+      crud.error.value = 'El nombre no puede estar vacío.'
+      throw new Error(crud.error.value)
+    }
+    crud.error.value = null
+    try {
+      await updateDoc(doc(db, 'screens', id), { name: name.trim() })
+      crud.items.value = crud.items.value.map((s) =>
+        s.id === id ? { ...s, name: name.trim() } : s,
+      )
+    } catch (e) {
+      crud.error.value = 'No se pudo actualizar el nombre.'
+      console.error('renameScreen error:', e)
+      throw e
+    }
   }
 
   async function setActiveSession(screenId, sessionId) {
@@ -61,6 +117,7 @@ export const useScreenStore = defineStore('screens', () => {
     $reset: crud.$reset,
     fetchScreens: crud.fetchOwn,
     createScreen,
+    renameScreen,
     deleteScreen: crud.remove,
     setActiveSession,
     clearActiveSession,

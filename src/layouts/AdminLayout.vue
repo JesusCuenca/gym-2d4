@@ -10,6 +10,7 @@ import {
   Squares2X2Icon,
   CubeIcon,
   CalendarDaysIcon,
+  TvIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
 } from '@heroicons/vue/24/outline'
@@ -61,6 +62,10 @@ function closeMenu() {
           <RouterLink to="/admin/clases" class="nav-link">
             <CalendarDaysIcon class="w-4 h-4" />
             Clases
+          </RouterLink>
+          <RouterLink to="/admin/pantallas" class="nav-link">
+            <TvIcon class="w-4 h-4" />
+            Pantallas
           </RouterLink>
           <RouterLink to="/admin/perfil" class="nav-link">
             <UserCircleIcon class="w-4 h-4" />
@@ -125,11 +130,19 @@ function closeMenu() {
               </RouterLink>
               <RouterLink
                 to="/admin/clases"
-                class="nav-link py-3 text-base"
+                class="nav-link py-3 text-base border-b border-white/5"
                 @click="closeMenu"
               >
                 <CalendarDaysIcon class="w-5 h-5" />
                 Clases
+              </RouterLink>
+              <RouterLink
+                to="/admin/pantallas"
+                class="nav-link py-3 text-base"
+                @click="closeMenu"
+              >
+                <TvIcon class="w-5 h-5" />
+                Pantallas
               </RouterLink>
             </nav>
 

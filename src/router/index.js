@@ -67,6 +67,11 @@ const routes = [
         component: () => import("../views/AdminClassLiveView.vue"),
       },
       {
+        path: "pantallas",
+        name: "admin-screens",
+        component: () => import("../views/AdminScreensView.vue"),
+      },
+      {
         path: "perfil/setup",
         name: "admin-profile-setup",
         component: () => import("../views/AdminProfileSetupView.vue"),

@@ -4,7 +4,6 @@ import { RouterLink } from 'vue-router'
 import { useBlockStore } from '../stores/blockStore'
 import { useClassStore } from '../stores/classStore'
 import { useScreenStore } from '../stores/screenStore'
-import ScreenManager from '../components/ScreenManager.vue'
 import { PlayIcon } from '@heroicons/vue/24/outline'
 
 const blockStore = useBlockStore()
@@ -63,10 +62,13 @@ onMounted(() => {
           <div class="text-3xl font-bold text-white">{{ classStore.classes.length }}</div>
           <div class="text-white/50 text-sm mt-1">Clases</div>
         </RouterLink>
-        <div class="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
+        <RouterLink
+          :to="{ name: 'admin-screens' }"
+          class="bg-white/5 border border-white/10 hover:border-gymOrange/50 rounded-lg p-4 text-center transition-colors"
+        >
           <div class="text-3xl font-bold text-white">{{ screenStore.screens.length }}</div>
           <div class="text-white/50 text-sm mt-1">Pantallas</div>
-        </div>
+        </RouterLink>
       </div>
 
       <!-- Quick Actions -->
@@ -110,11 +112,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Screens Section -->
-      <div class="mt-8">
-        <h2 class="text-lg font-bold text-white mb-4">Pantallas</h2>
-        <ScreenManager />
-      </div>
     </template>
   </div>
 </template>

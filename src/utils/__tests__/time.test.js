@@ -35,6 +35,15 @@ describe('secondsToTimeString', () => {
   it('pads single-digit seconds', () => {
     expect(secondsToTimeString(61)).toBe('01:01')
   })
+  it('returns "00:00" for NaN', () => {
+    expect(secondsToTimeString(NaN)).toBe('00:00')
+  })
+  it('returns "00:00" for undefined', () => {
+    expect(secondsToTimeString(undefined)).toBe('00:00')
+  })
+  it('clamps negative values to "00:00"', () => {
+    expect(secondsToTimeString(-5)).toBe('00:00')
+  })
 })
 
 describe('formatTimer', () => {

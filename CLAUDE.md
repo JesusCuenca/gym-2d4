@@ -34,7 +34,7 @@ src/
 ├── style.css                        # Tailwind import + custom theme colors/fonts
 │
 ├── models/
-│   └── blockTypes.js                # BLOCK_TYPES, TIMED_PRESETS, isTimed(), getBlockLabel(), getRepsSubcase()
+│   └── blockTypes.js                # BLOCK_TYPES, TIMED_SUBTYPES, isTimed(), getBlockLabel(), getRepsSubcase()
 │
 ├── utils/
 │   ├── time.js                      # timeStringToSeconds, secondsToTimeString, formatTimer, formatTimerTwoLine
@@ -81,11 +81,11 @@ src/
 
 ## 5. Firestore Data Model
 
-### 5.1 Block Model — 2 Types + Presets
+### 5.1 Block Model — 2 Types + Subtypes
 
-Blocks use **only 2 data types**: `timed` and `reps`. Common workout formats (AMRAP, EMOM, Tabata) are **UI presets** that pre-fill the form — they don't exist as distinct types at the data level.
+Blocks use **only 2 data types**: `timed` and `reps`. Common workout formats (AMRAP, EMOM, Tabata) are **UI subtypes** that pre-fill the form — they don't exist as distinct types at the data level.
 
-**Design principle:** The TV is 100% data-driven. It never checks `type` or `preset` to decide layout — it reads `rounds`, `workSeconds`, `restSeconds`, `exerciseMode`, and the pre-computed timeline to render everything.
+**Design principle:** The TV is 100% data-driven. It never checks `type` or `subtype` to decide layout — it reads `rounds`, `workSeconds`, `restSeconds`, `exerciseMode`, and the pre-computed timeline to render everything.
 
 #### Collection: `blocks`
 
@@ -93,7 +93,7 @@ Blocks use **only 2 data types**: `timed` and `reps`. Common workout formats (AM
 |-------|------|-------------|
 | `name` | string | Block display name (e.g. "AMRAP 15 min") |
 | `type` | string | `timed` or `reps` |
-| `preset` | string\|null | `amrap`, `emom`, `tabata`, or `null` — only for admin UX, TV ignores this |
+| `subtype` | string\|null | `amrap`, `emom`, `tabata`, or `null` — only for admin UX, TV ignores this |
 | `rounds` | number | Number of rounds (AMRAP = 1) |
 | `workSeconds` | number | Work phase duration per round in seconds (timed only) |
 | `restSeconds` | number | Rest phase duration per round in seconds (0 = no rest) |
@@ -112,11 +112,11 @@ Blocks use **only 2 data types**: `timed` and `reps`. Common workout formats (AM
 | `repsEveryRound` | number\|null | Reps per round (shown as orange square badge on TV) |
 | `notes` | string\|null | Optional notes |
 
-#### Timed Presets
+#### Timed Subtypes
 
-Presets are shortcuts in the admin form. They pre-fill fields with sensible defaults:
+Subtypes are shortcuts in the admin form. They pre-fill fields with sensible defaults:
 
-| Preset | `rounds` | `workSeconds` | `restSeconds` | `exerciseMode` |
+| Subtype | `rounds` | `workSeconds` | `restSeconds` | `exerciseMode` |
 |--------|----------|---------------|----------------|----------------|
 | AMRAP | 1 | total time cap | 0 | `all` |
 | EMOM | N intervals | interval duration | 0 | `all` |
@@ -125,12 +125,12 @@ Presets are shortcuts in the admin form. They pre-fill fields with sensible defa
 
 #### Block Examples
 
-**AMRAP 12 min** (timed, preset: amrap):
+**AMRAP 12 min** (timed, subtype: amrap):
 ```json
 {
   "name": "AMRAP 12",
   "type": "timed",
-  "preset": "amrap",
+  "subtype": "amrap",
   "rounds": 1,
   "workSeconds": 720,
   "restSeconds": 0,
@@ -143,12 +143,12 @@ Presets are shortcuts in the admin form. They pre-fill fields with sensible defa
 }
 ```
 
-**EMOM 6 rounds x 60s** (timed, preset: emom):
+**EMOM 6 rounds x 60s** (timed, subtype: emom):
 ```json
 {
   "name": "EMOM 6",
   "type": "timed",
-  "preset": "emom",
+  "subtype": "emom",
   "rounds": 6,
   "workSeconds": 60,
   "restSeconds": 0,
@@ -160,12 +160,12 @@ Presets are shortcuts in the admin form. They pre-fill fields with sensible defa
 }
 ```
 
-**Tabata** (timed, preset: tabata):
+**Tabata** (timed, subtype: tabata):
 ```json
 {
   "name": "Tabata Core",
   "type": "timed",
-  "preset": "tabata",
+  "subtype": "tabata",
   "rounds": 8,
   "workSeconds": 20,
   "restSeconds": 10,
@@ -177,12 +177,12 @@ Presets are shortcuts in the admin form. They pre-fill fields with sensible defa
 }
 ```
 
-**Custom timed** (timed, no preset):
+**Custom timed** (timed, no subtype):
 ```json
 {
   "name": "Intervals 4x3",
   "type": "timed",
-  "preset": null,
+  "subtype": null,
   "rounds": 4,
   "workSeconds": 180,
   "restSeconds": 60,
@@ -200,7 +200,7 @@ Presets are shortcuts in the admin form. They pre-fill fields with sensible defa
 {
   "name": "5 Rounds",
   "type": "reps",
-  "preset": null,
+  "subtype": null,
   "rounds": 5,
   "repsEveryRound": 10,
   "exercises": [
@@ -215,7 +215,7 @@ Presets are shortcuts in the admin form. They pre-fill fields with sensible defa
 {
   "name": "Fran",
   "type": "reps",
-  "preset": null,
+  "subtype": null,
   "rounds": 3,
   "repsPerRound": [21, 15, 9],
   "exercises": [
@@ -230,7 +230,7 @@ Presets are shortcuts in the admin form. They pre-fill fields with sensible defa
 {
   "name": "Accessory",
   "type": "reps",
-  "preset": null,
+  "subtype": null,
   "rounds": 3,
   "exercises": [
     { "name": "DB Rows", "repsEveryRound": 12, "notes": "Each arm" },
@@ -320,7 +320,7 @@ All workout types use a split layout: **30% Left (Controller) / 70% Right (Actio
 
 ### Timed Blocks (`type === 'timed'`)
 
-The TV is 100% data-driven via the timeline (pre-computed segment array). No type/preset checks.
+The TV is 100% data-driven via the timeline (pre-computed segment array). No type/subtype checks.
 
 - **Left (30%):** Giant countdown timer (phase seconds left) + block name + round info.
   - 1 round: shows total time.

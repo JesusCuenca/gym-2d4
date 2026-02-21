@@ -1,4 +1,13 @@
-export default [
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+export default shuffle([
   'Amo las agujetas de mañana',
   'Aquí venimos a sudar, no a peinarnos',
   'Cuida tu cuerpo, es tu única casa',
@@ -36,4 +45,4 @@ export default [
   'Tu sudor es tu grasa llorando',
   'Tu única competencia está en el espejo',
   'Un día más, un día mejor',
-].sort(() => Math.random() < 0.5)
+])

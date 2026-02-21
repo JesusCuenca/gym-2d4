@@ -4,8 +4,9 @@ export function timeStringToSeconds(str) {
 }
 
 export function secondsToTimeString(totalSeconds) {
-  const m = Math.floor(totalSeconds / 60)
-  const s = totalSeconds % 60
+  const abs = Math.max(0, Math.floor(isFinite(totalSeconds) ? totalSeconds : 0))
+  const m = Math.floor(abs / 60)
+  const s = abs % 60
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 

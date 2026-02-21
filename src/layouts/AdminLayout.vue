@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useUserStore } from '../stores/userStore'
@@ -22,6 +22,10 @@ const { isOnline } = useConnectionStatus()
 
 watch(menuOpen, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
+})
+
+onUnmounted(() => {
+  document.body.style.overflow = ''
 })
 
 async function handleLogout() {

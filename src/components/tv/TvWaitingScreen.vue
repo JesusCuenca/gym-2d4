@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import phrases from '../../utils/waitingPhrases'
 defineProps({
   screenName: String,
@@ -12,17 +12,13 @@ const showPhrase = ref(true)
 let clockInterval = null
 let phraseInterval = null
 
-const timeString = () => {
-  return now.value.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-}
+const timeString = computed(() =>
+  now.value.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+)
 
-const dateString = () => {
-  return now.value.toLocaleDateString('es-ES', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
-}
+const dateString = computed(() =>
+  now.value.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+)
 
 onMounted(() => {
   clockInterval = setInterval(() => {
@@ -58,10 +54,10 @@ onUnmounted(() => {
     <!-- Clock + Date -->
     <div class="text-center">
       <p class="text-8xl font-black font-condensed text-white">
-        {{ timeString() }}
+        {{ timeString }}
       </p>
       <p class="text-2xl text-white/40 font-condensed uppercase tracking-wider mt-2">
-        {{ dateString() }}
+        {{ dateString }}
       </p>
     </div>
 

@@ -155,6 +155,18 @@ describe('getTotalDuration', () => {
     expect(getTotalDuration({ type: 'reps' })).toBeNull()
   })
 
+  it('returns 0 for empty exercises', () => {
+    expect(getTotalDuration(timedBlock({ exercises: [] }))).toBe(0)
+  })
+
+  it('returns 0 for rounds = 0', () => {
+    expect(getTotalDuration(timedBlock({ rounds: 0 }))).toBe(0)
+  })
+
+  it('returns 0 for workSeconds = 0', () => {
+    expect(getTotalDuration(timedBlock({ workSeconds: 0 }))).toBe(0)
+  })
+
   it('mode "all": matches sum of buildTimeline durations', () => {
     const block = timedBlock({ rounds: 4, restSeconds: 20 })
     const tl = buildTimeline(block)

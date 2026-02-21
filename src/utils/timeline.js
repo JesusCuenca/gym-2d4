@@ -43,6 +43,9 @@ export function buildTimeline(block) {
  */
 export function getTotalDuration(block) {
   if (block.type !== 'timed') return null
+  if (!block.exercises?.length) return 0
+  if (!block.rounds || block.rounds < 1) return 0
+  if (!block.workSeconds || block.workSeconds <= 0) return 0
   const exCount = block.exercises?.length || 1
   if (block.exerciseMode === 'rotate') {
     const totalIterations = block.rounds * exCount

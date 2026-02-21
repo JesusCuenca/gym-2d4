@@ -138,6 +138,13 @@ export function useTimer(sessionRef) {
     return left > 0 ? left : null
   })
 
+  // Self-healing: countdown is stuck if >5s have elapsed without transitioning to running
+  const COUNTDOWN_STUCK_THRESHOLD = 5
+  const isCountdownStuck = computed(() => {
+    if (!isCountingDown.value) return false
+    return displaySeconds.value > COUNTDOWN_STUCK_THRESHOLD
+  })
+
   return {
     displaySeconds,
     currentSegment,
@@ -150,5 +157,6 @@ export function useTimer(sessionRef) {
     isBlockFinished,
     isCountingDown,
     countdownSecondsLeft,
+    isCountdownStuck,
   }
 }

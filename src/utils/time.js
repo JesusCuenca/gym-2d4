@@ -10,14 +10,14 @@ export function secondsToTimeString(totalSeconds) {
 }
 
 export function formatTimer(totalSeconds) {
-  const abs = Math.max(0, Math.floor(totalSeconds))
+  const abs = Math.max(0, Math.floor(isFinite(totalSeconds) ? totalSeconds : 0))
   const m = Math.floor(abs / 60)
   const s = abs % 60
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
 export function formatTimerTwoLine(totalSeconds) {
-  const abs = Math.max(0, Math.floor(totalSeconds))
+  const abs = Math.max(0, Math.floor(isFinite(totalSeconds) ? totalSeconds : 0))
   const m = Math.floor(abs / 60)
   const s = abs % 60
   const secStr = ':' + String(s).padStart(2, '0')

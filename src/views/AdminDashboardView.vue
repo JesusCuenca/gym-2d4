@@ -12,6 +12,13 @@ const classStore = useClassStore()
 const screenStore = useScreenStore()
 
 const loading = computed(() => blockStore.loading || classStore.loading || screenStore.loading)
+const fetchError = computed(() => blockStore.error || classStore.error || screenStore.error)
+
+function retryFetch() {
+  blockStore.fetchBlocks()
+  classStore.fetchClasses()
+  screenStore.fetchScreens()
+}
 
 onMounted(() => {
   blockStore.fetchBlocks()
@@ -29,7 +36,17 @@ onMounted(() => {
       <AppSpinner size="lg" />
     </div>
 
-    <template v-else>
+    <!-- Fetch error banner -->
+    <div v-if="fetchError && !loading"
+      class="bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-3 text-red-300 text-sm mb-6 flex items-center justify-between">
+      <span>{{ fetchError }}</span>
+      <button @click="retryFetch"
+        class="text-gymOrange hover:text-gymOrange/80 font-bold text-sm ml-4">
+        Reintentar
+      </button>
+    </div>
+
+    <template v-if="!loading">
       <!-- Stats -->
       <div class="grid grid-cols-3 gap-4 mb-8">
         <RouterLink

@@ -1,6 +1,8 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted, toRef } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, toRef } from 'vue'
 import { useRoute } from 'vue-router'
+import { doc, updateDoc } from 'firebase/firestore'
+import { db, serverTimestamp } from '../firebase'
 import { useSessionStore } from '../stores/sessionStore'
 import { useScreenStore } from '../stores/screenStore'
 import { useTimer } from '../composables/useTimer'
@@ -26,6 +28,7 @@ const { audioEnabled, toggleAudio, playWorkStart, playRestStart, playCountdown, 
 
 const hasActiveSession = ref(false)
 const { isOnline } = useConnectionStatus()
+const subscriptionError = computed(() => screenStore.error || sessionStore.error)
 
 function onScreenUpdate(data) {
   screenData.value = data
@@ -112,6 +115,25 @@ watch(
     }
   },
 )
+
+// Self-heal: if countdown stays stuck >5s, force transition to running
+watch(
+  () => timer.isCountdownStuck.value,
+  async (stuck) => {
+    if (!stuck) return
+    const s = sessionRef.value
+    if (!s || s.clockState !== 'countdown') return
+    console.warn('Stuck countdown detected, self-healing to running')
+    try {
+      await updateDoc(doc(db, 'sessions', s.id), {
+        clockState: 'running',
+        startTimestamp: serverTimestamp(),
+      })
+    } catch (e) {
+      console.error('Self-heal failed:', e)
+    }
+  },
+)
 </script>
 
 <template>
@@ -132,6 +154,19 @@ watch(
     >
       Reconectando...
     </div>
+
+    <!-- Subscription error overlay -->
+    <div
+      v-if="subscriptionError && !sessionStore.session"
+      class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-gymBlack/95"
+    >
+      <p class="text-5xl font-black font-condensed uppercase text-red-500 mb-4">
+        Error de conexión
+      </p>
+      <p class="text-2xl text-white/60 font-condensed">{{ subscriptionError }}</p>
+      <p class="text-xl text-white/30 font-condensed mt-6 animate-pulse">Reconectando...</p>
+    </div>
+
     <TvWaitingScreen
       v-if="!sessionStore.session || !['active', 'completed'].includes(sessionStore.session.sessionState)"
       :screenName="screenData?.name"

@@ -219,6 +219,7 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   async function endSession(sessionId, screenId) {
+    clearCountdownTimeout()
     error.value = null
     try {
       const screenStore = useScreenStore()

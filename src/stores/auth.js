@@ -12,9 +12,18 @@ export const useAuthStore = defineStore('auth', () => {
 
   function initAuth() {
     const AUTH_TIMEOUT_MS = 5000
+    let initialResolved = false
+    let timedOut = false
 
     const authPromise = new Promise((resolve) => {
       onAuthStateChanged(auth, (firebaseUser) => {
+        // If timeout already won and this is the late initial callback, ignore it
+        if (timedOut && !initialResolved) {
+          initialResolved = true
+          resolve()
+          return
+        }
+        initialResolved = true
         user.value = firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null
         isLoggedIn.value = !!firebaseUser
         loading.value = false
@@ -26,6 +35,7 @@ export const useAuthStore = defineStore('auth', () => {
       setTimeout(() => {
         if (loading.value) {
           console.warn('Auth initialization timed out after', AUTH_TIMEOUT_MS, 'ms')
+          timedOut = true
           user.value = null
           isLoggedIn.value = false
           loading.value = false

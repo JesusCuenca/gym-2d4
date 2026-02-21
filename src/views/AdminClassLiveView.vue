@@ -30,6 +30,7 @@ const selectedScreenId = ref('')
 const starting = ref(false)
 const started = ref(false)
 const expandedBlockIndex = ref(null)
+const actionLoading = ref(false)
 
 const currentBlock = computed(() => {
   const s = sessionStore.session
@@ -123,44 +124,75 @@ async function handleStart() {
     sessionId.value = await sessionStore.startSession(classData.value, selectedScreenId.value)
     sessionStore.subscribeToSession(sessionId.value)
     started.value = true
+  } catch {
+    toastStore.show('Error al iniciar sesión.', 'error')
   } finally {
     starting.value = false
   }
 }
 
 async function handlePlay() {
-  if (!sessionId.value) return
-  const s = sessionStore.session
-  if (s && s.accumulatedTime === 0 && s.clockState === 'stopped') {
-    await sessionStore.startCountdown(sessionId.value)
-  } else {
-    await sessionStore.play(sessionId.value)
+  if (!sessionId.value || actionLoading.value) return
+  actionLoading.value = true
+  try {
+    const s = sessionStore.session
+    if (s && s.accumulatedTime === 0 && s.clockState === 'stopped') {
+      await sessionStore.startCountdown(sessionId.value)
+    } else {
+      await sessionStore.play(sessionId.value)
+    }
+  } catch {
+    toastStore.show('Error al iniciar. Intenta de nuevo.', 'error')
+  } finally {
+    actionLoading.value = false
   }
 }
 
 async function handlePause() {
-  if (sessionId.value) await sessionStore.pause(sessionId.value)
+  if (!sessionId.value || actionLoading.value) return
+  actionLoading.value = true
+  try {
+    await sessionStore.pause(sessionId.value)
+  } catch {
+    toastStore.show('Error al pausar.', 'error')
+  } finally {
+    actionLoading.value = false
+  }
 }
 
 async function handleNextBlock() {
   const s = sessionStore.session
-  if (!s || !sessionId.value) return
+  if (!s || !sessionId.value || actionLoading.value) return
   const nextIndex = s.currentBlockIndex + 1
-  if (nextIndex < s.blocks.length) {
+  if (nextIndex >= s.blocks.length) return
+  actionLoading.value = true
+  try {
     await sessionStore.nextBlock(sessionId.value, nextIndex)
+  } catch {
+    toastStore.show('Error al cambiar de bloque.', 'error')
+  } finally {
+    actionLoading.value = false
   }
 }
 
 async function handleAdjustTime(clockDelta) {
-  if (!sessionId.value || !canAdjustTime.value) return
+  if (!sessionId.value || !canAdjustTime.value || actionLoading.value) return
   const newDisplay = timer.displaySeconds.value - clockDelta
   const maxDuration = totalBlockDuration.value
   if (newDisplay < 0) return
   if (maxDuration && newDisplay >= maxDuration) return
-  await sessionStore.adjustTime(sessionId.value, clockDelta)
+  actionLoading.value = true
+  try {
+    await sessionStore.adjustTime(sessionId.value, clockDelta)
+  } catch {
+    toastStore.show('Error al ajustar tiempo.', 'error')
+  } finally {
+    actionLoading.value = false
+  }
 }
 
 async function handleGoToBlock(targetIndex) {
+  if (actionLoading.value) return
   const s = sessionStore.session
   if (!s || !sessionId.value) return
   if (targetIndex === s.currentBlockIndex) return
@@ -171,27 +203,46 @@ async function handleGoToBlock(targetIndex) {
     message: `¿Saltar a "${blockName}"? Se perderá el progreso del bloque actual.`,
     confirmLabel: 'Saltar',
   })
-  if (ok) {
+  if (!ok) return
+  actionLoading.value = true
+  try {
     await sessionStore.goToBlock(sessionId.value, targetIndex)
+  } catch {
+    toastStore.show('Error al saltar al bloque.', 'error')
+  } finally {
+    actionLoading.value = false
   }
 }
 
 async function handleComplete() {
-  if (!sessionId.value) return
+  if (!sessionId.value || actionLoading.value) return
   const ok = await confirm({
     title: 'Completar sesión',
     message: '¿Seguro que quieres completar esta sesión? La pantalla de resumen se mostrará en la TV.',
     confirmLabel: 'Completar',
   })
-  if (ok) {
+  if (!ok) return
+  actionLoading.value = true
+  try {
     await sessionStore.completeSession(sessionId.value)
+  } catch {
+    toastStore.show('Error al completar la sesión.', 'error')
+  } finally {
+    actionLoading.value = false
   }
 }
 
 async function handleEnd() {
-  if (!sessionId.value) return
-  await sessionStore.endSession(sessionId.value, selectedScreenId.value)
-  toastStore.show('Sesión finalizada')
+  if (!sessionId.value || actionLoading.value) return
+  actionLoading.value = true
+  try {
+    await sessionStore.endSession(sessionId.value, selectedScreenId.value)
+    toastStore.show('Sesión finalizada')
+  } catch {
+    toastStore.show('Error al finalizar.', 'error')
+  } finally {
+    actionLoading.value = false
+  }
 }
 
 function handleBack() {
@@ -258,6 +309,11 @@ onUnmounted(() => {
 
     <!-- Live Remote Control -->
     <div v-else-if="!isCompleted && !isFinished">
+      <!-- Session subscription error -->
+      <div v-if="sessionStore.error"
+        class="bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-3 text-red-300 text-sm mb-4">
+        {{ sessionStore.error }}
+      </div>
       <div class="text-center mb-4">
         <p class="text-white/50 text-sm mb-1">{{ classData?.name }}</p>
         <p class="text-white/40 text-xs">
@@ -301,48 +357,48 @@ onUnmounted(() => {
 
       <!-- Time Adjustment (timed blocks only) -->
       <div v-if="canAdjustTime" class="flex justify-center gap-2 mb-4">
-        <button @click="handleAdjustTime(-30)"
-          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 transition-colors">
+        <button @click="handleAdjustTime(-30)" :disabled="actionLoading"
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
           -30s
         </button>
-        <button @click="handleAdjustTime(-10)"
-          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 transition-colors">
+        <button @click="handleAdjustTime(-10)" :disabled="actionLoading"
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
           -10s
         </button>
-        <button @click="handleAdjustTime(10)"
-          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 transition-colors">
+        <button @click="handleAdjustTime(10)" :disabled="actionLoading"
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
           +10s
         </button>
-        <button @click="handleAdjustTime(30)"
-          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 transition-colors">
+        <button @click="handleAdjustTime(30)" :disabled="actionLoading"
+          class="px-3 py-1.5 text-sm font-bold rounded-lg bg-white/10 text-white/60 hover:bg-white/20 active:bg-white/30 disabled:opacity-40 transition-colors">
           +30s
         </button>
       </div>
 
       <!-- Control Buttons -->
       <div class="grid grid-cols-2 gap-3 mb-6">
-        <button v-if="isCountdown" disabled
-          class="col-span-2 flex items-center justify-center gap-2 bg-gymOrange/50 text-white font-bold rounded-xl px-6 py-5 text-lg cursor-not-allowed">
+        <button v-if="isCountdown" @click="handlePlay" :disabled="actionLoading"
+          class="col-span-2 flex items-center justify-center gap-2 bg-gymOrange/50 text-white font-bold rounded-xl px-6 py-5 text-lg hover:bg-gymOrange/70 disabled:opacity-50 transition-colors">
           COMENZANDO...
         </button>
-        <button v-else-if="!isRunning" @click="handlePlay"
-          class="col-span-2 flex items-center justify-center gap-2 bg-green-600 text-white font-bold rounded-xl px-6 py-5 text-lg hover:bg-green-500 transition-colors">
+        <button v-else-if="!isRunning" @click="handlePlay" :disabled="actionLoading"
+          class="col-span-2 flex items-center justify-center gap-2 bg-green-600 text-white font-bold rounded-xl px-6 py-5 text-lg hover:bg-green-500 disabled:opacity-50 transition-colors">
           <PlayIcon class="w-6 h-6" />
           PLAY
         </button>
-        <button v-else @click="handlePause"
-          class="col-span-2 flex items-center justify-center gap-2 bg-yellow-600 text-white font-bold rounded-xl px-6 py-5 text-lg hover:bg-yellow-500 transition-colors">
+        <button v-else @click="handlePause" :disabled="actionLoading"
+          class="col-span-2 flex items-center justify-center gap-2 bg-yellow-600 text-white font-bold rounded-xl px-6 py-5 text-lg hover:bg-yellow-500 disabled:opacity-50 transition-colors">
           <PauseIcon class="w-6 h-6" />
           PAUSA
         </button>
 
-        <button @click="handleNextBlock" :disabled="isLastBlock"
+        <button @click="handleNextBlock" :disabled="isLastBlock || actionLoading"
           class="flex items-center justify-center gap-2 bg-blue-600 text-white font-bold rounded-xl px-4 py-4 hover:bg-blue-500 disabled:opacity-30 transition-colors">
           SIGUIENTE
           <ForwardIcon class="w-5 h-5" />
         </button>
-        <button @click="handleComplete"
-          class="flex items-center justify-center gap-2 bg-red-600/80 text-white font-bold rounded-xl px-4 py-4 hover:bg-red-600 transition-colors">
+        <button @click="handleComplete" :disabled="actionLoading"
+          class="flex items-center justify-center gap-2 bg-red-600/80 text-white font-bold rounded-xl px-4 py-4 hover:bg-red-600 disabled:opacity-50 transition-colors">
           <StopIcon class="w-5 h-5" />
           FINALIZAR
         </button>

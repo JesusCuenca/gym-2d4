@@ -1,8 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, toRef } from 'vue'
 import { useRoute } from 'vue-router'
-import { doc, updateDoc } from 'firebase/firestore'
-import { db, serverTimestamp } from '../firebase'
 import { useSessionStore } from '../stores/sessionStore'
 import { useScreenStore } from '../stores/screenStore'
 import { useTimer } from '../composables/useTimer'
@@ -116,21 +114,14 @@ watch(
   },
 )
 
-// Self-heal: if countdown stays stuck >5s, force transition to running
+// Note: stuck countdown detection is logged only — the admin side
+// (sessionStore.startCountdown) owns the countdown timeout and transitions
+// to 'running' after 3s. The TV cannot write to Firestore without auth.
 watch(
   () => timer.isCountdownStuck,
-  async (stuck) => {
-    if (!stuck) return
-    const s = sessionRef.value
-    if (!s || s.clockState !== 'countdown') return
-    console.warn('Stuck countdown detected, self-healing to running')
-    try {
-      await updateDoc(doc(db, 'sessions', s.id), {
-        clockState: 'running',
-        startTimestamp: serverTimestamp(),
-      })
-    } catch (e) {
-      console.error('Self-heal failed:', e)
+  (stuck) => {
+    if (stuck) {
+      console.warn('Countdown appears stuck; admin side will recover automatically.')
     }
   },
 )

@@ -19,6 +19,8 @@ async function handleAdd() {
     newScreenName.value = ''
     await screenStore.fetchScreens()
     toastStore.show('Pantalla creada')
+  } catch {
+    toastStore.show('Error al crear la pantalla.', 'error')
   } finally {
     adding.value = false
   }
@@ -29,9 +31,12 @@ async function handleDelete(screen) {
     title: 'Eliminar pantalla',
     message: `"${screen.name}" será eliminada permanentemente.`,
   })
-  if (ok) {
+  if (!ok) return
+  try {
     await screenStore.deleteScreen(screen.id)
     toastStore.show('Pantalla eliminada')
+  } catch {
+    toastStore.show('Error al eliminar la pantalla.', 'error')
   }
 }
 </script>

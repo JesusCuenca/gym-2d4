@@ -14,6 +14,7 @@ import {
   DocumentDuplicateIcon,
   TrashIcon,
   PlayIcon,
+  EyeIcon,
 } from '@heroicons/vue/24/outline'
 
 const classStore = useClassStore()
@@ -30,6 +31,10 @@ const {
   items: computed(() => classStore.classes),
   currentUserUid: computed(() => authStore.user?.uid),
 })
+
+function isOwner(cls) {
+  return cls.uid === authStore.user?.uid
+}
 
 function getTotalTime(cls) {
   return cls.blocks?.reduce((sum, b) => {
@@ -48,20 +53,27 @@ async function handleDelete(cls) {
     title: 'Eliminar clase',
     message: `"${cls.name}" será eliminada permanentemente.`,
   })
-  if (ok) {
+  if (!ok) return
+  try {
     await classStore.deleteClass(cls.id)
     toastStore.show('Clase eliminada')
+  } catch {
+    toastStore.show('Error al eliminar la clase.', 'error')
   }
 }
 
 async function handleClone(cls) {
-  await classStore.createClass({
-    name: `${cls.name} (copia)`,
-    description: cls.description,
-    blocks: cls.blocks,
-  })
-  await classStore.fetchAllClasses()
-  toastStore.show('Clase duplicada')
+  try {
+    await classStore.createClass({
+      name: `${cls.name} (copia)`,
+      description: cls.description,
+      blocks: cls.blocks,
+    })
+    await classStore.fetchAllClasses()
+    toastStore.show('Clase duplicada')
+  } catch {
+    toastStore.show('Error al duplicar la clase.', 'error')
+  }
 }
 
 onMounted(() => {
@@ -174,27 +186,49 @@ onMounted(() => {
             <PlayIcon class="w-4 h-4" />
             Iniciar
           </RouterLink>
-          <RouterLink
-            :to="{ name: 'admin-class-edit', params: { id: cls.id } }"
-            class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
-          >
-            <PencilSquareIcon class="w-4 h-4" />
-            Editar
-          </RouterLink>
-          <button
-            @click="handleClone(cls)"
-            class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
-          >
-            <DocumentDuplicateIcon class="w-4 h-4" />
-            Clonar
-          </button>
-          <button
-            @click="handleDelete(cls)"
-            class="flex items-center gap-1.5 text-sm text-red-400/70 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 rounded-lg px-3 py-1.5 transition-colors"
-          >
-            <TrashIcon class="w-4 h-4" />
-            Eliminar
-          </button>
+
+          <!-- Owner actions -->
+          <template v-if="isOwner(cls)">
+            <RouterLink
+              :to="{ name: 'admin-class-edit', params: { id: cls.id } }"
+              class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <PencilSquareIcon class="w-4 h-4" />
+              Editar
+            </RouterLink>
+            <button
+              @click="handleClone(cls)"
+              class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <DocumentDuplicateIcon class="w-4 h-4" />
+              Clonar
+            </button>
+            <button
+              @click="handleDelete(cls)"
+              class="flex items-center gap-1.5 text-sm text-red-400/70 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <TrashIcon class="w-4 h-4" />
+              Eliminar
+            </button>
+          </template>
+
+          <!-- Non-owner actions -->
+          <template v-else>
+            <RouterLink
+              :to="{ name: 'admin-class-edit', params: { id: cls.id } }"
+              class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <EyeIcon class="w-4 h-4" />
+              Ver
+            </RouterLink>
+            <button
+              @click="handleClone(cls)"
+              class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <DocumentDuplicateIcon class="w-4 h-4" />
+              Clonar
+            </button>
+          </template>
         </div>
       </div>
     </TransitionGroup>

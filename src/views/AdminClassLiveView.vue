@@ -68,16 +68,16 @@ const timerDisplay = computed(() => {
   const block = currentBlock.value
   if (!block) return '00:00'
   if (isTimed(block.type)) {
-    return formatTimer(timer.phaseSecondsLeft.value)
+    return formatTimer(timer.phaseSecondsLeft)
   }
-  return formatTimer(timer.displaySeconds.value)
+  return formatTimer(timer.displaySeconds)
 })
 
 const timerLabel = computed(() => {
   const block = currentBlock.value
   if (!block) return ''
   if (isTimed(block.type)) {
-    return timer.isResting.value ? 'Descanso' : 'Cuenta atrás'
+    return timer.isResting ? 'Descanso' : 'Cuenta atrás'
   }
   return 'Tiempo transcurrido'
 })
@@ -177,7 +177,7 @@ async function handleNextBlock() {
 
 async function handleAdjustTime(clockDelta) {
   if (!sessionId.value || !canAdjustTime.value || actionLoading.value) return
-  const newDisplay = timer.displaySeconds.value - clockDelta
+  const newDisplay = timer.displaySeconds - clockDelta
   const maxDuration = totalBlockDuration.value
   if (newDisplay < 0) return
   if (maxDuration && newDisplay >= maxDuration) return
@@ -349,7 +349,7 @@ onUnmounted(() => {
       <!-- Timer Display -->
       <div class="text-center mb-6">
         <div class="text-7xl font-black tabular-nums"
-          :class="isRunning ? (timer.isResting.value ? 'text-gymRest' : 'text-gymOrange') : 'text-white/70'">
+          :class="isRunning ? (timer.isResting ? 'text-gymRest' : 'text-gymOrange') : 'text-white/70'">
           {{ timerDisplay }}
         </div>
         <p class="text-white/50 text-xs mt-2">{{ timerLabel }}</p>

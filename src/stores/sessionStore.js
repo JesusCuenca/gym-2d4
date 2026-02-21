@@ -1,15 +1,15 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { db, serverTimestamp } from '../firebase'
+import { timestampToMillis } from '../utils/firestore'
 import {
   collection,
-  addDoc,
   doc,
   updateDoc,
   onSnapshot,
+  writeBatch,
 } from 'firebase/firestore'
 import { useAuthStore } from './auth'
-import { useScreenStore } from './screenStore'
 import { validateSessionInputs } from '../utils/validation'
 
 let countdownTimeoutId = null
@@ -37,9 +37,11 @@ export const useSessionStore = defineStore('session', () => {
     error.value = null
     try {
       const authStore = useAuthStore()
-      const screenStore = useScreenStore()
 
-      const docRef = await addDoc(collection(db, 'sessions'), {
+      const batch = writeBatch(db)
+      const sessionRef = doc(collection(db, 'sessions'))
+
+      batch.set(sessionRef, {
         classId: classData.id,
         className: classData.name,
         blocks: classData.blocks,
@@ -54,12 +56,11 @@ export const useSessionStore = defineStore('session', () => {
         createdAt: serverTimestamp(),
       })
 
-      const sessionId = docRef.id
+      batch.update(doc(db, 'screens', screenId), { activeSessionId: sessionRef.id })
 
-      // Link session to screen
-      await screenStore.setActiveSession(screenId, sessionId)
+      await batch.commit()
 
-      return sessionId
+      return sessionRef.id
     } catch (e) {
       if (!error.value) {
         error.value = 'No se pudo iniciar la sesión. Intenta de nuevo.'
@@ -120,10 +121,7 @@ export const useSessionStore = defineStore('session', () => {
 
       // Compute elapsed directly from session data instead of relying on
       // rAF-updated displaySeconds, which can be stale if the screen was off.
-      const startMs = s.startTimestamp.toMillis
-        ? s.startTimestamp.toMillis()
-        : s.startTimestamp.seconds * 1000
-      const elapsed = s.accumulatedTime + (Date.now() - startMs) / 1000
+      const elapsed = s.accumulatedTime + (Date.now() - timestampToMillis(s.startTimestamp)) / 1000
 
       await updateDoc(doc(db, 'sessions', sessionId), {
         clockState: 'paused',
@@ -204,10 +202,7 @@ export const useSessionStore = defineStore('session', () => {
 
       // Compute elapsed directly from session data (same fix as pause)
       if (s?.startTimestamp) {
-        const startMs = s.startTimestamp.toMillis
-          ? s.startTimestamp.toMillis()
-          : s.startTimestamp.seconds * 1000
-        updateData.accumulatedTime = s.accumulatedTime + (Date.now() - startMs) / 1000
+        updateData.accumulatedTime = s.accumulatedTime + (Date.now() - timestampToMillis(s.startTimestamp)) / 1000
       }
 
       await updateDoc(doc(db, 'sessions', sessionId), updateData)
@@ -222,16 +217,15 @@ export const useSessionStore = defineStore('session', () => {
     clearCountdownTimeout()
     error.value = null
     try {
-      const screenStore = useScreenStore()
+      const batch = writeBatch(db)
 
-      await updateDoc(doc(db, 'sessions', sessionId), {
-        sessionState: 'finished',
-      })
+      batch.update(doc(db, 'sessions', sessionId), { sessionState: 'finished' })
 
-      // Unlink session from screen
       if (screenId) {
-        await screenStore.clearActiveSession(screenId)
+        batch.update(doc(db, 'screens', screenId), { activeSessionId: null })
       }
+
+      await batch.commit()
     } catch (e) {
       error.value = 'Error al finalizar la sesión.'
       console.error('endSession error:', e)
@@ -260,6 +254,7 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   function unsubscribeFromSession() {
+    clearCountdownTimeout()
     if (unsubscribe) {
       unsubscribe()
       unsubscribe = null

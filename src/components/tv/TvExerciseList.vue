@@ -23,7 +23,7 @@ const tierClasses = computed(() => {
     xl: { gap: 'gap-8', name: 'text-8xl', notes: 'text-4xl', badge: 'w-28 h-28 text-6xl rounded-2xl', itemGap: 'gap-6' },
     lg: { gap: 'gap-6', name: 'text-7xl', notes: 'text-3xl', badge: 'w-24 h-24 text-5xl rounded-2xl', itemGap: 'gap-5' },
     md: { gap: 'gap-5', name: 'text-6xl', notes: 'text-2xl', badge: 'w-20 h-20 text-4xl rounded-xl', itemGap: 'gap-5' },
-    sm: { gap: 'gap-4', name: 'text-5xl', notes: 'text-xl', badge: 'w-18 h-18 text-3xl rounded-xl', itemGap: 'gap-4' },
+    sm: { gap: 'gap-4', name: 'text-5xl', notes: 'text-xl', badge: 'w-[4.5rem] h-[4.5rem] text-3xl rounded-xl', itemGap: 'gap-4' },
     xs: { gap: 'gap-3', name: 'text-4xl', notes: 'text-lg', badge: 'w-16 h-16 text-3xl rounded-xl', itemGap: 'gap-4' },
   }
   return tiers[sizeTier.value]

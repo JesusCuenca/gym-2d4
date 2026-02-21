@@ -3,6 +3,8 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useClassStore } from '../stores/classStore'
 import { useBlockStore } from '../stores/blockStore'
+import { useToastStore } from '../stores/toastStore'
+import { useAuthStore } from '../stores/auth'
 import { BLOCK_TYPES, TIMED_SUBTYPES, isTimed } from '../models/blockTypes'
 import { validateBlock } from '../utils/validation'
 import { Bars2Icon, XMarkIcon } from '@heroicons/vue/20/solid'
@@ -17,6 +19,8 @@ const router = useRouter()
 const route = useRoute()
 const classStore = useClassStore()
 const blockStore = useBlockStore()
+const toastStore = useToastStore()
+const authStore = useAuthStore()
 
 let blockKeyCounter = 0
 
@@ -27,6 +31,11 @@ const validationError = ref('')
 const name = ref('')
 const description = ref('')
 const classBlocks = ref([]) // { _key, sourceBlockId, form, editing }
+const classOwnerUid = ref(null)
+
+const isReadOnly = computed(
+  () => isEditMode.value && classOwnerUid.value !== null && classOwnerUid.value !== authStore.user?.uid
+)
 
 const { isDirty, markClean, takeSnapshot } = useUnsavedChanges(() => ({
   name: name.value,
@@ -93,10 +102,15 @@ function toggleEdit(index) {
 // --- Save block inline to library ---
 
 async function saveToLibrary(blockIndex) {
-  const blockData = formToBlockData(classBlocks.value[blockIndex].form)
-  const blockId = await blockStore.createBlock(blockData)
-  classBlocks.value[blockIndex].sourceBlockId = blockId
-  await blockStore.fetchBlocks()
+  try {
+    const blockData = formToBlockData(classBlocks.value[blockIndex].form)
+    const blockId = await blockStore.createBlock(blockData)
+    classBlocks.value[blockIndex].sourceBlockId = blockId
+    await blockStore.fetchBlocks()
+    toastStore.show('Bloque guardado en el catálogo')
+  } catch {
+    toastStore.show('Error al guardar el bloque en el catálogo.', 'error')
+  }
 }
 
 // --- Submit ---
@@ -149,6 +163,8 @@ async function handleSubmit() {
 
     markClean()
     router.push({ name: 'admin-classes' })
+  } catch {
+    toastStore.show('Error al guardar la clase. Intenta de nuevo.', 'error')
   } finally {
     submitting.value = false
   }
@@ -162,6 +178,7 @@ onMounted(async () => {
   if (isEditMode.value) {
     const cls = await classStore.getClassById(route.params.id)
     if (cls) {
+      classOwnerUid.value = cls.uid ?? null
       name.value = cls.name
       description.value = cls.description || ''
       classBlocks.value = (cls.blocks || []).map((b) => ({
@@ -181,8 +198,8 @@ onMounted(async () => {
 <template>
   <div class="max-w-2xl mx-auto">
     <h1 class="text-2xl font-bold text-gymOrange mb-6">
-      {{ isEditMode ? 'Editar clase' : 'Crear clase' }}
-      <span v-if="isDirty" class="inline-block w-2 h-2 bg-gymOrange rounded-full ml-2 align-middle" title="Cambios sin guardar" />
+      {{ isReadOnly ? 'Ver clase' : isEditMode ? 'Editar clase' : 'Crear clase' }}
+      <span v-if="isDirty && !isReadOnly" class="inline-block w-2 h-2 bg-gymOrange rounded-full ml-2 align-middle" title="Cambios sin guardar" />
     </h1>
 
     <div v-if="loading" class="flex justify-center py-12">
@@ -190,15 +207,21 @@ onMounted(async () => {
     </div>
 
     <form v-else @submit.prevent="handleSubmit" class="space-y-6">
+      <!-- Read-only banner -->
+      <div v-if="isReadOnly" class="bg-white/5 border border-white/20 rounded-lg px-4 py-3 text-sm text-white/60">
+        Esta clase pertenece a otro entrenador. Solo puedes verla.
+      </div>
+
       <!-- Class Name -->
       <div>
         <label class="block text-sm text-white/70 mb-1">Nombre de la clase</label>
         <input
           v-model="name"
           type="text"
-          required
+          :required="!isReadOnly"
+          :disabled="isReadOnly"
           placeholder="Ej. WOD Lunes"
-          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange"
+          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange disabled:opacity-60 disabled:cursor-default"
         />
       </div>
 
@@ -208,8 +231,9 @@ onMounted(async () => {
         <textarea
           v-model="description"
           rows="2"
+          :disabled="isReadOnly"
           placeholder="Breve descripción de la clase"
-          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange resize-none"
+          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange resize-none disabled:opacity-60 disabled:cursor-default"
         />
       </div>
 
@@ -233,13 +257,14 @@ onMounted(async () => {
           handle=".block-drag-handle"
           ghost-class="opacity-30"
           :animation="200"
+          :disabled="isReadOnly"
           class="space-y-3 mb-4"
         >
           <template #item="{ element: cb, index: bIndex }">
             <div class="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
               <!-- Block header (always visible) -->
               <div class="flex items-center gap-3 px-4 py-3">
-                <Bars2Icon class="block-drag-handle w-5 h-5 text-white/50 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0" />
+                <Bars2Icon v-if="!isReadOnly" class="block-drag-handle w-5 h-5 text-white/50 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0" />
                 <span class="text-gymOrange font-bold text-sm w-6">{{ bIndex + 1 }}</span>
                 <div class="flex-1 min-w-0">
                   <span class="text-white font-medium text-sm truncate block">
@@ -252,18 +277,20 @@ onMounted(async () => {
                 </div>
                 <div class="flex items-center gap-0.5 shrink-0">
                   <button type="button" @click="toggleEdit(bIndex)"
-                    class="text-gymOrange/70 hover:text-gymOrange p-1"><PencilSquareIcon class="w-4 h-4" /></button>
-                  <button type="button" @click="removeBlock(bIndex)"
+                    class="text-gymOrange/70 hover:text-gymOrange p-1" :title="isReadOnly ? 'Ver detalles' : 'Editar'">
+                    <PencilSquareIcon class="w-4 h-4" />
+                  </button>
+                  <button v-if="!isReadOnly" type="button" @click="removeBlock(bIndex)"
                     class="text-red-400/70 hover:text-red-400 p-1 ml-1"><XMarkIcon class="w-4 h-4" /></button>
                 </div>
               </div>
 
-              <!-- Inline block editor (collapsible) -->
+              <!-- Inline block viewer/editor (collapsible) -->
               <div v-if="cb.editing" class="border-t border-white/10 px-4 py-4 bg-white/[0.02]">
-                <BlockFormEditor :form="cb.form" compact />
+                <BlockFormEditor :form="cb.form" compact :readonly="isReadOnly" />
 
-                <!-- Save to library / catalog note -->
-                <div class="pt-3 mt-3 border-t border-white/10">
+                <!-- Save to library (only when not readonly) -->
+                <div v-if="!isReadOnly" class="pt-3 mt-3 border-t border-white/10">
                   <button
                     v-if="!cb.sourceBlockId"
                     type="button"
@@ -277,13 +304,13 @@ onMounted(async () => {
                   </span>
                 </div>
 
-                <!-- Close editor -->
+                <!-- Close -->
                 <button
                   type="button"
                   @click="toggleEdit(bIndex)"
                   class="w-full text-center text-xs text-white/50 hover:text-white/70 py-1 mt-1 transition-colors"
                 >
-                  Cerrar editor
+                  Cerrar
                 </button>
               </div>
             </div>
@@ -291,8 +318,8 @@ onMounted(async () => {
         </draggable>
       </div>
 
-      <!-- Add block actions -->
-      <div class="flex gap-2">
+      <!-- Add block actions (only when not readonly) -->
+      <div v-if="!isReadOnly" class="flex gap-2">
         <button
           type="button"
           @click="openBlockPicker"
@@ -312,9 +339,10 @@ onMounted(async () => {
       <!-- Validation error -->
       <p v-if="validationError" class="text-red-400 text-sm">{{ validationError }}</p>
 
-      <!-- Submit -->
+      <!-- Submit / Back -->
       <div class="flex gap-3 pt-4">
         <button
+          v-if="!isReadOnly"
           type="submit"
           :disabled="submitting || classBlocks.length === 0"
           class="flex-1 bg-gymOrange text-white font-bold rounded-lg px-4 py-3 hover:bg-gymOrange/90 disabled:opacity-50 transition-colors"
@@ -325,8 +353,9 @@ onMounted(async () => {
           type="button"
           @click="router.push({ name: 'admin-classes' })"
           class="px-6 py-3 border border-white/20 rounded-lg text-white/70 hover:text-white hover:border-white/40 transition-colors"
+          :class="{ 'flex-1': isReadOnly }"
         >
-          Cancelar
+          {{ isReadOnly ? 'Volver' : 'Cancelar' }}
         </button>
       </div>
     </form>

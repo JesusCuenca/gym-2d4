@@ -59,5 +59,10 @@ const transitionKey = computed(() => {
       :timer="timer"
       :session="session"
     />
+
+    <!-- Fallback: currentBlock is null (index out of range during transitions) -->
+    <div v-else :key="'fallback'" class="flex items-center justify-center h-full">
+      <p class="text-white/30 text-4xl font-condensed uppercase tracking-wider">Cargando...</p>
+    </div>
   </Transition>
 </template>

@@ -6,19 +6,25 @@ service cloud.firestore {
     // Blocks: only authenticated owner can read/write
     match /blocks/{blockId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null
-                         && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null
                     && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == resource.data.uid;
+      allow delete: if request.auth != null
+                    && resource.data.uid == request.auth.uid;
     }
 
     // Classes: only authenticated owner can read/write
     match /classes/{classId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null
-                         && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null
                     && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == resource.data.uid;
+      allow delete: if request.auth != null
+                    && resource.data.uid == request.auth.uid;
     }
 
     // Users: any authenticated user can read profiles, only owner can write own profile
@@ -31,19 +37,25 @@ service cloud.firestore {
     // Screens: owner can write, anyone can read (TV has no auth)
     match /screens/{screenId} {
       allow read: if true;
-      allow write: if request.auth != null
-                   && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null
                     && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == resource.data.uid;
+      allow delete: if request.auth != null
+                    && resource.data.uid == request.auth.uid;
     }
 
     // Sessions: owner can write, anyone can read (TV has no auth)
     match /sessions/{sessionId} {
       allow read: if true;
-      allow write: if request.auth != null
-                   && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null
                     && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == resource.data.uid;
+      allow delete: if request.auth != null
+                    && resource.data.uid == request.auth.uid;
     }
   }
 }

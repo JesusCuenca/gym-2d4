@@ -11,6 +11,7 @@ const showPhrase = ref(true)
 
 let clockInterval = null
 let phraseInterval = null
+let phraseTimeout = null
 
 const timeString = computed(() =>
   now.value.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
@@ -27,7 +28,8 @@ onMounted(() => {
 
   phraseInterval = setInterval(() => {
     showPhrase.value = false
-    setTimeout(() => {
+    phraseTimeout = setTimeout(() => {
+      phraseTimeout = null
       currentPhraseIndex.value = (currentPhraseIndex.value + 1) % phrases.length
       showPhrase.value = true
     }, 500)
@@ -37,6 +39,7 @@ onMounted(() => {
 onUnmounted(() => {
   clearInterval(clockInterval)
   clearInterval(phraseInterval)
+  if (phraseTimeout) clearTimeout(phraseTimeout)
 })
 </script>
 

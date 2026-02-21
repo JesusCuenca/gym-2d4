@@ -1,5 +1,6 @@
 import { ref, computed, watch, onUnmounted, reactive } from 'vue'
 import { buildTimeline } from '../utils/timeline'
+import { timestampToMillis } from '../utils/firestore'
 
 export function useTimer(sessionRef) {
   const displaySeconds = ref(0)
@@ -13,9 +14,7 @@ export function useTimer(sessionRef) {
       return
     }
 
-    const startMs = s.startTimestamp.toMillis
-      ? s.startTimestamp.toMillis()
-      : s.startTimestamp.seconds * 1000
+    const startMs = timestampToMillis(s.startTimestamp)
     const nowMs = Date.now()
     const elapsedSinceStart = (nowMs - startMs) / 1000
     displaySeconds.value = s.accumulatedTime + elapsedSinceStart
@@ -98,10 +97,32 @@ export function useTimer(sessionRef) {
     return cachedTimeline
   })
 
-  const currentSegment = computed(() => {
-    if (!timeline.value) return null
-    return timeline.value.findLast((s) => displaySeconds.value >= s.startAt) ?? null
+  // Binary search: find the last segment whose startAt <= displaySeconds.
+  // Returns { segment, index } or { segment: null, index: -1 }.
+  function findCurrentSegment(tl, elapsed) {
+    let lo = 0
+    let hi = tl.length - 1
+    let resultIdx = -1
+    while (lo <= hi) {
+      const mid = (lo + hi) >>> 1
+      if (tl[mid].startAt <= elapsed) {
+        resultIdx = mid
+        lo = mid + 1
+      } else {
+        hi = mid - 1
+      }
+    }
+    return resultIdx === -1
+      ? { segment: null, index: -1 }
+      : { segment: tl[resultIdx], index: resultIdx }
+  }
+
+  const currentSegmentResult = computed(() => {
+    if (!timeline.value) return { segment: null, index: -1 }
+    return findCurrentSegment(timeline.value, displaySeconds.value)
   })
+
+  const currentSegment = computed(() => currentSegmentResult.value.segment)
 
   const phaseSecondsLeft = computed(() => {
     const seg = currentSegment.value
@@ -118,11 +139,16 @@ export function useTimer(sessionRef) {
   const currentExerciseIndex = computed(() => currentSegment.value?.exerciseIndex ?? null)
 
   const nextExerciseName = computed(() => {
-    if (!timeline.value || !currentSegment.value) return null
-    const idx = timeline.value.indexOf(currentSegment.value)
-    const nextWork = timeline.value.slice(idx + 1).find((s) => s.phase === 'work')
-    if (!nextWork || nextWork.exerciseIndex == null) return null
-    return currentBlock.value?.exercises?.[nextWork.exerciseIndex]?.name ?? null
+    const { segment, index } = currentSegmentResult.value
+    if (!timeline.value || !segment) return null
+    // Search forward from current index without creating a new array
+    for (let i = index + 1; i < timeline.value.length; i++) {
+      const seg = timeline.value[i]
+      if (seg.phase === 'work' && seg.exerciseIndex != null) {
+        return currentBlock.value?.exercises?.[seg.exerciseIndex]?.name ?? null
+      }
+    }
+    return null
   })
 
   const isBlockFinished = computed(() => {

@@ -6,6 +6,7 @@ import { useUserStore } from './userStore'
 import { useBlockStore } from './blockStore'
 import { useClassStore } from './classStore'
 import { useScreenStore } from './screenStore'
+import { useSessionStore } from './sessionStore'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -55,7 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await signInWithEmailAndPassword(auth, email, password)
     } catch (e) {
-      error.value = e.message
+      error.value = 'Credenciales inválidas. Comprueba tu email y contraseña.'
       throw e
     }
   }
@@ -64,6 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await signOut(auth)
     } finally {
+      useSessionStore().unsubscribeFromSession()
       useUserStore().$reset()
       useBlockStore().$reset()
       useClassStore().$reset()

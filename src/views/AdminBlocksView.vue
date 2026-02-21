@@ -9,8 +9,9 @@ import { useConfirm } from '../composables/useConfirm'
 import { useListFilters } from '../composables/useListFilters'
 import { getBlockLabel } from '../models/blockTypes'
 import { formatTimer } from '../utils/time'
+import { getTotalDuration } from '../utils/timeline'
 import ListFilterBar from '../components/ListFilterBar.vue'
-import { PencilSquareIcon, DocumentDuplicateIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { PencilSquareIcon, DocumentDuplicateIcon, TrashIcon, EyeIcon } from '@heroicons/vue/24/outline'
 
 const blockStore = useBlockStore()
 const userStore = useUserStore()
@@ -33,26 +34,38 @@ async function handleDelete(block) {
     title: 'Eliminar bloque',
     message: `"${block.name}" será eliminado permanentemente.`,
   })
-  if (ok) {
+  if (!ok) return
+  try {
     await blockStore.deleteBlock(block.id)
     toastStore.show('Bloque eliminado')
+  } catch {
+    toastStore.show('Error al eliminar el bloque.', 'error')
   }
 }
 
 async function handleClone(block) {
-  const { id: _id, createdAt: _createdAt, ...data } = block
-  await blockStore.createBlock({
-    ...data,
-    name: `${block.name} (copia)`,
-  })
-  await blockStore.fetchAllBlocks()
-  toastStore.show('Bloque duplicado')
+  try {
+    const { id: _id, createdAt: _createdAt, ...data } = block
+    await blockStore.createBlock({
+      ...data,
+      name: `${block.name} (copia)`,
+    })
+    await blockStore.fetchAllBlocks()
+    toastStore.show('Bloque duplicado')
+  } catch {
+    toastStore.show('Error al duplicar el bloque.', 'error')
+  }
+}
+
+function isOwner(block) {
+  return block.uid === authStore.user?.uid
 }
 
 function blockMeta(block) {
   const parts = []
   if (block.type === 'timed') {
-    if (block.workSeconds) parts.push(formatTimer(block.workSeconds * (block.rounds || 1)))
+    const total = getTotalDuration(block)
+    if (total) parts.push(formatTimer(total))
     if (block.rounds > 1) parts.push(`${block.rounds} rondas`)
   } else {
     if (block.rounds) parts.push(`${block.rounds} rondas`)
@@ -166,27 +179,48 @@ onMounted(() => {
         </div>
 
         <div class="flex gap-2">
-          <RouterLink
-            :to="{ name: 'admin-block-edit', params: { id: block.id } }"
-            class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
-          >
-            <PencilSquareIcon class="w-4 h-4" />
-            Editar
-          </RouterLink>
-          <button
-            @click="handleClone(block)"
-            class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
-          >
-            <DocumentDuplicateIcon class="w-4 h-4" />
-            Clonar
-          </button>
-          <button
-            @click="handleDelete(block)"
-            class="flex items-center gap-1.5 text-sm text-red-400/70 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 rounded-lg px-3 py-1.5 transition-colors"
-          >
-            <TrashIcon class="w-4 h-4" />
-            Eliminar
-          </button>
+          <!-- Owner actions -->
+          <template v-if="isOwner(block)">
+            <RouterLink
+              :to="{ name: 'admin-block-edit', params: { id: block.id } }"
+              class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <PencilSquareIcon class="w-4 h-4" />
+              Editar
+            </RouterLink>
+            <button
+              @click="handleClone(block)"
+              class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <DocumentDuplicateIcon class="w-4 h-4" />
+              Clonar
+            </button>
+            <button
+              @click="handleDelete(block)"
+              class="flex items-center gap-1.5 text-sm text-red-400/70 hover:text-red-400 border border-red-400/20 hover:border-red-400/40 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <TrashIcon class="w-4 h-4" />
+              Eliminar
+            </button>
+          </template>
+
+          <!-- Non-owner actions -->
+          <template v-else>
+            <RouterLink
+              :to="{ name: 'admin-block-edit', params: { id: block.id } }"
+              class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <EyeIcon class="w-4 h-4" />
+              Ver
+            </RouterLink>
+            <button
+              @click="handleClone(block)"
+              class="flex items-center gap-1.5 text-sm text-white/60 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <DocumentDuplicateIcon class="w-4 h-4" />
+              Clonar
+            </button>
+          </template>
         </div>
       </div>
     </TransitionGroup>

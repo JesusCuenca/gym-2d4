@@ -11,18 +11,19 @@ const props = defineProps({
   countdownNumber: { type: Number, default: null },
 })
 
-const typeLabel = computed(() => getBlockLabel(props.block))
+const typeLabel = computed(() => props.block ? getBlockLabel(props.block) : '')
 
 const summaryPills = computed(() => {
+  if (!props.block) return []
   const pills = []
-  if (isTimed(props.block?.type)) {
+  if (isTimed(props.block.type)) {
     const duration = getTotalDuration(props.block)
     if (duration) pills.push({ label: 'Duración', value: formatTimer(duration) })
   }
-  if (props.block?.exercises?.length) {
+  if (props.block.exercises?.length) {
     pills.push({ label: 'Ejercicios', value: String(props.block.exercises.length) })
   }
-  if (props.block?.rounds > 1) {
+  if (props.block.rounds > 1) {
     pills.push({ label: 'Rondas', value: String(props.block.rounds) })
   }
   return pills

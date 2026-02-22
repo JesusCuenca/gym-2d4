@@ -28,7 +28,7 @@ async function handleSubmit() {
 <template>
   <div class="flex items-center justify-center min-h-screen px-4">
     <form @submit.prevent="handleSubmit" class="w-full max-w-sm space-y-6">
-      <h1 class="text-3xl font-bold text-gymOrange text-center">2D4 Gym TV</h1>
+      <h1 class="text-3xl font-bold text-gymOrange text-center">2D4 Gym</h1>
 
       <div v-if="authStore.error"
         class="bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-3 text-red-300 text-sm">

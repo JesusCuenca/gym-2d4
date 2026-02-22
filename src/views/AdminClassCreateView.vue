@@ -205,7 +205,8 @@ onMounted(async () => {
   <div class="max-w-2xl mx-auto">
     <h1 class="text-2xl font-bold text-gymOrange mb-6">
       {{ isReadOnly ? 'Ver clase' : isEditMode ? 'Editar clase' : 'Crear clase' }}
-      <span v-if="isDirty && !isReadOnly" class="inline-block w-2 h-2 bg-gymOrange rounded-full ml-2 align-middle" title="Cambios sin guardar" />
+      <span v-if="isDirty && !isReadOnly" class="inline-block w-2 h-2 bg-gymOrange rounded-full ml-2 align-middle"
+        title="Cambios sin guardar" />
     </h1>
 
     <div v-if="loading" class="flex justify-center py-12">
@@ -221,36 +222,15 @@ onMounted(async () => {
       <!-- Class Name -->
       <div>
         <label class="block text-sm text-white/70 mb-1">Nombre de la clase</label>
-        <input
-          v-model="name"
-          type="text"
-          :required="!isReadOnly"
-          :disabled="isReadOnly"
-          placeholder="Ej. WOD Lunes"
-          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange disabled:opacity-60 disabled:cursor-default"
-        />
+        <input v-model="name" type="text" :required="!isReadOnly" :disabled="isReadOnly" placeholder="Ej. WOD Lunes"
+          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange disabled:opacity-60 disabled:cursor-default" />
       </div>
 
       <!-- Description -->
       <div>
         <label class="block text-sm text-white/70 mb-1">Descripción (opcional)</label>
-        <textarea
-          v-model="description"
-          rows="2"
-          :disabled="isReadOnly"
-          placeholder="Breve descripción de la clase"
-          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange resize-none disabled:opacity-60 disabled:cursor-default"
-        />
-      </div>
-
-      <!-- Class Tags -->
-      <div>
-        <label class="block text-sm text-white/70 mb-1.5">Etiquetas</label>
-        <TagSelector
-          :tagGroups="CLASS_TAG_GROUPS"
-          v-model="classTags"
-          :readonly="isReadOnly"
-        />
+        <textarea v-model="description" rows="2" :disabled="isReadOnly" placeholder="Breve descripción de la clase"
+          class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange resize-none disabled:opacity-60 disabled:cursor-default" />
       </div>
 
       <!-- Class Blocks -->
@@ -259,45 +239,39 @@ onMounted(async () => {
           Bloques de la clase ({{ classBlocks.length }})
         </label>
 
-        <div
-          v-if="classBlocks.length === 0"
-          class="text-white/50 text-sm py-4 text-center border border-dashed border-white/10 rounded-lg"
-        >
+        <div v-if="classBlocks.length === 0"
+          class="text-white/50 text-sm py-4 text-center border border-dashed border-white/10 rounded-lg">
           Aún no hay bloques. Añade bloques del catálogo o crea uno nuevo.
         </div>
 
-        <draggable
-          v-else
-          v-model="classBlocks"
-          item-key="_key"
-          handle=".block-drag-handle"
-          ghost-class="opacity-30"
-          :animation="200"
-          :disabled="isReadOnly"
-          class="space-y-3 mb-4"
-        >
+        <draggable v-else v-model="classBlocks" item-key="_key" handle=".block-drag-handle" ghost-class="opacity-30"
+          :animation="200" :disabled="isReadOnly" class="space-y-3 mb-4">
           <template #item="{ element: cb, index: bIndex }">
             <div class="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
               <!-- Block header (always visible) -->
               <div class="flex items-center gap-3 px-4 py-3">
-                <Bars2Icon v-if="!isReadOnly" class="block-drag-handle w-5 h-5 text-white/50 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0" />
+                <Bars2Icon v-if="!isReadOnly"
+                  class="block-drag-handle w-5 h-5 text-white/50 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0" />
                 <span class="text-gymOrange font-bold text-sm w-6">{{ bIndex + 1 }}</span>
                 <div class="flex-1 min-w-0">
                   <span class="text-white font-medium text-sm truncate block">
                     {{ cb.form.name || 'Sin nombre' }}
                   </span>
                   <span class="text-white/50 text-xs">
-                    {{ cb.form.subtype && cb.form.subtype !== 'custom' ? TIMED_SUBTYPES.find(p => p.value === cb.form.subtype)?.label : BLOCK_TYPES.find(bt => bt.value === cb.form.type)?.label }}
+                    {{cb.form.subtype && cb.form.subtype !== 'custom' ? TIMED_SUBTYPES.find(p => p.value ===
+                      cb.form.subtype)?.label : BLOCK_TYPES.find(bt => bt.value === cb.form.type)?.label}}
                     <span v-if="blockSummary(cb.form)"> · {{ blockSummary(cb.form) }}</span>
                   </span>
                 </div>
                 <div class="flex items-center gap-0.5 shrink-0">
-                  <button type="button" @click="toggleEdit(bIndex)"
-                    class="text-gymOrange/70 hover:text-gymOrange p-1" :title="isReadOnly ? 'Ver detalles' : 'Editar'">
+                  <button type="button" @click="toggleEdit(bIndex)" class="text-gymOrange/70 hover:text-gymOrange p-1"
+                    :title="isReadOnly ? 'Ver detalles' : 'Editar'">
                     <PencilSquareIcon class="w-4 h-4" />
                   </button>
                   <button v-if="!isReadOnly" type="button" @click="removeBlock(bIndex)"
-                    class="text-red-400/70 hover:text-red-400 p-1 ml-1"><XMarkIcon class="w-4 h-4" /></button>
+                    class="text-red-400/70 hover:text-red-400 p-1 ml-1">
+                    <XMarkIcon class="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
@@ -307,12 +281,8 @@ onMounted(async () => {
 
                 <!-- Save to library (only when not readonly) -->
                 <div v-if="!isReadOnly" class="pt-3 mt-3 border-t border-white/10">
-                  <button
-                    v-if="!cb.sourceBlockId"
-                    type="button"
-                    @click="saveToLibrary(bIndex)"
-                    class="text-xs text-gymOrange/70 hover:text-gymOrange transition-colors"
-                  >
+                  <button v-if="!cb.sourceBlockId" type="button" @click="saveToLibrary(bIndex)"
+                    class="text-xs text-gymOrange/70 hover:text-gymOrange transition-colors">
                     Guardar en el catálogo de bloques
                   </button>
                   <span v-else class="text-xs text-white/50">
@@ -321,11 +291,8 @@ onMounted(async () => {
                 </div>
 
                 <!-- Close -->
-                <button
-                  type="button"
-                  @click="toggleEdit(bIndex)"
-                  class="w-full text-center text-xs text-white/50 hover:text-white/70 py-1 mt-1 transition-colors"
-                >
+                <button type="button" @click="toggleEdit(bIndex)"
+                  class="w-full text-center text-xs text-white/50 hover:text-white/70 py-1 mt-1 transition-colors">
                   Cerrar
                 </button>
               </div>
@@ -336,18 +303,12 @@ onMounted(async () => {
 
       <!-- Add block actions (only when not readonly) -->
       <div v-if="!isReadOnly" class="flex gap-2">
-        <button
-          type="button"
-          @click="openBlockPicker"
-          class="flex-1 border border-dashed border-white/20 rounded-lg py-3 text-white/60 hover:text-white hover:border-white/40 text-sm transition-colors"
-        >
+        <button type="button" @click="openBlockPicker"
+          class="flex-1 border border-dashed border-white/20 rounded-lg py-3 text-white/60 hover:text-white hover:border-white/40 text-sm transition-colors">
           + Añadir del catálogo
         </button>
-        <button
-          type="button"
-          @click="addNewBlock"
-          class="flex-1 border border-dashed border-gymOrange/30 rounded-lg py-3 text-gymOrange/70 hover:text-gymOrange hover:border-gymOrange/50 text-sm transition-colors"
-        >
+        <button type="button" @click="addNewBlock"
+          class="flex-1 border border-dashed border-gymOrange/30 rounded-lg py-3 text-gymOrange/70 hover:text-gymOrange hover:border-gymOrange/50 text-sm transition-colors">
           + Crear bloque nuevo
         </button>
       </div>
@@ -355,22 +316,21 @@ onMounted(async () => {
       <!-- Validation error -->
       <p v-if="validationError" class="text-red-400 text-sm">{{ validationError }}</p>
 
+      <!-- Class Tags -->
+      <div>
+        <label class="block text-sm text-white/70 mb-1.5">Etiquetas</label>
+        <TagSelector :tagGroups="CLASS_TAG_GROUPS" v-model="classTags" :readonly="isReadOnly" />
+      </div>
+
       <!-- Submit / Back -->
       <div class="flex gap-3 pt-4">
-        <button
-          v-if="!isReadOnly"
-          type="submit"
-          :disabled="submitting || classBlocks.length === 0"
-          class="flex-1 bg-gymOrange text-white font-bold rounded-lg px-4 py-3 hover:bg-gymOrange/90 disabled:opacity-50 transition-colors"
-        >
+        <button v-if="!isReadOnly" type="submit" :disabled="submitting || classBlocks.length === 0"
+          class="flex-1 bg-gymOrange text-white font-bold rounded-lg px-4 py-3 hover:bg-gymOrange/90 disabled:opacity-50 transition-colors">
           {{ submitting ? 'Guardando...' : isEditMode ? 'Actualizar clase' : 'Crear clase' }}
         </button>
-        <button
-          type="button"
-          @click="router.push({ name: 'admin-classes' })"
+        <button type="button" @click="router.push({ name: 'admin-classes' })"
           class="px-6 py-3 border border-white/20 rounded-lg text-white/70 hover:text-white hover:border-white/40 transition-colors"
-          :class="{ 'flex-1': isReadOnly }"
-        >
+          :class="{ 'flex-1': isReadOnly }">
           {{ isReadOnly ? 'Volver' : 'Cancelar' }}
         </button>
       </div>

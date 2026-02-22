@@ -4,6 +4,7 @@ import { XMarkIcon, MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import { useBlockPicker } from '../composables/useBlockPicker'
 import { useBlockStore } from '../stores/blockStore'
 import { BLOCK_TYPES, TIMED_SUBTYPES, REPS_SUBTYPES, getBlockLabel, getRepsSubcase } from '../models/blockTypes'
+import { BLOCK_TAG_GROUPS } from '../utils/tags'
 
 const { state, respond, cancel } = useBlockPicker()
 const blockStore = useBlockStore()
@@ -11,6 +12,7 @@ const blockStore = useBlockStore()
 const searchQuery = ref('')
 const selectedType = ref(null)
 const selectedSubtype = ref(null)
+const selectedTags = ref([])
 const selectedSet = ref(new Set())
 
 watch(
@@ -20,6 +22,7 @@ watch(
       searchQuery.value = ''
       selectedType.value = null
       selectedSubtype.value = null
+      selectedTags.value = []
       selectedSet.value = new Set()
     }
   },
@@ -51,6 +54,12 @@ const filteredBlocks = computed(() => {
     result = result.filter((b) => b.name?.toLowerCase().includes(needle))
   }
 
+  if (selectedTags.value.length > 0) {
+    result = result.filter((b) =>
+      (b.tags || []).some((t) => selectedTags.value.includes(t))
+    )
+  }
+
   return result
 })
 
@@ -66,6 +75,14 @@ function toggleType(type) {
 
 function toggleSubtype(subtype) {
   selectedSubtype.value = selectedSubtype.value === subtype ? null : subtype
+}
+
+function toggleTag(tagId) {
+  if (selectedTags.value.includes(tagId)) {
+    selectedTags.value = selectedTags.value.filter((t) => t !== tagId)
+  } else {
+    selectedTags.value = [...selectedTags.value, tagId]
+  }
 }
 
 function toggleBlock(block) {
@@ -185,6 +202,29 @@ function exerciseCount(block) {
             >
               {{ st.label }}
             </button>
+          </div>
+        </div>
+
+        <!-- Tag chips -->
+        <div class="px-4 pb-3 flex-shrink-0">
+          <div v-for="group in BLOCK_TAG_GROUPS" :key="group.id" class="mb-2 last:mb-0">
+            <p class="text-[10px] text-white/40 mb-1">{{ group.label }}</p>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="tag in group.tags"
+                :key="tag.id"
+                type="button"
+                @click="toggleTag(tag.id)"
+                class="px-2.5 py-1 rounded-full text-xs transition-colors whitespace-nowrap"
+                :class="
+                  selectedTags.includes(tag.id)
+                    ? 'bg-gymOrange/80 text-white'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10 border border-white/15'
+                "
+              >
+                {{ tag.label }}
+              </button>
+            </div>
           </div>
         </div>
 

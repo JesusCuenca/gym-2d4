@@ -46,7 +46,7 @@ function closeMenu() {
       <div class="flex items-center justify-between">
         <RouterLink to="/admin" class="flex items-center gap-2 hover:opacity-90 transition-opacity">
           <img src="/gym-2d4-logo.jpg" alt="2D4 Gym" class="h-8 w-8 object-contain rounded-md" />
-          <span class="text-gymOrange font-bold text-xl">2D4 Gym TV</span>
+          <span class="text-gymOrange font-bold text-xl">2D4 Gym</span>
         </RouterLink>
 
         <!-- Desktop nav -->
@@ -78,10 +78,7 @@ function closeMenu() {
         </div>
 
         <!-- Mobile hamburger -->
-        <button
-          @click="menuOpen = !menuOpen"
-          class="sm:hidden text-white/70 hover:text-white p-1"
-        >
+        <button @click="menuOpen = !menuOpen" class="sm:hidden text-white/70 hover:text-white p-1">
           <Bars3Icon v-if="!menuOpen" class="w-6 h-6" />
           <XMarkIcon v-else class="w-6 h-6" />
         </button>
@@ -91,11 +88,7 @@ function closeMenu() {
     <!-- Mobile menu overlay -->
     <Teleport to="body">
       <Transition name="mobile-menu">
-        <div
-          v-if="menuOpen"
-          class="fixed inset-0 z-30 sm:hidden"
-          @click.self="closeMenu"
-        >
+        <div v-if="menuOpen" class="fixed inset-0 z-30 sm:hidden" @click.self="closeMenu">
           <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="closeMenu" />
 
           <div class="relative bg-gymBlack border-b border-white/10 px-4 py-4 z-40">
@@ -110,44 +103,29 @@ function closeMenu() {
             </div>
 
             <nav class="flex flex-col gap-1 mb-4">
-              <RouterLink
-                to="/admin"
-                active-class=""
-                exact-active-class="router-link-exact-active"
-                class="nav-link py-3 text-base border-b border-white/5"
-                @click="closeMenu"
-              >
+              <RouterLink to="/admin" active-class="" exact-active-class="router-link-exact-active"
+                class="nav-link py-3 text-base border-b border-white/5" @click="closeMenu">
                 <Squares2X2Icon class="w-5 h-5" />
                 Panel
               </RouterLink>
-              <RouterLink
-                to="/admin/bloques"
-                class="nav-link py-3 text-base border-b border-white/5"
-                @click="closeMenu"
-              >
+              <RouterLink to="/admin/bloques" class="nav-link py-3 text-base border-b border-white/5"
+                @click="closeMenu">
                 <CubeIcon class="w-5 h-5" />
                 Bloques
               </RouterLink>
-              <RouterLink
-                to="/admin/clases"
-                class="nav-link py-3 text-base border-b border-white/5"
-                @click="closeMenu"
-              >
+              <RouterLink to="/admin/clases" class="nav-link py-3 text-base border-b border-white/5" @click="closeMenu">
                 <CalendarDaysIcon class="w-5 h-5" />
                 Clases
               </RouterLink>
-              <RouterLink
-                to="/admin/pantallas"
-                class="nav-link py-3 text-base"
-                @click="closeMenu"
-              >
+              <RouterLink to="/admin/pantallas" class="nav-link py-3 text-base" @click="closeMenu">
                 <TvIcon class="w-5 h-5" />
                 Pantallas
               </RouterLink>
             </nav>
 
             <div class="pt-3 border-t border-white/10 flex items-center justify-between">
-              <RouterLink to="/admin/perfil" class="text-white/50 text-sm truncate hover:text-white transition-colors" @click="closeMenu">
+              <RouterLink to="/admin/perfil" class="text-white/50 text-sm truncate hover:text-white transition-colors"
+                @click="closeMenu">
                 {{ userStore.profile?.displayName || authStore.user?.email }}
               </RouterLink>
               <button @click="handleLogout" class="nav-link text-base">

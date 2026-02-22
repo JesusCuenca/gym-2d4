@@ -8,6 +8,7 @@ import { useToastStore } from '../stores/toastStore'
 import { useConfirm } from '../composables/useConfirm'
 import { useListFilters } from '../composables/useListFilters'
 import { getTotalDuration } from '../utils/timeline'
+import { CLASS_TAG_GROUPS, getClassTagLabel } from '../utils/tags'
 import ListFilterBar from '../components/ListFilterBar.vue'
 import {
   PencilSquareIcon,
@@ -25,6 +26,7 @@ const { confirm } = useConfirm()
 
 const {
   searchText, userMode, selectedUserUids, dateFrom, dateTo,
+  tagsFilter,
   currentPage, totalPages, totalFilteredCount, paginatedItems,
   nextPage, prevPage, clearFilters, hasActiveFilters,
 } = useListFilters({
@@ -67,6 +69,7 @@ async function handleClone(cls) {
     await classStore.createClass({
       name: `${cls.name} (copia)`,
       description: cls.description,
+      tags: cls.tags || [],
       blocks: cls.blocks,
     })
     await classStore.fetchAllClasses()
@@ -101,10 +104,13 @@ onMounted(() => {
       v-model:selectedUserUids="selectedUserUids"
       v-model:dateFrom="dateFrom"
       v-model:dateTo="dateTo"
+      v-model:tagsFilter="tagsFilter"
       :currentPage="currentPage"
       :totalPages="totalPages"
       :totalFilteredCount="totalFilteredCount"
       :showTypeFilter="false"
+      :showTagFilter="true"
+      :tagGroups="CLASS_TAG_GROUPS"
       :allUsers="userStore.allUsers"
       :currentUserUid="authStore.user?.uid"
       :hasActiveFilters="hasActiveFilters"
@@ -172,6 +178,14 @@ onMounted(() => {
           >
             {{ block.blockData?.name || 'Bloque' }}
           </span>
+        </div>
+
+        <div v-if="cls.tags?.length" class="flex flex-wrap gap-1 mb-2">
+          <span
+            v-for="tag in cls.tags"
+            :key="tag"
+            class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60"
+          >{{ getClassTagLabel(tag) }}</span>
         </div>
 
         <div class="text-white/50 text-xs mb-4">

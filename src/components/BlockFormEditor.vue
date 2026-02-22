@@ -5,6 +5,8 @@ import { Bars2Icon, TrashIcon } from '@heroicons/vue/20/solid'
 import { useExercisePicker } from '../composables/useExercisePicker'
 import draggable from 'vuedraggable'
 import { createEmptyExercise } from '../utils/blockForm'
+import TagSelector from './TagSelector.vue'
+import { BLOCK_TAG_GROUPS } from '../utils/tags'
 
 const props = defineProps({
   form: { type: Object, required: true },
@@ -154,6 +156,18 @@ async function openExercisePicker() {
         placeholder="Ej. AMRAP 15 min"
         :disabled="props.readonly"
         :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-gymOrange disabled:opacity-60 disabled:cursor-default', sz.nameInput]"
+      />
+    </div>
+
+    <!-- Tags -->
+    <div>
+      <label :class="['block mb-1.5', sz.label]">Etiquetas</label>
+      <TagSelector
+        :tagGroups="BLOCK_TAG_GROUPS"
+        :modelValue="form.tags || []"
+        :compact="props.compact"
+        :readonly="props.readonly"
+        @update:modelValue="form.tags = $event"
       />
     </div>
 

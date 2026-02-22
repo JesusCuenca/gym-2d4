@@ -10,6 +10,7 @@ import { useListFilters } from '../composables/useListFilters'
 import { getBlockLabel } from '../models/blockTypes'
 import { formatTimer } from '../utils/time'
 import { getTotalDuration } from '../utils/timeline'
+import { BLOCK_TAG_GROUPS, getBlockTagLabel } from '../utils/tags'
 import ListFilterBar from '../components/ListFilterBar.vue'
 import { PencilSquareIcon, DocumentDuplicateIcon, TrashIcon, EyeIcon } from '@heroicons/vue/24/outline'
 
@@ -21,7 +22,7 @@ const { confirm } = useConfirm()
 
 const {
   searchText, userMode, selectedUserUids, dateFrom, dateTo,
-  typeFilter, subtypeFilter,
+  typeFilter, subtypeFilter, tagsFilter,
   currentPage, totalPages, totalFilteredCount, paginatedItems,
   nextPage, prevPage, clearFilters, hasActiveFilters,
 } = useListFilters({
@@ -102,10 +103,13 @@ onMounted(() => {
       v-model:dateTo="dateTo"
       v-model:typeFilter="typeFilter"
       v-model:subtypeFilter="subtypeFilter"
+      v-model:tagsFilter="tagsFilter"
       :currentPage="currentPage"
       :totalPages="totalPages"
       :totalFilteredCount="totalFilteredCount"
       :showTypeFilter="true"
+      :showTagFilter="true"
+      :tagGroups="BLOCK_TAG_GROUPS"
       :allUsers="userStore.allUsers"
       :currentUserUid="authStore.user?.uid"
       :hasActiveFilters="hasActiveFilters"
@@ -172,6 +176,14 @@ onMounted(() => {
           <span v-if="block.exercises?.length" class="text-white/50">
             — {{ block.exercises.map((e) => e.name).join(', ') }}
           </span>
+        </div>
+
+        <div v-if="block.tags?.length" class="flex flex-wrap gap-1 mb-2">
+          <span
+            v-for="tag in block.tags"
+            :key="tag"
+            class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60"
+          >{{ getBlockTagLabel(tag) }}</span>
         </div>
 
         <div class="text-white/50 text-xs mb-4">

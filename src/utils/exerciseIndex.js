@@ -4,9 +4,14 @@ import exercisesData from './exercises.json'
 export const parentGroups = musclesHierarchy
 export const exercises = exercisesData
 
-// parentId → Set of child names
-const parentChildNames = Object.fromEntries(
-  parentGroups.map((g) => [g.id, new Set(g.children.map((c) => c.name))]),
+// id → display name (e.g. 'cuadriceps' → 'Cuádriceps')
+export const muscleIdToName = Object.fromEntries(
+  parentGroups.flatMap((g) => g.children.map((c) => [c.id, c.name])),
+)
+
+// parentId → Set of child ids
+const parentChildIds = Object.fromEntries(
+  parentGroups.map((g) => [g.id, new Set(g.children.map((c) => c.id))]),
 )
 
 /**
@@ -14,20 +19,20 @@ const parentChildNames = Object.fromEntries(
  *
  * @param {string} query - substring search against name and displayName
  * @param {string|null} parentId - filter by parent group id (e.g. 'pierna')
- * @param {string|null} childName - filter by specific child muscle name (e.g. 'Cuádriceps')
+ * @param {string|null} childId - filter by specific child muscle id (e.g. 'cuadriceps')
  * @returns {Array} filtered and sorted exercises
  */
-export function filterExercises(query, parentId, childName) {
+export function filterExercises(query, parentId, childId) {
   let result = exercises
 
-  if (childName) {
+  if (childId) {
     result = result.filter(
       (ex) =>
-        ex.musculoPrincipal === childName ||
-        ex.musculosSecundarios?.includes(childName),
+        ex.musculoPrincipal === childId ||
+        ex.musculosSecundarios?.includes(childId),
     )
   } else if (parentId) {
-    const childSet = parentChildNames[parentId]
+    const childSet = parentChildIds[parentId]
     if (childSet) {
       result = result.filter(
         (ex) =>
@@ -45,12 +50,12 @@ export function filterExercises(query, parentId, childName) {
   }
 
   // Primary muscle match first, secondary after
-  if (childName) {
+  if (childId) {
     result = [...result].sort((a, b) =>
-      (a.musculoPrincipal === childName ? 0 : 1) - (b.musculoPrincipal === childName ? 0 : 1),
+      (a.musculoPrincipal === childId ? 0 : 1) - (b.musculoPrincipal === childId ? 0 : 1),
     )
   } else if (parentId) {
-    const childSet = parentChildNames[parentId]
+    const childSet = parentChildIds[parentId]
     if (childSet) {
       result = [...result].sort((a, b) =>
         (childSet.has(a.musculoPrincipal) ? 0 : 1) - (childSet.has(b.musculoPrincipal) ? 0 : 1),

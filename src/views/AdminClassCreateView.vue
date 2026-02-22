@@ -13,6 +13,8 @@ import { useBlockPicker } from '../composables/useBlockPicker'
 import { useUnsavedChanges } from '../composables/useUnsavedChanges'
 import { createEmptyForm, blockDataToForm, formToBlockData } from '../utils/blockForm'
 import BlockFormEditor from '../components/BlockFormEditor.vue'
+import TagSelector from '../components/TagSelector.vue'
+import { CLASS_TAG_GROUPS } from '../utils/tags'
 import draggable from 'vuedraggable'
 
 const router = useRouter()
@@ -30,6 +32,7 @@ const submitting = ref(false)
 const validationError = ref('')
 const name = ref('')
 const description = ref('')
+const classTags = ref([])
 const classBlocks = ref([]) // { _key, sourceBlockId, form, editing }
 const classOwnerUid = ref(null)
 
@@ -40,6 +43,7 @@ const isReadOnly = computed(
 const { isDirty, markClean, takeSnapshot } = useUnsavedChanges(() => ({
   name: name.value,
   description: description.value,
+  classTags: classTags.value,
   classBlocks: classBlocks.value,
 }))
 
@@ -148,6 +152,7 @@ async function handleSubmit() {
     const classData = {
       name: name.value,
       description: description.value || null,
+      tags: classTags.value.length ? [...classTags.value] : [],
       blocks: classBlocks.value.map((cb, index) => ({
         blockId: cb.sourceBlockId || null,
         blockData: formToBlockData(cb.form),
@@ -181,6 +186,7 @@ onMounted(async () => {
       classOwnerUid.value = cls.uid ?? null
       name.value = cls.name
       description.value = cls.description || ''
+      classTags.value = cls.tags || []
       classBlocks.value = (cls.blocks || []).map((b) => ({
         _key: ++blockKeyCounter,
         sourceBlockId: b.blockId,
@@ -234,6 +240,16 @@ onMounted(async () => {
           :disabled="isReadOnly"
           placeholder="Breve descripción de la clase"
           class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-gymOrange resize-none disabled:opacity-60 disabled:cursor-default"
+        />
+      </div>
+
+      <!-- Class Tags -->
+      <div>
+        <label class="block text-sm text-white/70 mb-1.5">Etiquetas</label>
+        <TagSelector
+          :tagGroups="CLASS_TAG_GROUPS"
+          v-model="classTags"
+          :readonly="isReadOnly"
         />
       </div>
 

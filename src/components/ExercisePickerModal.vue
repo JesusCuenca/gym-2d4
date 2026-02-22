@@ -2,13 +2,13 @@
 import { ref, computed, watch } from 'vue'
 import { XMarkIcon, MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import { useExercisePicker } from '../composables/useExercisePicker'
-import { parentGroups, exercises, filterExercises } from '../utils/exerciseIndex'
+import { parentGroups, exercises, filterExercises, muscleIdToName } from '../utils/exerciseIndex'
 
 const { state, respond, cancel } = useExercisePicker()
 
 const searchQuery = ref('')
 const selectedParentId = ref(null)
-const selectedChildName = ref(null)
+const selectedChildId = ref(null)
 const selectedSet = ref(new Set())
 
 watch(
@@ -17,7 +17,7 @@ watch(
     if (open) {
       searchQuery.value = ''
       selectedParentId.value = null
-      selectedChildName.value = null
+      selectedChildId.value = null
       selectedSet.value = new Set()
     }
   },
@@ -30,21 +30,21 @@ const activeParentGroup = computed(() =>
 )
 
 const filteredExercises = computed(() =>
-  filterExercises(searchQuery.value, selectedParentId.value, selectedChildName.value),
+  filterExercises(searchQuery.value, selectedParentId.value, selectedChildId.value),
 )
 
 function toggleParent(id) {
   if (selectedParentId.value === id) {
     selectedParentId.value = null
-    selectedChildName.value = null
+    selectedChildId.value = null
   } else {
     selectedParentId.value = id
-    selectedChildName.value = null
+    selectedChildId.value = null
   }
 }
 
-function toggleChild(name) {
-  selectedChildName.value = selectedChildName.value === name ? null : name
+function toggleChild(id) {
+  selectedChildId.value = selectedChildId.value === id ? null : id
 }
 
 function toggleExercise(ex) {
@@ -150,10 +150,10 @@ function handleConfirm() {
               v-for="child in activeParentGroup.children"
               :key="child.id"
               type="button"
-              @click="toggleChild(child.name)"
+              @click="toggleChild(child.id)"
               class="px-3 py-1 rounded-full text-xs transition-colors whitespace-nowrap"
               :class="
-                selectedChildName === child.name
+                selectedChildId === child.id
                   ? 'bg-gymOrange/80 text-white'
                   : 'bg-white/5 text-white/60 hover:bg-white/10 border border-white/15'
               "
@@ -199,9 +199,9 @@ function handleConfirm() {
             <div class="flex-1 min-w-0">
               <p class="text-white text-sm font-medium truncate">{{ ex.name }}</p>
               <p class="text-white/50 text-xs mt-0.5 truncate">
-                {{ ex.musculoPrincipal }}
+                {{ muscleIdToName[ex.musculoPrincipal] ?? ex.musculoPrincipal }}
                 <span v-if="ex.musculosSecundarios && ex.musculosSecundarios.length">
-                  · {{ ex.musculosSecundarios.join(' · ') }}
+                  · {{ ex.musculosSecundarios.map((id) => muscleIdToName[id] ?? id).join(' · ') }}
                 </span>
               </p>
             </div>

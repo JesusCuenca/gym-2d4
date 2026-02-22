@@ -12,6 +12,9 @@ const props = defineProps({
   dateTo: { type: String, default: '' },
   typeFilter: { type: String, default: '' },
   subtypeFilter: { type: String, default: '' },
+  tagsFilter: { type: Array, default: () => [] },
+  tagGroups: { type: Array, default: () => [] },
+  showTagFilter: { type: Boolean, default: false },
   currentPage: { type: Number, default: 1 },
   totalPages: { type: Number, default: 1 },
   totalFilteredCount: { type: Number, default: 0 },
@@ -29,6 +32,7 @@ const emit = defineEmits([
   'update:dateTo',
   'update:typeFilter',
   'update:subtypeFilter',
+  'update:tagsFilter',
   'nextPage',
   'prevPage',
   'clearFilters',
@@ -65,6 +69,14 @@ const showingTo = computed(() => Math.min(props.currentPage * pageSize, props.to
 const chipBase = 'px-3 py-1.5 text-xs rounded-lg border transition-colors'
 const chipActive = 'bg-gymOrange/20 text-gymOrange border-gymOrange/30'
 const chipInactive = 'bg-white/5 text-white/60 border-white/10 hover:border-white/30'
+
+function toggleTag(id) {
+  const current = [...props.tagsFilter]
+  const idx = current.indexOf(id)
+  if (idx === -1) current.push(id)
+  else current.splice(idx, 1)
+  emit('update:tagsFilter', current)
+}
 </script>
 
 <template>
@@ -231,6 +243,22 @@ const chipInactive = 'bg-white/5 text-white/60 border-white/10 hover:border-whit
                   @click="emit('update:subtypeFilter', st.value)"
                   :class="[chipBase, subtypeFilter === st.value ? chipActive : chipInactive]"
                 >{{ st.label }}</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tags filter -->
+          <div v-if="showTagFilter && tagGroups.length > 0">
+            <label class="block text-xs text-white/60 mb-2">Etiquetas</label>
+            <div v-for="group in tagGroups" :key="group.id" class="mb-3 last:mb-0">
+              <label class="block text-xs text-white/40 mb-1.5">{{ group.label }}</label>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="tag in group.tags"
+                  :key="tag.id"
+                  @click="toggleTag(tag.id)"
+                  :class="[chipBase, tagsFilter.includes(tag.id) ? chipActive : chipInactive]"
+                >{{ tag.label }}</button>
               </div>
             </div>
           </div>

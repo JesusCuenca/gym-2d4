@@ -20,6 +20,7 @@ export function useListFilters({ items, currentUserUid }) {
   const dateTo = ref('')
   const typeFilter = ref('')
   const subtypeFilter = ref('')
+  const tagsFilter = ref([])
 
   // Pagination state
   const currentPage = ref(1)
@@ -56,6 +57,13 @@ export function useListFilters({ items, currentUserUid }) {
       result = result.filter((item) => item.name?.toLowerCase().includes(needle))
     }
 
+    // Tags filter (OR logic: item must have at least one selected tag)
+    if (tagsFilter.value.length > 0) {
+      result = result.filter((item) =>
+        (item.tags || []).some((t) => tagsFilter.value.includes(t))
+      )
+    }
+
     // Date range
     if (dateFrom.value) {
       const from = new Date(dateFrom.value)
@@ -88,7 +96,7 @@ export function useListFilters({ items, currentUserUid }) {
 
   // Reset page when any filter changes
   watch(
-    [searchText, userMode, selectedUserUids, dateFrom, dateTo, typeFilter, subtypeFilter],
+    [searchText, userMode, selectedUserUids, dateFrom, dateTo, typeFilter, subtypeFilter, tagsFilter],
     () => { currentPage.value = 1 },
   )
 
@@ -107,6 +115,7 @@ export function useListFilters({ items, currentUserUid }) {
       || dateTo.value !== ''
       || typeFilter.value !== ''
       || subtypeFilter.value !== ''
+      || tagsFilter.value.length > 0
   })
 
   function clearFilters() {
@@ -117,6 +126,7 @@ export function useListFilters({ items, currentUserUid }) {
     dateTo.value = ''
     typeFilter.value = ''
     subtypeFilter.value = ''
+    tagsFilter.value = []
     currentPage.value = 1
   }
 
@@ -128,6 +138,7 @@ export function useListFilters({ items, currentUserUid }) {
     dateTo,
     typeFilter,
     subtypeFilter,
+    tagsFilter,
     currentPage,
     totalPages,
     totalFilteredCount,

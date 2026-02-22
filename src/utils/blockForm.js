@@ -20,6 +20,7 @@ export function createEmptyForm() {
     repsEveryRound: '',
     repsPerRound: [''],
     exercises: [createEmptyExercise()],
+    tags: [],
   }
 }
 
@@ -37,6 +38,7 @@ export function blockDataToForm(bd) {
     exerciseMode: bd.exerciseMode || 'all',
     repsEveryRound: bd.repsEveryRound ? String(bd.repsEveryRound) : '',
     repsPerRound: bd.repsPerRound?.length ? bd.repsPerRound.map(String) : [''],
+    tags: bd.tags?.length ? [...bd.tags] : [],
     exercises: (bd.exercises?.length ? bd.exercises : [{ name: '' }]).map((ex) => ({
       _id: ++exerciseIdCounter,
       name: ex.name || '',
@@ -82,6 +84,8 @@ export function formToBlockData(form) {
       repsEveryRound: showExReps && ex.repsEveryRound ? parseInt(ex.repsEveryRound) : null,
       notes: ex.notes || null,
     }))
+
+  blockData.tags = form.tags?.length ? [...form.tags] : []
 
   return blockData
 }

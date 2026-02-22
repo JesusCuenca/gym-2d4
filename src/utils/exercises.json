@@ -2,229 +2,385 @@
     {
         "name": "Sentadilla clásica (Squat)",
         "displayName": "SENTADILLA",
-        "musculoPrincipal": "Cuádriceps",
+        "musculoPrincipal": "cuadriceps",
         "musculosSecundarios": [
-            "Glúteo",
-            "Isquiotibial"
+            "gluteo",
+            "isquiotibial"
         ]
     },
     {
         "name": "Sentadilla Sumo",
         "displayName": "SENTADILLA SUMO",
-        "musculoPrincipal": "Cuádriceps",
+        "musculoPrincipal": "cuadriceps",
         "musculosSecundarios": [
-            "Aductor",
-            "Glúteo"
+            "aductor",
+            "gluteo"
         ]
     },
     {
-        "name": "Zancadas (Lunges)",
+        "name": "Zancadas",
         "displayName": "ZANCADAS",
-        "musculoPrincipal": "Cuádriceps",
+        "musculoPrincipal": "cuadriceps",
         "musculosSecundarios": [
-            "Glúteo",
-            "Isquiotibial"
+            "gluteo",
+            "isquiotibial"
         ]
     },
     {
         "name": "Puente de glúteo (Glute Bridge)",
         "displayName": "PUENTE GLÚTEO",
-        "musculoPrincipal": "Glúteo",
+        "musculoPrincipal": "gluteo",
         "musculosSecundarios": [
-            "Isquiotibial",
-            "Espalda baja"
+            "isquiotibial",
+            "espalda-baja"
         ]
     },
     {
-        "name": "Peso muerto rumano con mancuernas / Kettlebell",
+        "name": "Peso muerto rumano ",
         "displayName": "PESO MUERTO",
-        "musculoPrincipal": "Isquiotibial",
+        "musculoPrincipal": "isquiotibial",
         "musculosSecundarios": [
-            "Glúteo",
-            "Espalda baja"
+            "gluteo",
+            "espalda-baja"
         ]
     },
     {
         "name": "Pasos laterales con banda elástica (Monster Walks)",
         "displayName": "MONSTER WALKS",
-        "musculoPrincipal": "Abductor",
+        "musculoPrincipal": "abductor",
         "musculosSecundarios": [
-            "Glúteo"
+            "gluteo"
         ]
     },
     {
         "name": "Elevación de talones",
         "displayName": "ELEV. TALONES",
-        "musculoPrincipal": "Pantorrilla",
+        "musculoPrincipal": "pantorrilla",
         "musculosSecundarios": []
     },
     {
-        "name": "Remo con mancuernas o Kettlebell",
+        "name": "Remo",
         "displayName": "REMO",
-        "musculoPrincipal": "Dorsal",
+        "musculoPrincipal": "dorsal",
         "musculosSecundarios": [
-            "Bíceps",
-            "Deltoides posterior"
+            "biceps",
+            "deltoides-posterior"
         ]
     },
     {
         "name": "Press Militar con mancuernas (Overhead Press)",
         "displayName": "PRESS MILITAR",
-        "musculoPrincipal": "Deltoides anterior",
+        "musculoPrincipal": "deltoides-anterior",
         "musculosSecundarios": [
-            "Deltoides lateral",
-            "Tríceps"
+            "deltoides-lateral",
+            "triceps"
         ]
     },
     {
         "name": "Elevaciones laterales",
         "displayName": "ELEV. LATERALES",
-        "musculoPrincipal": "Deltoides lateral",
+        "musculoPrincipal": "deltoides-lateral",
         "musculosSecundarios": [
-            "Trapecio"
+            "trapecio"
         ]
     },
     {
         "name": "Pájaros / Elevaciones posteriores",
         "displayName": "PÁJAROS",
-        "musculoPrincipal": "Deltoides posterior",
+        "musculoPrincipal": "deltoides-posterior",
         "musculosSecundarios": [
-            "Trapecio",
-            "Dorsal"
+            "trapecio",
+            "dorsal"
         ]
     },
     {
         "name": "Rotación externa con banda elástica",
         "displayName": "ROTACIÓN EXT.",
-        "musculoPrincipal": "Manguito rotador",
+        "musculoPrincipal": "manguito-rotador",
         "musculosSecundarios": [
-            "Deltoides posterior"
+            "deltoides-posterior"
         ]
     },
     {
         "name": "Curl de bíceps con mancuernas",
         "displayName": "CURL BÍCEPS",
-        "musculoPrincipal": "Bíceps",
+        "musculoPrincipal": "biceps",
         "musculosSecundarios": [
-            "Flexor del antebrazo"
+            "flexor-del-antebrazo"
         ]
     },
     {
         "name": "Extensión de tríceps tras nuca (Copa)",
         "displayName": "EXT. TRÍCEPS",
-        "musculoPrincipal": "Tríceps",
+        "musculoPrincipal": "triceps",
         "musculosSecundarios": []
     },
     {
         "name": "Fondos de tríceps en cajón (Dips)",
         "displayName": "FONDOS TRÍCEPS",
-        "musculoPrincipal": "Tríceps",
+        "musculoPrincipal": "triceps",
         "musculosSecundarios": [
-            "Deltoides anterior"
+            "deltoides-anterior"
         ]
     },
     {
-        "name": "Flexiones de brazos clásicas (Push-ups)",
+        "name": "Flexiones (Push-ups)",
         "displayName": "FLEXIONES",
-        "musculoPrincipal": "Pectoral",
+        "musculoPrincipal": "pectoral",
         "musculosSecundarios": [
-            "Tríceps",
-            "Deltoides anterior"
+            "triceps",
+            "deltoides-anterior"
         ]
     },
     {
-        "name": "Flexiones con rodillas apoyadas / en cajón",
-        "displayName": "FLEX. RODILLAS",
-        "musculoPrincipal": "Pectoral",
-        "musculosSecundarios": [
-            "Tríceps",
-            "Deltoides anterior"
-        ]
-    },
-    {
-        "name": "Press de pecho con mancuernas (en el suelo o banco)",
+        "name": "Press de pecho",
         "displayName": "PRESS PECHO",
-        "musculoPrincipal": "Pectoral",
+        "musculoPrincipal": "pectoral",
         "musculosSecundarios": [
-            "Tríceps",
-            "Deltoides anterior"
+            "triceps",
+            "deltoides-anterior"
         ]
     },
     {
-        "name": "Aperturas con mancuernas (Flyes)",
+        "name": "Aperturas con mancuernas",
         "displayName": "APERTURAS",
-        "musculoPrincipal": "Pectoral",
+        "musculoPrincipal": "pectoral",
         "musculosSecundarios": [
-            "Deltoides anterior"
+            "deltoides-anterior"
         ]
     },
     {
-        "name": "Burpees (fase completa tocando el pecho en el suelo)",
+        "name": "Burpees",
         "displayName": "BURPEES",
-        "musculoPrincipal": "Pectoral",
+        "musculoPrincipal": "pectoral",
         "musculosSecundarios": [
-            "Cuádriceps",
-            "Abdomen"
+            "cuadriceps",
+            "abdomen"
         ]
     },
     {
         "name": "Flexiones declinadas (pies en alto)",
         "displayName": "FLEX. DECLINADAS",
-        "musculoPrincipal": "Pectoral",
+        "musculoPrincipal": "pectoral",
         "musculosSecundarios": [
-            "Deltoides anterior",
-            "Tríceps"
+            "deltoides-anterior",
+            "triceps"
         ]
     },
     {
         "name": "Plancha abdominal (Plank)",
         "displayName": "PLANCHA",
-        "musculoPrincipal": "Abdomen",
+        "musculoPrincipal": "abdomen",
         "musculosSecundarios": [
-            "Espalda baja",
-            "Deltoides anterior"
+            "espalda-baja",
+            "deltoides-anterior"
         ]
     },
     {
         "name": "Giros Rusos (Russian Twists)",
         "displayName": "GIROS RUSOS",
-        "musculoPrincipal": "Oblicuos",
+        "musculoPrincipal": "oblicuos",
         "musculosSecundarios": [
-            "Abdomen"
+            "abdomen"
         ]
     },
     {
         "name": "Escaladores (Mountain Climbers)",
-        "displayName": "ESCALADORES",
-        "musculoPrincipal": "Abdomen",
+        "displayName": "Mountain Climbers",
+        "musculoPrincipal": "abdomen",
         "musculosSecundarios": [
-            "Flexor de cadera",
-            "Deltoides anterior"
+            "flexor-de-cadera",
+            "deltoides-anterior"
         ]
     },
     {
         "name": "Elevación de piernas acostado",
         "displayName": "ELEV. PIERNAS",
-        "musculoPrincipal": "Abdomen",
+        "musculoPrincipal": "abdomen",
         "musculosSecundarios": [
-            "Flexor de cadera"
+            "flexor-de-cadera"
         ]
     },
     {
-        "name": "Kettlebell Swing",
-        "displayName": "KB SWING",
-        "musculoPrincipal": "Glúteo",
+        "name": "American Swing",
+        "displayName": "AMERICAN SWING",
+        "musculoPrincipal": "gluteo",
         "musculosSecundarios": [
-            "Isquiotibial",
-            "Espalda baja"
+            "isquiotibial",
+            "espalda-baja"
         ]
     },
     {
         "name": "Superman (Extensión lumbar en el suelo)",
         "displayName": "SUPERMAN",
-        "musculoPrincipal": "Espalda baja",
+        "musculoPrincipal": "espalda-baja",
         "musculosSecundarios": [
-            "Glúteo"
+            "gluteo"
+        ]
+    },
+    {
+        "name": "Sentadilla isométrica (Wall Sit)",
+        "displayName": "SENTADILLA ISOM.",
+        "musculoPrincipal": "cuadriceps",
+        "musculosSecundarios": [
+            "gluteo",
+            "isquiotibial"
+        ]
+    },
+    {
+        "name": "Sentadilla y media (con rebote)",
+        "displayName": "SENTADILLA 1.5",
+        "musculoPrincipal": "cuadriceps",
+        "musculosSecundarios": [
+            "gluteo",
+            "isquiotibial"
+        ]
+    },
+    {
+        "name": "Sentadilla con pies juntos",
+        "displayName": "SENTADILLA CERRADA",
+        "musculoPrincipal": "cuadriceps",
+        "musculosSecundarios": [
+            "gluteo",
+            "aductor"
+        ]
+    },
+    {
+        "name": "Hip thrust (Empuje de cadera)",
+        "displayName": "HIP THRUST",
+        "musculoPrincipal": "gluteo",
+        "musculosSecundarios": [
+            "isquiotibial",
+            "espalda-baja"
+        ]
+    },
+    {
+        "name": "Peso muerto tradicional (Deadlift)",
+        "displayName": "PESO MUERTO",
+        "musculoPrincipal": "gluteo",
+        "musculosSecundarios": [
+            "isquiotibial",
+            "espalda-baja",
+            "cuadriceps"
+        ]
+    },
+    {
+        "name": "Cargada (Clean)",
+        "displayName": "CARGADA",
+        "musculoPrincipal": "gluteo",
+        "musculosSecundarios": [
+            "cuadriceps",
+            "espalda-baja",
+            "trapecio"
+        ]
+    },
+    {
+        "name": "Curl de bíceps martillo",
+        "displayName": "CURL MARTILLO",
+        "musculoPrincipal": "biceps",
+        "musculosSecundarios": [
+            "flexor-del-antebrazo"
+        ]
+    },
+    {
+        "name": "Abdominal mariposa (Butterfly Sit-up)",
+        "displayName": "SIT-UPS MARIPOSA",
+        "musculoPrincipal": "abdomen",
+        "musculosSecundarios": [
+            "flexor-de-cadera"
+        ]
+    },
+    {
+        "name": "Abdominal en V (V-Ups)",
+        "displayName": "V-UPS",
+        "musculoPrincipal": "abdomen",
+        "musculosSecundarios": [
+            "flexor-de-cadera"
+        ]
+    },
+    {
+        "name": "Abdominal en V Alterno",
+        "displayName": "V-UPS ALTERNOS",
+        "musculoPrincipal": "abdomen",
+        "musculosSecundarios": [
+            "oblicuos",
+            "flexor-de-cadera"
+        ]
+    },
+    {
+        "name": "Crunches",
+        "displayName": "CRUNCHES",
+        "musculoPrincipal": "abdomen",
+        "musculosSecundarios": []
+    },
+    {
+        "name": "Abdominal lateral / Oblicuos",
+        "displayName": "ABD. LATERAL",
+        "musculoPrincipal": "oblicuos",
+        "musculosSecundarios": [
+            "abdomen"
+        ]
+    },
+    {
+        "name": "Remo estrecho",
+        "displayName": "REMO ESTRECHO",
+        "musculoPrincipal": "dorsal",
+        "musculosSecundarios": [
+            "biceps",
+            "deltoides-posterior"
+        ]
+    },
+    {
+        "name": "Remo abierto",
+        "displayName": "REMO ABIERTO",
+        "musculoPrincipal": "dorsal",
+        "musculosSecundarios": [
+            "deltoides-posterior",
+            "trapecio"
+        ]
+    },
+    {
+        "name": "Remo a una mano",
+        "displayName": "REMO 1 MANO",
+        "musculoPrincipal": "dorsal",
+        "musculosSecundarios": [
+            "biceps"
+        ]
+    },
+    {
+        "name": "Devil Press",
+        "displayName": "DEVIL PRESS",
+        "musculoPrincipal": "pectoral",
+        "musculosSecundarios": [
+            "deltoides-anterior",
+            "gluteo",
+            "espalda-baja"
+        ]
+    },
+    {
+        "name": "Zancada búlgara (Bulgarian Split Squat)",
+        "displayName": "ZANCADA BÚLGARA",
+        "musculoPrincipal": "cuadriceps",
+        "musculosSecundarios": [
+            "gluteo",
+            "isquiotibial"
+        ]
+    },
+    {
+        "name": "Abdominal barca isométrica (Hollow Hold)",
+        "displayName": "BARCA ISOMÉTRICA",
+        "musculoPrincipal": "abdomen",
+        "musculosSecundarios": [
+            "flexor-de-cadera"
+        ]
+    },
+    {
+        "name": "Flexiones inclinadas (Manos elevadas)",
+        "displayName": "FLEX. INCLINADAS",
+        "musculoPrincipal": "pectoral",
+        "musculosSecundarios": [
+            "triceps",
+            "deltoides-anterior"
         ]
     }
 ]

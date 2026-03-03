@@ -2,6 +2,7 @@
 import { computed, watch } from 'vue'
 import { BLOCK_TYPES, TIMED_SUBTYPES, REPS_SUBTYPES, isTimed } from '../models/blockTypes'
 import { Bars2Icon, TrashIcon } from '@heroicons/vue/20/solid'
+import { QueueListIcon } from '@heroicons/vue/24/outline'
 import { useExercisePicker } from '../composables/useExercisePicker'
 import draggable from 'vuedraggable'
 import { createEmptyExercise } from '../utils/blockForm'
@@ -45,7 +46,8 @@ const sz = computed(() => {
     exNotesInput: c ? 'px-2 py-1.5 text-sm' : 'px-3 py-2 text-sm',
     exBtnsGap: c ? 'mt-2' : 'mt-3',
     addPickerBtn: c ? 'py-2 text-xs' : 'py-3 text-sm',
-    addPlusBtn: c ? 'w-10 py-2 text-xs' : 'w-12 py-3 text-sm',
+    addNewBtn: c ? 'py-2 text-xs' : 'py-3 text-sm',
+    addBtnIcon: c ? 'w-3.5 h-3.5' : 'w-4 h-4',
   }
 })
 
@@ -337,23 +339,25 @@ async function openExercisePicker() {
         </template>
       </draggable>
 
-      <!-- Tags -->
-      <div>
-        <label :class="['block mb-1.5', sz.label]">Etiquetas</label>
-        <TagSelector :tagGroups="BLOCK_TAG_GROUPS" :modelValue="form.tags || []" :compact="props.compact"
-          :readonly="props.readonly" @update:modelValue="form.tags = $event" />
-      </div>
-
       <div v-if="!props.readonly" :class="['flex gap-2', sz.exBtnsGap]">
         <button type="button" @click="openExercisePicker"
-          :class="['flex-1 border border-gymOrange/30 bg-gymOrange/10 rounded-lg text-gymOrange/80 hover:text-gymOrange hover:border-gymOrange/50 transition-colors', sz.addPickerBtn]">
+          :class="['flex-1 flex items-center justify-center gap-1.5 border border-white/20 rounded-lg text-white/60 hover:text-white hover:border-white/40 transition-colors', sz.addPickerBtn]">
+          <QueueListIcon :class="sz.addBtnIcon" />
           Añadir ejercicios
         </button>
         <button type="button" @click="addExercise"
-          :class="['border border-dashed border-white/20 rounded-lg text-white/60 hover:text-white hover:border-white/40 transition-colors', sz.addPlusBtn]">
-          +
+          :class="['flex-1 border border-gymOrange/30 rounded-lg text-gymOrange/70 hover:text-gymOrange hover:border-gymOrange/50 transition-colors', sz.addNewBtn]">
+          + Crear ejercicio
         </button>
       </div>
+
+    </div>
+
+    <!-- Tags -->
+    <div>
+      <label :class="['block mb-1.5', sz.label]">Etiquetas</label>
+      <TagSelector :tagGroups="BLOCK_TAG_GROUPS" :modelValue="form.tags || []" :compact="props.compact"
+        :readonly="props.readonly" @update:modelValue="form.tags = $event" />
     </div>
   </div>
 </template>

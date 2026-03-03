@@ -3,17 +3,27 @@ import { ref, computed, watch } from 'vue'
 import { XMarkIcon, MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import { useBlockPicker } from '../composables/useBlockPicker'
 import { useBlockStore } from '../stores/blockStore'
+import { useAuthStore } from '../stores/auth'
+import { useUserStore } from '../stores/userStore'
 import { BLOCK_TYPES, TIMED_SUBTYPES, REPS_SUBTYPES, getBlockLabel, getRepsSubcase } from '../models/blockTypes'
 import { BLOCK_TAG_GROUPS } from '../utils/tags'
 
 const { state, respond, cancel } = useBlockPicker()
 const blockStore = useBlockStore()
+const authStore = useAuthStore()
+const userStore = useUserStore()
 
 const searchQuery = ref('')
 const selectedType = ref(null)
 const selectedSubtype = ref(null)
 const selectedTags = ref([])
 const selectedSet = ref(new Set())
+const userMode = ref('mine')
+const selectedUserUids = ref([])
+
+const otherUsers = computed(() => {
+  return userStore.allUsers.filter((u) => u.uid !== authStore.user?.uid)
+})
 
 watch(
   () => state.value.open,
@@ -24,6 +34,8 @@ watch(
       selectedSubtype.value = null
       selectedTags.value = []
       selectedSet.value = new Set()
+      userMode.value = 'mine'
+      selectedUserUids.value = []
     }
   },
 )
@@ -36,6 +48,13 @@ const subtypeOptions = computed(() => {
 
 const filteredBlocks = computed(() => {
   let result = blockStore.blocks
+
+  // User filter
+  if (userMode.value === 'mine') {
+    result = result.filter((b) => b.uid === authStore.user?.uid)
+  } else if (userMode.value === 'selected' && selectedUserUids.value.length > 0) {
+    result = result.filter((b) => selectedUserUids.value.includes(b.uid))
+  }
 
   if (selectedType.value) {
     result = result.filter((b) => b.type === selectedType.value)
@@ -83,6 +102,14 @@ function toggleTag(tagId) {
   } else {
     selectedTags.value = [...selectedTags.value, tagId]
   }
+}
+
+function toggleUserUid(uid) {
+  const current = [...selectedUserUids.value]
+  const idx = current.indexOf(uid)
+  if (idx === -1) current.push(uid)
+  else current.splice(idx, 1)
+  selectedUserUids.value = current
 }
 
 function toggleBlock(block) {
@@ -159,6 +186,50 @@ function exerciseCount(block) {
               placeholder="Buscar bloque..."
               class="w-full bg-white/10 border border-white/20 rounded-lg pl-9 pr-3 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-gymOrange"
             />
+          </div>
+        </div>
+
+        <!-- User filter -->
+        <div class="px-4 pb-2 flex-shrink-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-[10px] text-white/40 shrink-0">Creado por</span>
+            <button
+              type="button"
+              @click="userMode = 'mine'"
+              class="px-2.5 py-1 text-xs rounded-lg border transition-colors"
+              :class="userMode === 'mine'
+                ? 'bg-gymOrange/20 text-gymOrange border-gymOrange/30'
+                : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30'"
+            >Solo míos</button>
+            <button
+              type="button"
+              @click="userMode = 'all'"
+              class="px-2.5 py-1 text-xs rounded-lg border transition-colors"
+              :class="userMode === 'all'
+                ? 'bg-gymOrange/20 text-gymOrange border-gymOrange/30'
+                : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30'"
+            >Todos</button>
+            <button
+              v-if="otherUsers.length > 0"
+              type="button"
+              @click="userMode = 'selected'"
+              class="px-2.5 py-1 text-xs rounded-lg border transition-colors"
+              :class="userMode === 'selected'
+                ? 'bg-gymOrange/20 text-gymOrange border-gymOrange/30'
+                : 'bg-white/5 text-white/60 border-white/10 hover:border-white/30'"
+            >Seleccionar</button>
+          </div>
+          <div v-if="userMode === 'selected' && otherUsers.length > 0" class="flex flex-wrap gap-1.5 mt-2">
+            <button
+              v-for="user in otherUsers"
+              :key="user.uid"
+              type="button"
+              @click="toggleUserUid(user.uid)"
+              class="px-2.5 py-1 text-xs rounded-lg border transition-colors"
+              :class="selectedUserUids.includes(user.uid)
+                ? 'bg-white/20 text-white border-white/40'
+                : 'bg-white/5 text-white/50 border-white/10 hover:border-white/30'"
+            >{{ user.displayName || user.email }}</button>
           </div>
         </div>
 
@@ -269,6 +340,9 @@ function exerciseCount(block) {
               <p class="text-white/50 text-xs mt-0.5 truncate">
                 {{ exerciseCount(block) }} ejercicio{{ exerciseCount(block) !== 1 ? 's' : '' }}
                 <span v-if="block.rounds && block.rounds > 1"> · {{ block.rounds }} rondas</span>
+              </p>
+              <p v-if="userMode !== 'mine'" class="text-white/40 text-[10px] mt-0.5 truncate">
+                por {{ userStore.getUserName(block.uid) }}
               </p>
             </div>
 

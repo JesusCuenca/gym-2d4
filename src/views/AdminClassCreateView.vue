@@ -5,10 +5,11 @@ import { useClassStore } from '../stores/classStore'
 import { useBlockStore } from '../stores/blockStore'
 import { useToastStore } from '../stores/toastStore'
 import { useAuthStore } from '../stores/auth'
+import { useUserStore } from '../stores/userStore'
 import { BLOCK_TYPES, TIMED_SUBTYPES, isTimed } from '../models/blockTypes'
 import { validateBlock } from '../utils/validation'
 import { Bars2Icon, XMarkIcon } from '@heroicons/vue/20/solid'
-import { PencilSquareIcon } from '@heroicons/vue/24/outline'
+import { PencilSquareIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { useBlockPicker } from '../composables/useBlockPicker'
 import { useUnsavedChanges } from '../composables/useUnsavedChanges'
 import { createEmptyForm, blockDataToForm, formToBlockData } from '../utils/blockForm'
@@ -23,6 +24,7 @@ const classStore = useClassStore()
 const blockStore = useBlockStore()
 const toastStore = useToastStore()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 
 let blockKeyCounter = 0
 
@@ -110,7 +112,7 @@ async function saveToLibrary(blockIndex) {
     const blockData = formToBlockData(classBlocks.value[blockIndex].form)
     const blockId = await blockStore.createBlock(blockData)
     classBlocks.value[blockIndex].sourceBlockId = blockId
-    await blockStore.fetchBlocks()
+    await blockStore.fetchAllBlocks()
     toastStore.show('Bloque guardado en el catálogo')
   } catch {
     toastStore.show('Error al guardar el bloque en el catálogo.', 'error')
@@ -179,7 +181,7 @@ async function handleSubmit() {
 
 onMounted(async () => {
   loading.value = true
-  await blockStore.fetchBlocks()
+  await Promise.all([blockStore.fetchAllBlocks(), userStore.fetchAllUsers()])
   if (isEditMode.value) {
     const cls = await classStore.getClassById(route.params.id)
     if (cls) {
@@ -304,11 +306,12 @@ onMounted(async () => {
       <!-- Add block actions (only when not readonly) -->
       <div v-if="!isReadOnly" class="flex gap-2">
         <button type="button" @click="openBlockPicker"
-          class="flex-1 border border-dashed border-white/20 rounded-lg py-3 text-white/60 hover:text-white hover:border-white/40 text-sm transition-colors">
-          + Añadir del catálogo
+          class="flex-1 flex items-center justify-center gap-1.5 border border-white/20 rounded-lg py-3 text-white/60 hover:text-white hover:border-white/40 text-sm transition-colors">
+          <CubeIcon class="w-4 h-4" />
+          Añadir del catálogo
         </button>
         <button type="button" @click="addNewBlock"
-          class="flex-1 border border-dashed border-gymOrange/30 rounded-lg py-3 text-gymOrange/70 hover:text-gymOrange hover:border-gymOrange/50 text-sm transition-colors">
+          class="flex-1 border border-gymOrange/30 rounded-lg py-3 text-gymOrange/70 hover:text-gymOrange hover:border-gymOrange/50 text-sm transition-colors">
           + Crear bloque nuevo
         </button>
       </div>

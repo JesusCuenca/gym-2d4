@@ -1,7 +1,7 @@
 <script setup>
 import { computed, watch } from 'vue'
 import { BLOCK_TYPES, TIMED_SUBTYPES, REPS_SUBTYPES, isTimed } from '../models/blockTypes'
-import { Bars2Icon, TrashIcon } from '@heroicons/vue/20/solid'
+import { TrashIcon, ArrowsUpDownIcon } from '@heroicons/vue/20/solid'
 import { QueueListIcon } from '@heroicons/vue/24/outline'
 import { useExercisePicker } from '../composables/useExercisePicker'
 import draggable from 'vuedraggable'
@@ -308,7 +308,7 @@ async function openExercisePicker() {
           <div :class="['bg-white/5 border border-white/10 rounded-lg', sz.exCard]">
             <div :class="['flex items-center justify-between']">
               <div :class="['flex items-center', sz.exHeaderGap]">
-                <Bars2Icon v-if="!props.readonly"
+                <ArrowsUpDownIcon v-if="!props.readonly"
                   :class="['block-form-drag-handle text-white/50 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0', sz.exDragIcon]" />
                 <span :class="['font-medium', sz.exNum]">#{{ index + 1 }}</span>
               </div>

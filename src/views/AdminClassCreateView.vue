@@ -8,7 +8,7 @@ import { useAuthStore } from '../stores/auth'
 import { useUserStore } from '../stores/userStore'
 import { BLOCK_TYPES, TIMED_SUBTYPES, isTimed } from '../models/blockTypes'
 import { validateBlock } from '../utils/validation'
-import { Bars2Icon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { ArrowsUpDownIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import { PencilSquareIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { useBlockPicker } from '../composables/useBlockPicker'
 import { useUnsavedChanges } from '../composables/useUnsavedChanges'
@@ -252,7 +252,7 @@ onMounted(async () => {
             <div class="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
               <!-- Block header (always visible) -->
               <div class="flex items-center gap-3 px-4 py-3">
-                <Bars2Icon v-if="!isReadOnly"
+                <ArrowsUpDownIcon v-if="!isReadOnly"
                   class="block-drag-handle w-5 h-5 text-white/50 hover:text-white/60 cursor-grab active:cursor-grabbing shrink-0" />
                 <span class="text-gymOrange font-bold text-sm w-6">{{ bIndex + 1 }}</span>
                 <div class="flex-1 min-w-0">

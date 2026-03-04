@@ -33,13 +33,13 @@ const summaryPills = computed(() => {
 <template>
   <div class="flex items-center justify-center h-full">
     <div class="text-center">
-      <p class="text-3xl text-white/60 uppercase tracking-wider font-condensed mb-6">
+      <p class="text-tv-label-lg text-white/60 uppercase tracking-wider font-condensed mb-6">
         Siguiente — Bloque {{ blockIndex + 1 }}/{{ totalBlocks }}
       </p>
-      <h1 class="text-8xl font-black text-gymOrange uppercase tracking-normal font-condensed mb-4">
+      <h1 class="text-tv-heading font-black text-gymOrange uppercase tracking-normal font-condensed mb-4">
         {{ block?.name || 'PREPARADOS' }}
       </h1>
-      <p v-if="typeLabel" class="text-4xl text-white/60 uppercase tracking-wider font-condensed mb-8">
+      <p v-if="typeLabel" class="text-tv-body text-white/60 uppercase tracking-wider font-condensed mb-8">
         {{ typeLabel }}
       </p>
 
@@ -51,7 +51,7 @@ const summaryPills = computed(() => {
           class="bg-white/10 rounded-xl px-5 py-3 text-center"
         >
           <p class="text-sm text-white/60 uppercase tracking-wider font-condensed">{{ pill.label }}</p>
-          <p class="text-2xl font-black text-white font-condensed">{{ pill.value }}</p>
+          <p class="text-tv-label font-black text-white font-condensed">{{ pill.value }}</p>
         </div>
       </div>
 
@@ -61,7 +61,7 @@ const summaryPills = computed(() => {
           <span
             v-if="countdownNumber"
             :key="countdownNumber"
-            class="text-9xl font-black text-gymOrange font-condensed tabular-nums"
+            class="text-tv-display font-black text-gymOrange font-condensed tabular-nums"
           >
             {{ countdownNumber }}
           </span>

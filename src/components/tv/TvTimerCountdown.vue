@@ -27,20 +27,20 @@ const timerColorClass = computed(() => {
   <div class="flex flex-col items-center justify-center">
     <div
       v-if="isExpired"
-      class="text-9xl font-black text-gymOrange uppercase tracking-normal font-condensed animate-pulse"
+      class="text-tv-display font-black text-gymOrange uppercase tracking-normal font-condensed animate-pulse"
     >
       ¡TIEMPO!
     </div>
     <template v-else>
       <div
         v-if="formatted.minutes"
-        class="text-[12rem] font-black uppercase tracking-normal font-condensed tabular-nums leading-none transition-colors duration-300"
+        class="text-tv-timer font-black uppercase tracking-normal font-condensed tabular-nums leading-none transition-colors duration-300"
         :class="[timerColorClass, { 'animate-urgency-pulse animate-urgency-scale': isUrgent }]"
       >
         {{ formatted.minutes }}
       </div>
       <div
-        class="text-[12rem] font-black uppercase tracking-normal font-condensed tabular-nums leading-none transition-colors duration-300"
+        class="text-tv-timer font-black uppercase tracking-normal font-condensed tabular-nums leading-none transition-colors duration-300"
         :class="[timerColorClass, { 'animate-urgency-pulse animate-urgency-scale': isUrgent }]"
       >
         {{ formatted.seconds }}

@@ -6,6 +6,15 @@
   --color-gymRest: #06B6D4;
   --color-gymDanger: #EF4444;
   --font-condensed: 'Barlow Condensed', sans-serif;
+  --text-tv-timer: clamp(5rem, 10vw, 10rem);
+  --text-tv-display: clamp(3rem, 7vw, 7rem);
+  --text-tv-heading: clamp(2.5rem, 5vw, 5.5rem);
+  --text-tv-subtitle: clamp(2.25rem, 4.5vw, 5.25rem);
+  --text-tv-subheading: clamp(2rem, 3.75vw, 4.5rem);
+  --text-tv-emphasis: clamp(1.5rem, 2.5vw, 3rem);
+  --text-tv-body: clamp(1.25rem, 2vw, 2.25rem);
+  --text-tv-label-lg: clamp(1rem, 1.6vw, 1.875rem);
+  --text-tv-label: clamp(0.875rem, 1.25vw, 1.5rem);
   --animate-urgency-pulse: urgency-pulse 0.5s ease-in-out infinite;
   --animate-urgency-scale: urgency-scale 0.5s ease-in-out infinite;
   --animate-countdown-pop: countdown-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);

@@ -5,7 +5,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center h-full gap-6">
+  <div class="flex flex-col items-center justify-center h-full gap-6 overflow-hidden">
     <!-- Rep badge -->
     <div v-if="exercise?.repsEveryRound">
       <span
@@ -15,12 +15,13 @@ defineProps({
     </div>
 
     <!-- Exercise name -->
-    <h2 class="text-[12rem] font-black text-white uppercase tracking-normal font-condensed text-center">
+    <h2
+      class="text-[clamp(4rem,10vw,8rem)] font-black text-white uppercase tracking-normal font-condensed text-center max-w-full break-words leading-none">
       {{ exercise?.name }}
     </h2>
 
     <!-- Notes -->
-    <p v-if="exercise?.notes" class="text-4xl text-white/70 font-condensed uppercase">
+    <p v-if="exercise?.notes" class="text-tv-body text-white/70 font-condensed uppercase">
       {{ exercise.notes }}
     </p>
   </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 
 const props = defineProps({
   exercises: Array,
@@ -8,6 +8,10 @@ const props = defineProps({
     default: true,
   },
 })
+
+const containerRef = ref(null)
+const listRef = ref(null)
+const scaleFactor = ref(1)
 
 const sizeTier = computed(() => {
   const count = props.exercises?.length || 0
@@ -28,27 +32,56 @@ const tierClasses = computed(() => {
   }
   return tiers[sizeTier.value]
 })
+
+function recalculateScale() {
+  if (!listRef.value || !containerRef.value) return
+  const listH = listRef.value.scrollHeight
+  const containerH = containerRef.value.clientHeight
+  scaleFactor.value = listH > containerH ? containerH / listH : 1
+}
+
+let resizeObserver = null
+
+onMounted(() => {
+  recalculateScale()
+  if (listRef.value) {
+    resizeObserver = new ResizeObserver(recalculateScale)
+    resizeObserver.observe(listRef.value)
+  }
+})
+
+onUnmounted(() => {
+  resizeObserver?.disconnect()
+})
+
+watch(() => props.exercises, async () => {
+  await nextTick()
+  recalculateScale()
+}, { deep: true })
 </script>
 
 <template>
-  <div class="flex flex-col" :class="tierClasses.gap">
-    <div v-for="(exercise, index) in exercises" :key="index" class="flex items-center" :class="tierClasses.itemGap">
-      <!-- Rep badge -->
-      <div v-if="showRepBadges && exercise.repsEveryRound" class="flex-shrink-0">
-        <span class="inline-flex items-center justify-center bg-gymOrange font-black text-white font-condensed"
-          :class="tierClasses.badge">
-          {{ exercise.repsEveryRound }}
-        </span>
-      </div>
+  <div ref="containerRef" class="h-full w-full flex items-center justify-center overflow-hidden">
+    <div ref="listRef" class="flex flex-col origin-center" :class="tierClasses.gap"
+      :style="{ transform: `scale(${scaleFactor})` }">
+      <div v-for="(exercise, index) in exercises" :key="index" class="flex items-center" :class="tierClasses.itemGap">
+        <!-- Rep badge -->
+        <div v-if="showRepBadges && exercise.repsEveryRound" class="flex-shrink-0">
+          <span class="inline-flex items-center justify-center bg-gymOrange font-black text-white font-condensed"
+            :class="tierClasses.badge">
+            {{ exercise.repsEveryRound }}
+          </span>
+        </div>
 
-      <!-- Exercise name and notes -->
-      <div class="flex-1 min-w-0">
-        <p class="font-black text-white uppercase tracking-normal font-condensed truncate" :class="tierClasses.name">
-          {{ exercise.name }}
-        </p>
-        <p v-if="exercise.notes" class="text-white/70 font-condensed uppercase" :class="tierClasses.notes">
-          {{ exercise.notes }}
-        </p>
+        <!-- Exercise name and notes -->
+        <div class="flex-1 min-w-0">
+          <p class="font-black text-white uppercase tracking-normal font-condensed truncate" :class="tierClasses.name">
+            {{ exercise.name }}
+          </p>
+          <p v-if="exercise.notes" class="text-white/70 font-condensed uppercase" :class="tierClasses.notes">
+            {{ exercise.notes }}
+          </p>
+        </div>
       </div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { getRepsSubcase } from '../../models/blockTypes'
 import { formatTimer } from '../../utils/time'
 import TvExerciseList from './TvExerciseList.vue'
@@ -22,6 +22,37 @@ const perRoundTier = computed(() => {
   if (count <= 6) return { badge: 'w-20 h-20 text-tv-body rounded-xl', text: 'text-tv-label', gap: 'gap-4' }
   return { badge: 'w-16 h-16 text-tv-label-lg rounded-xl', text: 'text-xl', gap: 'gap-3' }
 })
+
+// Auto-scale for perRound left panel
+const perRoundContainerRef = ref(null)
+const perRoundListRef = ref(null)
+const perRoundScale = ref(1)
+
+function recalculatePerRoundScale() {
+  if (!perRoundListRef.value || !perRoundContainerRef.value) return
+  const listH = perRoundListRef.value.scrollHeight
+  const containerH = perRoundContainerRef.value.clientHeight
+  perRoundScale.value = listH > containerH ? containerH / listH : 1
+}
+
+let resizeObserver = null
+
+onMounted(() => {
+  recalculatePerRoundScale()
+  if (perRoundListRef.value) {
+    resizeObserver = new ResizeObserver(recalculatePerRoundScale)
+    resizeObserver.observe(perRoundListRef.value)
+  }
+})
+
+onUnmounted(() => {
+  resizeObserver?.disconnect()
+})
+
+watch(() => props.block.repsPerRound, async () => {
+  await nextTick()
+  recalculatePerRoundScale()
+}, { deep: true })
 </script>
 
 <template>
@@ -37,7 +68,7 @@ const perRoundTier = computed(() => {
       </p>
 
       <!-- Center: reps content -->
-      <div class="flex-1 flex flex-col items-center justify-center">
+      <div class="flex-1 flex flex-col items-center justify-center overflow-hidden">
         <!-- sameReps: big rep square + label -->
         <div v-if="subcase === 'sameReps'" class="flex flex-col items-center gap-4">
           <span
@@ -47,17 +78,21 @@ const perRoundTier = computed(() => {
           <span class="text-tv-label text-white/70 font-condensed uppercase">reps cada ronda</span>
         </div>
 
-        <!-- perRound: series breakdown -->
-        <div v-else-if="subcase === 'perRound' && block.repsPerRound" class="flex flex-col items-center"
-          :class="perRoundTier.gap">
-          <div v-for="(reps, i) in block.repsPerRound" :key="i" class="flex items-center gap-3">
-            <span class="text-white/70 font-condensed uppercase" :class="perRoundTier.text">
-              ronda {{ i + 1 }}
-            </span>
-            <span class="inline-flex items-center justify-center bg-gymOrange font-black text-white font-condensed"
-              :class="perRoundTier.badge">
-              {{ reps }}
-            </span>
+        <!-- perRound: series breakdown with auto-scale -->
+        <div v-else-if="subcase === 'perRound' && block.repsPerRound" ref="perRoundContainerRef"
+          class="h-full w-full flex items-center justify-center overflow-hidden">
+          <div ref="perRoundListRef" class="flex flex-col items-center origin-center"
+            :class="perRoundTier.gap"
+            :style="{ transform: `scale(${perRoundScale})` }">
+            <div v-for="(reps, i) in block.repsPerRound" :key="i" class="flex items-center gap-3">
+              <span class="text-white/70 font-condensed uppercase" :class="perRoundTier.text">
+                ronda {{ i + 1 }}
+              </span>
+              <span class="inline-flex items-center justify-center bg-gymOrange font-black text-white font-condensed"
+                :class="perRoundTier.badge">
+                {{ reps }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -69,7 +104,7 @@ const perRoundTier = computed(() => {
     </div>
 
     <!-- Right Panel (70%) — Exercise List -->
-    <div class="w-[70%] flex items-center justify-center px-12">
+    <div class="w-[70%] h-full flex items-center justify-center px-12 pb-16">
       <TvExerciseList :exercises="block.exercises" :showRepBadges="subcase !== 'sameReps'" />
     </div>
 

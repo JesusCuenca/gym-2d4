@@ -64,7 +64,7 @@ const exercisePositionText = computed(() => {
     </div>
 
     <!-- Right Panel (70%) — Exercises -->
-    <div class="w-[70%] flex items-center justify-center px-12 relative">
+    <div class="w-[70%] h-full flex items-center justify-center px-12 relative">
       <!-- Rotating mode: single exercise with transitions -->
       <template v-if="isRotating">
         <Transition name="tv-exercise" mode="out-in">

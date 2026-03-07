@@ -158,9 +158,10 @@ export function useTimer(sessionRef) {
   })
 
   const isCountingDown = computed(() => sessionRef.value?.clockState === 'countdown')
+  const COUNTDOWN_DURATION = 3
   const countdownSecondsLeft = computed(() => {
     if (!isCountingDown.value) return null
-    const left = Math.ceil(3 - displaySeconds.value)
+    const left = Math.ceil(COUNTDOWN_DURATION - displaySeconds.value)
     return left > 0 ? left : null
   })
 

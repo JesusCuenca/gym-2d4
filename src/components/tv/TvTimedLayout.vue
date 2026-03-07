@@ -30,7 +30,6 @@ const currentExercise = computed(() => {
 })
 
 const isRotating = computed(() => props.timer.currentExerciseIndex != null)
-const isResting = computed(() => props.timer.isResting)
 
 const exercisePositionText = computed(() => {
   const idx = props.timer.currentExerciseIndex
@@ -53,7 +52,7 @@ const exercisePositionText = computed(() => {
 
       <!-- Center: timer countdown -->
       <div class="flex-1 flex items-center justify-center">
-        <TvTimerCountdown :secondsLeft="timer.phaseSecondsLeft" :isResting="isResting" />
+        <TvTimerCountdown :secondsLeft="timer.phaseSecondsLeft" :isResting="timer.isResting" />
       </div>
 
       <!-- Bottom: round info -->
@@ -68,7 +67,7 @@ const exercisePositionText = computed(() => {
       <!-- Rotating mode: single exercise with transitions -->
       <template v-if="isRotating">
         <Transition name="tv-exercise" mode="out-in">
-          <div v-if="!isResting" :key="`ex-${timer.currentExerciseIndex}`"
+          <div v-if="!timer.isResting" :key="`ex-${timer.currentExerciseIndex}`"
             class="relative flex flex-col items-center justify-center h-full">
             <p v-if="exercisePositionText"
               class="absolute top-10 text-tv-label text-white/70 uppercase tracking-widest font-condensed">
@@ -87,7 +86,7 @@ const exercisePositionText = computed(() => {
         <TvExerciseList :exercises="block.exercises" />
         <!-- Rest overlay for list mode with transition -->
         <Transition name="tv-rest">
-          <div v-if="isResting" class="absolute inset-0 flex items-center justify-center bg-gymBlack/80">
+          <div v-if="timer.isResting" class="absolute inset-0 flex items-center justify-center bg-gymBlack/80">
             <span class="text-tv-display font-black text-gymRest uppercase font-condensed">DESCANSO</span>
           </div>
         </Transition>

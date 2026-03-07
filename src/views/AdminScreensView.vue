@@ -101,8 +101,12 @@ async function handleDelete(screen) {
     message: `"${screen.name}" será eliminada permanentemente.`,
   })
   if (ok) {
-    await screenStore.deleteScreen(screen.id)
-    toastStore.show('Pantalla eliminada')
+    try {
+      await screenStore.deleteScreen(screen.id)
+      toastStore.show('Pantalla eliminada')
+    } catch {
+      toastStore.show('Error al eliminar la pantalla.', 'error')
+    }
   }
 }
 

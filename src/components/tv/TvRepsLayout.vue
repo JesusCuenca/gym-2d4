@@ -49,10 +49,10 @@ onUnmounted(() => {
   resizeObserver?.disconnect()
 })
 
-watch(() => props.block.repsPerRound, async () => {
+watch(() => props.block.repsPerRound?.length, async () => {
   await nextTick()
   recalculatePerRoundScale()
-}, { deep: true })
+})
 </script>
 
 <template>

@@ -54,10 +54,10 @@ onUnmounted(() => {
   resizeObserver?.disconnect()
 })
 
-watch(() => props.exercises, async () => {
+watch(() => props.exercises?.length, async () => {
   await nextTick()
   recalculateScale()
-}, { deep: true })
+})
 </script>
 
 <template>

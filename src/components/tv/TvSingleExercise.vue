@@ -16,7 +16,7 @@ defineProps({
 
     <!-- Exercise name -->
     <h2
-      class="text-[clamp(4rem,10vw,8rem)] font-black text-white uppercase tracking-normal font-condensed text-center max-w-full break-words leading-none">
+      class="text-[clamp(4rem,10vw,8rem)] font-black text-white uppercase tracking-normal font-condensed text-center max-w-full break-words leading-none px-8">
       {{ exercise?.name }}
     </h2>
 

@@ -3,8 +3,8 @@ import { computed } from 'vue'
 import { formatTimerTwoLine } from '../../utils/time'
 
 const props = defineProps({
-  secondsLeft: Number,
-  isResting: Boolean,
+  secondsLeft: { type: Number, default: 0 },
+  isResting: { type: Boolean, default: false },
   urgencyThreshold: { type: Number, default: 5 },
 })
 

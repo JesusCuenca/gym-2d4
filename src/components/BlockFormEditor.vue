@@ -6,6 +6,7 @@ import { QueueListIcon } from '@heroicons/vue/24/outline'
 import { useExercisePicker } from '../composables/useExercisePicker'
 import draggable from 'vuedraggable'
 import { createEmptyExercise } from '../utils/blockForm'
+import { CHAR_LIMITS } from '../utils/validation'
 import TagSelector from './TagSelector.vue'
 import { BLOCK_TAG_GROUPS } from '../utils/tags'
 
@@ -153,7 +154,9 @@ async function openExercisePicker() {
     <div>
       <label :class="['block mb-1', sz.label]">Nombre del bloque</label>
       <input v-model="form.name" type="text" placeholder="Ej. AMRAP 15 min" :disabled="props.readonly"
+        :maxlength="CHAR_LIMITS.blockName"
         :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-gymOrange disabled:opacity-60 disabled:cursor-default', sz.nameInput]" />
+      <span v-if="!props.readonly" class="block text-xs text-white/40 text-right mt-0.5">{{ (form.name || '').length }}/{{ CHAR_LIMITS.blockName }}</span>
     </div>
 
     <!-- Block Type -->
@@ -319,8 +322,12 @@ async function openExercisePicker() {
               </button>
             </div>
 
-            <input v-model="exercise.name" type="text" placeholder="Nombre del ejercicio" :disabled="props.readonly"
-              :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-gymOrange disabled:opacity-60 disabled:cursor-default', sz.exNameInput]" />
+            <div>
+              <input v-model="exercise.name" type="text" placeholder="Nombre del ejercicio" :disabled="props.readonly"
+                :maxlength="CHAR_LIMITS.exerciseName"
+                :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-gymOrange disabled:opacity-60 disabled:cursor-default', sz.exNameInput]" />
+              <span v-if="!props.readonly" class="block text-xs text-white/40 text-right mt-0.5">{{ (exercise.name || '').length }}/{{ CHAR_LIMITS.exerciseName }}</span>
+            </div>
 
             <div class="flex gap-2">
               <div v-if="showExerciseReps" :class="sz.exRepsW">
@@ -332,7 +339,9 @@ async function openExercisePicker() {
               <div class="flex-1">
                 <label :class="['block', sz.exSubLabel]">Notas</label>
                 <input v-model="exercise.notes" type="text" placeholder="Opcional" :disabled="props.readonly"
+                  :maxlength="CHAR_LIMITS.exerciseNotes"
                   :class="['w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-gymOrange disabled:opacity-60 disabled:cursor-default', sz.exNotesInput]" />
+                <span v-if="!props.readonly" class="block text-xs text-white/40 text-right mt-0.5">{{ (exercise.notes || '').length }}/{{ CHAR_LIMITS.exerciseNotes }}</span>
               </div>
             </div>
           </div>

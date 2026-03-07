@@ -6,9 +6,18 @@
 
 import { getRepsSubcase } from '../models/blockTypes'
 
+export const CHAR_LIMITS = {
+  blockName: 50,
+  exerciseName: 30,
+  exerciseNotes: 30,
+}
+
 export function validateBlock(blockData) {
   if (!blockData.name?.trim()) {
     return { valid: false, message: 'El bloque debe tener un nombre.' }
+  }
+  if (blockData.name.length > CHAR_LIMITS.blockName) {
+    return { valid: false, message: `El nombre del bloque no puede superar ${CHAR_LIMITS.blockName} caracteres.` }
   }
 
   if (!blockData.type || !['timed', 'reps'].includes(blockData.type)) {
@@ -17,6 +26,14 @@ export function validateBlock(blockData) {
 
   if (!blockData.exercises?.length || !blockData.exercises.some((ex) => ex.name?.trim())) {
     return { valid: false, message: 'El bloque debe tener al menos un ejercicio con nombre.' }
+  }
+  for (const ex of blockData.exercises) {
+    if (ex.name && ex.name.length > CHAR_LIMITS.exerciseName) {
+      return { valid: false, message: `El nombre del ejercicio "${ex.name.slice(0, 15)}…" supera ${CHAR_LIMITS.exerciseName} caracteres.` }
+    }
+    if (ex.notes && ex.notes.length > CHAR_LIMITS.exerciseNotes) {
+      return { valid: false, message: `Las notas de "${ex.name || 'ejercicio'}" superan ${CHAR_LIMITS.exerciseNotes} caracteres.` }
+    }
   }
 
   if (blockData.type === 'timed') {

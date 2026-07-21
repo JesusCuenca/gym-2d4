@@ -9,25 +9,28 @@ export function buildTimeline(block) {
   if (!block.rounds || block.rounds < 1) return []
   if (!block.workSeconds || block.workSeconds <= 0) return []
 
+  const workFor = (round) => block.workSecondsPerRound?.[round - 1] ?? block.workSeconds
+
   const segments = []
   let cursor = 0
 
   for (let round = 1; round <= block.rounds; round++) {
     const isLastRound = round === block.rounds
+    const work = workFor(round)
 
     if (block.exerciseMode === 'rotate') {
       for (let i = 0; i < block.exercises.length; i++) {
         const isLastExercise = isLastRound && i === block.exercises.length - 1
-        segments.push({ startAt: cursor, duration: block.workSeconds, phase: 'work', round, exerciseIndex: i })
-        cursor += block.workSeconds
+        segments.push({ startAt: cursor, duration: work, phase: 'work', round, exerciseIndex: i })
+        cursor += work
         if (block.restSeconds > 0 && !isLastExercise) {
           segments.push({ startAt: cursor, duration: block.restSeconds, phase: 'rest', round, exerciseIndex: i })
           cursor += block.restSeconds
         }
       }
     } else {
-      segments.push({ startAt: cursor, duration: block.workSeconds, phase: 'work', round, exerciseIndex: null })
-      cursor += block.workSeconds
+      segments.push({ startAt: cursor, duration: work, phase: 'work', round, exerciseIndex: null })
+      cursor += work
       if (block.restSeconds > 0 && !isLastRound) {
         segments.push({ startAt: cursor, duration: block.restSeconds, phase: 'rest', round, exerciseIndex: null })
         cursor += block.restSeconds
@@ -47,9 +50,13 @@ export function getTotalDuration(block) {
   if (!block.rounds || block.rounds < 1) return 0
   if (!block.workSeconds || block.workSeconds <= 0) return 0
   const exCount = block.exercises?.length || 1
-  if (block.exerciseMode === 'rotate') {
-    const totalIterations = block.rounds * exCount
-    return totalIterations * block.workSeconds + (totalIterations - 1) * block.restSeconds
+  const workFor = (round) => block.workSecondsPerRound?.[round - 1] ?? block.workSeconds
+
+  let totalWork = 0
+  for (let round = 1; round <= block.rounds; round++) {
+    totalWork += workFor(round) * (block.exerciseMode === 'rotate' ? exCount : 1)
   }
-  return block.rounds * block.workSeconds + (block.rounds - 1) * block.restSeconds
+
+  const totalIterations = block.rounds * (block.exerciseMode === 'rotate' ? exCount : 1)
+  return totalWork + (totalIterations - 1) * block.restSeconds
 }

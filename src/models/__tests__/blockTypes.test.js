@@ -22,6 +22,7 @@ describe('getBlockLabel', () => {
     expect(getBlockLabel({ type: 'timed', subtype: 'emom' })).toBe('EMOM')
     expect(getBlockLabel({ type: 'timed', subtype: 'tabata' })).toBe('Tabata')
     expect(getBlockLabel({ type: 'timed', subtype: 'custom' })).toBe('Personalizada')
+    expect(getBlockLabel({ type: 'timed', subtype: 'intervals' })).toBe('Tiempo por ronda')
   })
   it('returns block type label when no subtype', () => {
     expect(getBlockLabel({ type: 'timed' })).toBe('Por tiempo')

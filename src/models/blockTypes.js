@@ -8,6 +8,7 @@ export const TIMED_SUBTYPES = [
   { value: 'amrap', label: 'AMRAP', defaults: { rounds: 1, restSeconds: 0, exerciseMode: 'all' } },
   { value: 'emom', label: 'EMOM', defaults: { restSeconds: 0, exerciseMode: 'all' } },
   { value: 'tabata', label: 'Tabata', defaults: { workSeconds: 20, restSeconds: 10, exerciseMode: 'rotate' } },
+  { value: 'intervals', label: 'Tiempo por ronda', defaults: { exerciseMode: 'rotate' } },
 ]
 
 export const REPS_SUBTYPES = [

@@ -37,6 +37,14 @@ export function validateBlock(blockData) {
   }
 
   if (blockData.type === 'timed') {
+    if (blockData.subtype === 'intervals') {
+      if (!blockData.workSecondsPerRound?.length) {
+        return { valid: false, message: 'Debes añadir al menos una ronda con tiempo.' }
+      }
+      if (blockData.workSecondsPerRound.some((s) => !Number.isFinite(s) || s <= 0)) {
+        return { valid: false, message: 'Todos los tiempos por ronda deben ser mayores a 0.' }
+      }
+    }
     if (!blockData.workSeconds || blockData.workSeconds <= 0) {
       return { valid: false, message: 'El tiempo de trabajo debe ser mayor a 0.' }
     }

@@ -78,7 +78,8 @@ export function useTimer(sessionRef) {
     if (!s) return null
     const b = s.blocks?.[s.currentBlockIndex]?.blockData
     if (!b || b.type !== 'timed') return null
-    return `${s.currentBlockIndex}_${b.rounds}_${b.workSeconds}_${b.restSeconds}_${b.exerciseMode}_${b.exercises?.length}`
+    const perRound = b.workSecondsPerRound?.join('-') ?? ''
+    return `${s.currentBlockIndex}_${b.rounds}_${b.workSeconds}_${perRound}_${b.restSeconds}_${b.exerciseMode}_${b.exercises?.length}`
   })
 
   let cachedTimeline = null

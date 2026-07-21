@@ -54,13 +54,16 @@ const sz = computed(() => {
 
 // Visibility computeds
 const isTimedType = computed(() => isTimed(props.form.type))
-const showWorkTime = computed(() => isTimedType.value)
+const showWorkTime = computed(() => isTimedType.value && props.form.subtype !== 'intervals')
+const showWorkPerRound = computed(() => isTimedType.value && props.form.subtype === 'intervals')
 const showRestTime = computed(() => isTimedType.value && props.form.subtype !== 'amrap')
 const showRounds = computed(() => {
-  if (isTimedType.value) return props.form.subtype !== 'amrap'
+  if (isTimedType.value) return props.form.subtype !== 'amrap' && props.form.subtype !== 'intervals'
   return props.form.subtype !== 'perRound'
 })
-const showExerciseMode = computed(() => isTimedType.value && props.form.subtype === 'custom')
+const showExerciseMode = computed(() =>
+  isTimedType.value && (props.form.subtype === 'custom' || props.form.subtype === 'intervals')
+)
 const showBlockReps = computed(() => !isTimedType.value)
 const showExerciseReps = computed(() => {
   if (isTimedType.value) return props.form.exerciseMode === 'all'
@@ -127,6 +130,12 @@ watch(() => props.form.type, (newType) => {
 function addRepsRound() { props.form.repsPerRound.push('') }
 function removeRepsRound(index) {
   if (props.form.repsPerRound.length > 1) props.form.repsPerRound.splice(index, 1)
+}
+
+// Work time per round (intervals subtype)
+function addWorkRound() { props.form.workSecondsPerRound.push('') }
+function removeWorkRound(index) {
+  if (props.form.workSecondsPerRound.length > 1) props.form.workSecondsPerRound.splice(index, 1)
 }
 
 // Exercises
@@ -222,6 +231,26 @@ async function openExercisePicker() {
           <button type="button" @click="stepWork(30)" :disabled="!canStepWork(30)"
             :class="['text-white/60 hover:text-white disabled:opacity-40 transition-colors', sz.stepBtn]">+30s</button>
         </template>
+      </div>
+    </div>
+
+    <!-- Work Time per round (intervals) -->
+    <div v-if="showWorkPerRound" class="space-y-2">
+      <label :class="['block mb-1', sz.label]">Tiempo de trabajo por ronda (segundos)</label>
+      <div :class="['flex flex-wrap items-end', sz.perRoundGap]">
+        <div v-for="(_, rIndex) in form.workSecondsPerRound" :key="rIndex" :class="['flex items-center', sz.perRoundGap]">
+          <div class="text-center">
+            <span class="block text-xs text-white/50 mb-0.5">R{{ rIndex + 1 }}</span>
+            <input v-model="form.workSecondsPerRound[rIndex]" type="number" min="1" placeholder="0" :disabled="props.readonly"
+              :class="['bg-white/10 border border-white/20 rounded-lg text-white text-center focus:outline-none focus:border-gymOrange disabled:opacity-60 disabled:cursor-default', sz.perRoundInput]" />
+          </div>
+          <button v-if="!props.readonly && form.workSecondsPerRound.length > 1" type="button" @click="removeWorkRound(rIndex)"
+            :class="['text-red-400/50 hover:text-red-400 p-0.5', sz.perRoundTrashMt]">
+            <TrashIcon :class="['shrink-0', sz.exTrashIcon]" />
+          </button>
+        </div>
+        <button v-if="!props.readonly" type="button" @click="addWorkRound"
+          :class="['rounded-lg border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors', sz.perRoundAddBtn, sz.perRoundTrashMt]">+</button>
       </div>
     </div>
 

@@ -149,6 +149,25 @@ describe('blockDataToForm — timed', () => {
     expect(form.exercises).toHaveLength(1)
     expect(form.exercises[0].name).toBe('')
   })
+
+  it('converts intervals block correctly (per-round work time)', () => {
+    const form = blockDataToForm(timedBlockData({
+      subtype: 'intervals',
+      rounds: 3,
+      workSeconds: 30,
+      workSecondsPerRound: [30, 35, 40],
+      restSeconds: 15,
+      exerciseMode: 'rotate',
+    }))
+    expect(form.subtype).toBe('intervals')
+    expect(form.workSecondsPerRound).toEqual(['30', '35', '40'])
+  })
+
+  it('infers intervals subtype from data when subtype field is missing', () => {
+    const data = { name: 'X', type: 'timed', workSecondsPerRound: [30, 35, 40], exercises: [] }
+    const form = blockDataToForm(data)
+    expect(form.subtype).toBe('intervals')
+  })
 })
 
 describe('blockDataToForm — reps', () => {
@@ -274,6 +293,77 @@ describe('formToBlockData — timed', () => {
     }
     const data = formToBlockData(form)
     expect(data.exercises[0].repsEveryRound).toBeNull()
+  })
+
+  it('converts intervals form correctly (per-round work time)', () => {
+    const form = {
+      name: 'Interval Strength',
+      type: 'timed',
+      subtype: 'intervals',
+      workMinutes: '0',
+      workSeconds: '00',
+      workSecondsPerRound: ['30', '35', '40'],
+      restMinutes: '0',
+      restSeconds: '15',
+      rounds: '',
+      exerciseMode: 'rotate',
+      repsEveryRound: '',
+      repsPerRound: [''],
+      exercises: [
+        { name: 'Deadlift', repsEveryRound: '', notes: '' },
+        { name: 'Row', repsEveryRound: '', notes: '' },
+        { name: 'Curl', repsEveryRound: '', notes: '' },
+      ],
+    }
+    const data = formToBlockData(form)
+    expect(data.subtype).toBe('intervals')
+    expect(data.workSecondsPerRound).toEqual([30, 35, 40])
+    expect(data.rounds).toBe(3) // inferred from workSecondsPerRound length
+    expect(data.workSeconds).toBe(30) // kept as first entry for guards/summaries
+    expect(data.restSeconds).toBe(15)
+    expect(data.exerciseMode).toBe('rotate')
+  })
+
+  it('filters invalid values from workSecondsPerRound', () => {
+    const form = {
+      name: 'Test',
+      type: 'timed',
+      subtype: 'intervals',
+      workMinutes: '0',
+      workSeconds: '00',
+      workSecondsPerRound: ['30', '', '40'],
+      restMinutes: '0',
+      restSeconds: '00',
+      rounds: '',
+      exerciseMode: 'rotate',
+      repsEveryRound: '',
+      repsPerRound: [''],
+      exercises: [{ name: 'Row', repsEveryRound: '', notes: '' }],
+    }
+    const data = formToBlockData(form)
+    expect(data.workSecondsPerRound).toEqual([30, 40])
+    expect(data.rounds).toBe(2)
+  })
+
+  it('sets workSecondsPerRound to null for non-intervals timed subtypes', () => {
+    const form = {
+      name: 'Custom',
+      type: 'timed',
+      subtype: 'custom',
+      workMinutes: '3',
+      workSeconds: '00',
+      workSecondsPerRound: ['30'],
+      restMinutes: '0',
+      restSeconds: '00',
+      rounds: '4',
+      exerciseMode: 'all',
+      repsEveryRound: '',
+      repsPerRound: [''],
+      exercises: [{ name: 'Row', repsEveryRound: '', notes: '' }],
+    }
+    const data = formToBlockData(form)
+    expect(data.workSecondsPerRound).toBeNull()
+    expect(data.workSeconds).toBe(180)
   })
 
   it('filters out exercises with empty names', () => {
@@ -416,5 +506,20 @@ describe('round-trip: blockDataToForm → formToBlockData', () => {
     expect(roundTrip.type).toBe(original.type)
     expect(roundTrip.repsPerRound).toEqual(original.repsPerRound)
     expect(roundTrip.rounds).toBe(original.rounds)
+  })
+
+  it('preserves timed intervals (workSecondsPerRound) data', () => {
+    const original = timedBlockData({
+      subtype: 'intervals',
+      rounds: 3,
+      workSeconds: 30,
+      workSecondsPerRound: [30, 35, 40],
+      restSeconds: 15,
+      exerciseMode: 'rotate',
+    })
+    const roundTrip = formToBlockData(blockDataToForm(original))
+    expect(roundTrip.workSecondsPerRound).toEqual(original.workSecondsPerRound)
+    expect(roundTrip.rounds).toBe(original.rounds)
+    expect(roundTrip.restSeconds).toBe(original.restSeconds)
   })
 })

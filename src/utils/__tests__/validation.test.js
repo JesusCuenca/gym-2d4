@@ -99,6 +99,34 @@ describe('validateBlock — timed', () => {
     }))
     expect(r.valid).toBe(false)
   })
+
+  it('accepts intervals block with valid workSecondsPerRound', () => {
+    const r = validateBlock(validTimedBlock({
+      subtype: 'intervals',
+      workSeconds: 30,
+      workSecondsPerRound: [30, 35, 40],
+      rounds: 3,
+    }))
+    expect(r.valid).toBe(true)
+  })
+
+  it('rejects intervals block with empty workSecondsPerRound', () => {
+    const r = validateBlock(validTimedBlock({
+      subtype: 'intervals',
+      workSecondsPerRound: [],
+    }))
+    expect(r.valid).toBe(false)
+  })
+
+  it('rejects intervals block with a non-positive value in workSecondsPerRound', () => {
+    const r = validateBlock(validTimedBlock({
+      subtype: 'intervals',
+      workSeconds: 30,
+      workSecondsPerRound: [30, 0, 40],
+      rounds: 3,
+    }))
+    expect(r.valid).toBe(false)
+  })
 })
 
 describe('validateBlock — reps', () => {

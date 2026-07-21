@@ -93,9 +93,10 @@ Blocks use **only 2 data types**: `timed` and `reps`. Common workout formats (AM
 |-------|------|-------------|
 | `name` | string | Block display name (e.g. "AMRAP 15 min") |
 | `type` | string | `timed` or `reps` |
-| `subtype` | string\|null | `amrap`, `emom`, `tabata`, or `null` — only for admin UX, TV ignores this |
+| `subtype` | string\|null | `amrap`, `emom`, `tabata`, `intervals`, or `null` — only for admin UX, TV ignores this |
 | `rounds` | number | Number of rounds (AMRAP = 1) |
-| `workSeconds` | number | Work phase duration per round in seconds (timed only) |
+| `workSeconds` | number | Work phase duration per round in seconds (timed only). When `workSecondsPerRound` is set, this holds its first entry (kept for validation/legacy display) |
+| `workSecondsPerRound` | array\|null | Different work duration per round e.g. `[30, 35, 40]` (timed blocks, subtype: intervals). When set, `rounds` = its length |
 | `restSeconds` | number | Rest phase duration per round in seconds (0 = no rest) |
 | `exerciseMode` | string | `all` (show full list) or `rotate` (one exercise at a time, cycling) |
 | `repsEveryRound` | number\|null | Same reps each round (reps blocks, sub-case: sameReps) |
@@ -121,6 +122,7 @@ Subtypes are shortcuts in the admin form. They pre-fill fields with sensible def
 | AMRAP | 1 | total time cap | 0 | `all` |
 | EMOM | N intervals | interval duration | 0 | `all` |
 | Tabata | 8 | 20 | 10 | `rotate` |
+| Intervals | derived from `workSecondsPerRound.length` | per-round via `workSecondsPerRound` (e.g. `[30, 35, 40]`) | user-defined | user-defined |
 | (custom) | user-defined | user-defined | user-defined | user-defined |
 
 #### Block Examples
@@ -191,6 +193,25 @@ Subtypes are shortcuts in the admin form. They pre-fill fields with sensible def
     { "name": "Row", "repsEveryRound": null, "notes": "Max cal" },
     { "name": "Assault Bike", "repsEveryRound": null, "notes": "Max cal" },
     { "name": "Ski Erg", "repsEveryRound": null, "notes": "Max cal" }
+  ]
+}
+```
+
+**Intervals — different work time per round** (timed, subtype: intervals):
+```json
+{
+  "name": "Strength Intervals",
+  "type": "timed",
+  "subtype": "intervals",
+  "rounds": 3,
+  "workSeconds": 30,
+  "workSecondsPerRound": [30, 35, 40],
+  "restSeconds": 15,
+  "exerciseMode": "rotate",
+  "exercises": [
+    { "name": "Deadlift", "repsEveryRound": null, "notes": null },
+    { "name": "Row", "repsEveryRound": null, "notes": null },
+    { "name": "Bicep Curl", "repsEveryRound": null, "notes": null }
   ]
 }
 ```

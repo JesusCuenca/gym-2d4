@@ -132,6 +132,52 @@ describe('buildTimeline — mode "rotate"', () => {
   })
 })
 
+describe('buildTimeline — workSecondsPerRound (intervals)', () => {
+  it('rotate mode: each round uses its own work duration', () => {
+    const block = timedBlock({
+      exerciseMode: 'rotate',
+      rounds: 3,
+      workSecondsPerRound: [30, 35, 40],
+      restSeconds: 0,
+      exercises: [{ name: 'Deadlift' }, { name: 'Row' }, { name: 'Curl' }],
+    })
+    const tl = buildTimeline(block)
+    expect(tl.map((s) => s.duration)).toEqual([30, 30, 30, 35, 35, 35, 40, 40, 40])
+    expect(tl.map((s) => s.round)).toEqual([1, 1, 1, 2, 2, 2, 3, 3, 3])
+  })
+
+  it('all mode: each round uses its own work duration', () => {
+    const block = timedBlock({
+      exerciseMode: 'all',
+      rounds: 3,
+      workSecondsPerRound: [30, 35, 40],
+      restSeconds: 10,
+    })
+    const tl = buildTimeline(block)
+    const workSegments = tl.filter((s) => s.phase === 'work')
+    expect(workSegments.map((s) => s.duration)).toEqual([30, 35, 40])
+  })
+
+  it('sum of durations equals getTotalDuration', () => {
+    const block = timedBlock({
+      exerciseMode: 'rotate',
+      rounds: 3,
+      restSeconds: 5,
+      workSecondsPerRound: [30, 35, 40],
+      exercises: [{ name: 'A' }, { name: 'B' }],
+    })
+    const tl = buildTimeline(block)
+    const sum = tl.reduce((acc, s) => acc + s.duration, 0)
+    expect(sum).toBe(getTotalDuration(block))
+  })
+
+  it('falls back to scalar workSeconds when workSecondsPerRound is absent', () => {
+    const block = timedBlock({ rounds: 2, workSeconds: 45, restSeconds: 0 })
+    const tl = buildTimeline(block)
+    expect(tl.every((s) => s.duration === 45)).toBe(true)
+  })
+})
+
 describe('buildTimeline — edge cases', () => {
   it('returns null for reps blocks', () => {
     expect(buildTimeline({ type: 'reps', exercises: [{ name: 'A' }], rounds: 3 })).toBeNull()
@@ -190,5 +236,16 @@ describe('getTotalDuration', () => {
   it('restSeconds = 0: no rest time added', () => {
     const block = timedBlock({ rounds: 5, restSeconds: 0 })
     expect(getTotalDuration(block)).toBe(5 * 60)
+  })
+
+  it('workSecondsPerRound: sums per-round durations plus rest', () => {
+    const block = timedBlock({
+      exerciseMode: 'all',
+      rounds: 3,
+      restSeconds: 10,
+      workSecondsPerRound: [30, 35, 40],
+    })
+    // 30 + 35 + 40 + 2 rests of 10
+    expect(getTotalDuration(block)).toBe(30 + 35 + 40 + 2 * 10)
   })
 })

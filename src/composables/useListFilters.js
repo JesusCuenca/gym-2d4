@@ -10,11 +10,12 @@ const PAGE_SIZE = 20
  * @param {Object} options
  * @param {import('vue').ComputedRef<Array>} options.items - Raw items from the store
  * @param {import('vue').ComputedRef<string>} options.currentUserUid - Logged-in user uid
+ * @param {string} [options.defaultUserMode='mine'] - Initial user filter: 'mine' | 'all'
  */
-export function useListFilters({ items, currentUserUid }) {
+export function useListFilters({ items, currentUserUid, defaultUserMode = 'mine' }) {
   // Filter state
   const searchText = ref('')
-  const userMode = ref('mine') // 'mine' | 'all' | 'selected'
+  const userMode = ref(defaultUserMode) // 'mine' | 'all' | 'selected'
   const selectedUserUids = ref([])
   const dateFrom = ref('')
   const dateTo = ref('')
@@ -110,7 +111,7 @@ export function useListFilters({ items, currentUserUid }) {
 
   const hasActiveFilters = computed(() => {
     return searchText.value !== ''
-      || userMode.value !== 'mine'
+      || userMode.value !== defaultUserMode
       || dateFrom.value !== ''
       || dateTo.value !== ''
       || typeFilter.value !== ''
@@ -120,7 +121,7 @@ export function useListFilters({ items, currentUserUid }) {
 
   function clearFilters() {
     searchText.value = ''
-    userMode.value = 'mine'
+    userMode.value = defaultUserMode
     selectedUserUids.value = []
     dateFrom.value = ''
     dateTo.value = ''

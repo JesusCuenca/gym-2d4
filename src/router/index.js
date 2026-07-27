@@ -11,6 +11,13 @@ const routes = [
     component: () => import("../views/TvDisplayView.vue"),
   },
 
+  // Client progress (public — private link, no auth required)
+  {
+    path: "/progreso/:clientId",
+    name: "client-progress",
+    component: () => import("../views/ClientProgressView.vue"),
+  },
+
   // Authentication
   {
     path: "/login",
@@ -65,6 +72,28 @@ const routes = [
         path: "clases/:id/live",
         name: "admin-class-live",
         component: () => import("../views/AdminClassLiveView.vue"),
+      },
+      {
+        path: "clientes",
+        name: "admin-clients",
+        component: () => import("../views/AdminClientsView.vue"),
+      },
+      {
+        path: "clientes/nuevo",
+        name: "admin-client-create",
+        component: () => import("../views/AdminClientCreateView.vue"),
+      },
+      {
+        path: "clientes/:id/editar",
+        name: "admin-client-edit",
+        component: () => import("../views/AdminClientCreateView.vue"),
+        props: true,
+      },
+      {
+        path: "clientes/:id",
+        name: "admin-client-detail",
+        component: () => import("../views/AdminClientDetailView.vue"),
+        props: true,
       },
       {
         path: "pantallas",

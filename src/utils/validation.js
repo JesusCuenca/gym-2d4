@@ -5,11 +5,22 @@
  */
 
 import { getRepsSubcase } from '../models/blockTypes'
+import { MEASUREMENT_METRICS } from '../models/measurementMetrics'
 
 export const CHAR_LIMITS = {
   blockName: 50,
   exerciseName: 30,
   exerciseNotes: 30,
+  clientName: 50,
+  clientNotes: 500,
+  measurementNotes: 200,
+}
+
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function isValidDateString(value) {
+  return DATE_REGEX.test(value) && !isNaN(new Date(value).getTime())
 }
 
 export function validateBlock(blockData) {
@@ -93,6 +104,62 @@ export function validateBlock(blockData) {
     ) {
       return { valid: false, message: 'Cada ejercicio debe tener repeticiones.' }
     }
+  }
+
+  return { valid: true }
+}
+
+export function validateClient(clientData) {
+  if (!clientData.name?.trim()) {
+    return { valid: false, message: 'El cliente debe tener un nombre.' }
+  }
+  if (clientData.name.length > CHAR_LIMITS.clientName) {
+    return { valid: false, message: `El nombre del cliente no puede superar ${CHAR_LIMITS.clientName} caracteres.` }
+  }
+  if (clientData.email && !EMAIL_REGEX.test(clientData.email)) {
+    return { valid: false, message: 'El email no es válido.' }
+  }
+  if (clientData.birthDate && !isValidDateString(clientData.birthDate)) {
+    return { valid: false, message: 'La fecha de nacimiento no es válida.' }
+  }
+  if (clientData.heightCm != null && (clientData.heightCm < 50 || clientData.heightCm > 250)) {
+    return { valid: false, message: 'La altura debe estar entre 50 y 250 cm.' }
+  }
+  if (clientData.dietaryNotes && clientData.dietaryNotes.length > CHAR_LIMITS.clientNotes) {
+    return { valid: false, message: `Las notas alimenticias no pueden superar ${CHAR_LIMITS.clientNotes} caracteres.` }
+  }
+  if (clientData.notes && clientData.notes.length > CHAR_LIMITS.clientNotes) {
+    return { valid: false, message: `Las notas no pueden superar ${CHAR_LIMITS.clientNotes} caracteres.` }
+  }
+  return { valid: true }
+}
+
+export function validateMeasurement(measurementData) {
+  if (!measurementData.measuredAt) {
+    return { valid: false, message: 'La medición debe tener una fecha.' }
+  }
+  if (!isValidDateString(measurementData.measuredAt)) {
+    return { valid: false, message: 'La fecha de la medición no es válida.' }
+  }
+
+  const hasAnyMetric = MEASUREMENT_METRICS.some((m) => measurementData[m.key] != null)
+  if (!hasAnyMetric) {
+    return { valid: false, message: 'Debes rellenar al menos una medida.' }
+  }
+
+  for (const metric of MEASUREMENT_METRICS) {
+    const value = measurementData[metric.key]
+    if (value == null) continue
+    if (!Number.isFinite(value) || value < metric.min || value > metric.max) {
+      return { valid: false, message: `${metric.label} debe estar entre ${metric.min} y ${metric.max}.` }
+    }
+    if (metric.integer && !Number.isInteger(value)) {
+      return { valid: false, message: `${metric.label} debe ser un número entero.` }
+    }
+  }
+
+  if (measurementData.notes && measurementData.notes.length > CHAR_LIMITS.measurementNotes) {
+    return { valid: false, message: `Las notas no pueden superar ${CHAR_LIMITS.measurementNotes} caracteres.` }
   }
 
   return { valid: true }

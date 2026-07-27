@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { validateBlock, validateClass } from '../validation'
+import { validateBlock, validateClass, validateClient, validateMeasurement, CHAR_LIMITS } from '../validation'
 
 // Helpers
 function validTimedBlock(overrides) {
@@ -221,6 +221,119 @@ describe('validateClass', () => {
       name: 'Test',
       blocks: [{ blockData: { ...validTimedBlock(), name: '' } }],
     })
+    expect(r.valid).toBe(false)
+  })
+})
+
+// --- validateClient ---
+
+function validClient(overrides) {
+  return {
+    name: 'María García',
+    email: 'maria@example.com',
+    phone: '600000000',
+    birthDate: '1990-05-12',
+    heightCm: 168,
+    dietaryNotes: 'Intolerante a la lactosa',
+    notes: 'Objetivo: perder grasa',
+    ...overrides,
+  }
+}
+
+describe('validateClient', () => {
+  it('accepts a valid client', () => {
+    expect(validateClient(validClient()).valid).toBe(true)
+  })
+
+  it('accepts a minimal client (only name)', () => {
+    const r = validateClient({ name: 'Ana', email: null, phone: null, birthDate: null, heightCm: null, dietaryNotes: null, notes: null })
+    expect(r.valid).toBe(true)
+  })
+
+  it('rejects missing name', () => {
+    const r = validateClient(validClient({ name: '' }))
+    expect(r.valid).toBe(false)
+    expect(r.message).toBeTruthy()
+  })
+
+  it('rejects whitespace-only name', () => {
+    expect(validateClient(validClient({ name: '   ' })).valid).toBe(false)
+  })
+
+  it('rejects name over the char limit', () => {
+    const r = validateClient(validClient({ name: 'a'.repeat(CHAR_LIMITS.clientName + 1) }))
+    expect(r.valid).toBe(false)
+  })
+
+  it('rejects invalid email', () => {
+    expect(validateClient(validClient({ email: 'not-an-email' })).valid).toBe(false)
+  })
+
+  it('rejects invalid birthDate format', () => {
+    expect(validateClient(validClient({ birthDate: '12/05/1990' })).valid).toBe(false)
+  })
+
+  it('rejects heightCm out of range', () => {
+    expect(validateClient(validClient({ heightCm: 30 })).valid).toBe(false)
+    expect(validateClient(validClient({ heightCm: 300 })).valid).toBe(false)
+  })
+})
+
+// --- validateMeasurement ---
+
+function validMeasurement(overrides) {
+  return {
+    measuredAt: '2026-07-01',
+    weightKg: 78.4,
+    bodyFatPct: 22.1,
+    notes: null,
+    ...overrides,
+  }
+}
+
+describe('validateMeasurement', () => {
+  it('accepts a valid measurement', () => {
+    expect(validateMeasurement(validMeasurement()).valid).toBe(true)
+  })
+
+  it('accepts minimal measurement (date + one metric)', () => {
+    expect(validateMeasurement({ measuredAt: '2026-07-01', waistCm: 80 }).valid).toBe(true)
+  })
+
+  it('rejects missing measuredAt', () => {
+    const r = validateMeasurement(validMeasurement({ measuredAt: '' }))
+    expect(r.valid).toBe(false)
+  })
+
+  it('rejects malformed measuredAt', () => {
+    expect(validateMeasurement(validMeasurement({ measuredAt: '01-07-2026' })).valid).toBe(false)
+  })
+
+  it('rejects measurement with zero metrics filled', () => {
+    const r = validateMeasurement({ measuredAt: '2026-07-01', notes: 'solo notas' })
+    expect(r.valid).toBe(false)
+    expect(r.message).toBe('Debes rellenar al menos una medida.')
+  })
+
+  it('rejects out-of-range value with label and range in the message', () => {
+    const r = validateMeasurement(validMeasurement({ weightKg: 500 }))
+    expect(r.valid).toBe(false)
+    expect(r.message).toContain('Peso')
+    expect(r.message).toContain('300')
+  })
+
+  it('accepts decimal visceralFat', () => {
+    expect(validateMeasurement(validMeasurement({ visceralFat: 5.5 })).valid).toBe(true)
+  })
+
+  it('rejects non-integer value for integer metrics', () => {
+    const r = validateMeasurement(validMeasurement({ metabolicAge: 35.5 }))
+    expect(r.valid).toBe(false)
+    expect(r.message).toContain('entero')
+  })
+
+  it('rejects notes over the char limit', () => {
+    const r = validateMeasurement(validMeasurement({ notes: 'a'.repeat(CHAR_LIMITS.measurementNotes + 1) }))
     expect(r.valid).toBe(false)
   })
 })

@@ -46,6 +46,33 @@ service cloud.firestore {
                     && resource.data.uid == request.auth.uid;
     }
 
+    // Clients: single-doc public read via unguessable ID (private progress link).
+    // LIST requires auth — unauthenticated users must NOT enumerate clients.
+    match /clients/{clientId} {
+      allow get: if true;
+      allow list: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == resource.data.uid;
+      allow delete: if request.auth != null
+                    && resource.data.uid == request.auth.uid;
+
+      // Measurements: readable only under a known clientId (path-scoped;
+      // no collection-group rule → cross-client enumeration impossible).
+      match /measurements/{measurementId} {
+        allow read: if true;
+        allow create: if request.auth != null
+                      && request.resource.data.uid == request.auth.uid;
+        allow update: if request.auth != null
+                      && resource.data.uid == request.auth.uid
+                      && request.resource.data.uid == resource.data.uid;
+        allow delete: if request.auth != null
+                      && resource.data.uid == request.auth.uid;
+      }
+    }
+
     // Sessions: owner can write, anyone can read (TV has no auth)
     match /sessions/{sessionId} {
       allow read: if true;

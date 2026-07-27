@@ -7,6 +7,8 @@ import { useBlockStore } from './blockStore'
 import { useClassStore } from './classStore'
 import { useScreenStore } from './screenStore'
 import { useSessionStore } from './sessionStore'
+import { useClientStore } from './clientStore'
+import { useMeasurementStore } from './measurementStore'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -70,6 +72,8 @@ export const useAuthStore = defineStore('auth', () => {
       useBlockStore().$reset()
       useClassStore().$reset()
       useScreenStore().$reset()
+      useClientStore().$reset()
+      useMeasurementStore().$reset()
     }
   }
 

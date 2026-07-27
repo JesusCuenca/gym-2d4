@@ -10,6 +10,7 @@ import {
   Squares2X2Icon,
   CubeIcon,
   CalendarDaysIcon,
+  UsersIcon,
   TvIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
@@ -62,6 +63,10 @@ function closeMenu() {
           <RouterLink to="/admin/clases" class="nav-link">
             <CalendarDaysIcon class="w-4 h-4" />
             Clases
+          </RouterLink>
+          <RouterLink to="/admin/clientes" class="nav-link">
+            <UsersIcon class="w-4 h-4" />
+            Clientes
           </RouterLink>
           <RouterLink to="/admin/pantallas" class="nav-link">
             <TvIcon class="w-4 h-4" />
@@ -116,6 +121,11 @@ function closeMenu() {
               <RouterLink to="/admin/clases" class="nav-link py-3 text-base border-b border-white/5" @click="closeMenu">
                 <CalendarDaysIcon class="w-5 h-5" />
                 Clases
+              </RouterLink>
+              <RouterLink to="/admin/clientes" class="nav-link py-3 text-base border-b border-white/5"
+                @click="closeMenu">
+                <UsersIcon class="w-5 h-5" />
+                Clientes
               </RouterLink>
               <RouterLink to="/admin/pantallas" class="nav-link py-3 text-base" @click="closeMenu">
                 <TvIcon class="w-5 h-5" />
